@@ -53,8 +53,8 @@ if (fs.existsSync(commandsPath)) {
     loadCommands(commandsPath);
 }
 
-// Bot ready event
-client.once('ready', async () => {
+// Bot ready event (updated for Discord.js v14+ compatibility)
+client.once('clientReady', async () => {
     console.log(`🤖 ${client.user.tag} is online!`);
     console.log(`📊 Serving ${client.guilds.cache.size} servers`);
     console.log(`⚡ Loaded ${client.commands.size} commands`);
