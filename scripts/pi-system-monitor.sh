@@ -12,7 +12,8 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Configuration
-BOT_DIR="/home/pi/sapphire-bot"
+CURRENT_USER=$(whoami)
+BOT_DIR="/home/$CURRENT_USER/sapphire-bot"
 SERVICE_NAME="sapphire-bot"
 LOG_FILE="/var/log/sapphire-monitor.log"
 ALERT_THRESHOLD_CPU=85
@@ -93,6 +94,7 @@ get_bot_memory() {
 # Get bot uptime
 get_bot_uptime() {
     pm2 jlist 2>/dev/null | jq -r ".[] | select(.name==\"$SERVICE_NAME\") | .pm2_env.pm_uptime" 2>/dev/null | head -1
+    find /home/$CURRENT_USER/.pm2/logs -name "*.log" -mtime +7 -delete 2>/dev/null || true
 }
 
 # System health check

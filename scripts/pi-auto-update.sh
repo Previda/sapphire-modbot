@@ -11,9 +11,10 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-BOT_DIR="/home/pi/sapphire-bot"
+CURRENT_USER=$(whoami)
+BOT_DIR="/home/$CURRENT_USER/sapphire-bot"
 REPO_URL="https://github.com/Previda/sapphire-modbot.git"
-BACKUP_DIR="/home/pi/bot-backups"
+BACKUP_DIR="/home/$CURRENT_USER/bot-backups"
 LOG_FILE="/var/log/sapphire-bot-update.log"
 SERVICE_NAME="sapphire-bot"
 
@@ -22,20 +23,26 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
 
-# Check if running as pi user
+# Check if running as regular user (not root)
 check_user() {
-    if [ "$USER" != "pi" ]; then
-        echo -e "${RED}❌ This script should be run as the 'pi' user${NC}"
-        exit 1
+    if [ "$USER" = "root" ] || [ "$EUID" -eq 0 ]; then
+        echo -e "${YELLOW}⚠️  Running as root. Consider running as a regular user for better security.${NC}"
+        read -p "Continue anyway? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${RED}❌ Aborted by user${NC}"
+            exit 1
+        fi
     fi
+    echo -e "${GREEN}✅ Running as user: $CURRENT_USER${NC}"
 }
 
 # Create directories if they don't exist
 create_directories() {
     log "Creating necessary directories..."
     mkdir -p "$BACKUP_DIR"
-    mkdir -p "$(dirname "$LOG_FILE")"
-    sudo chown pi:pi "$(dirname "$LOG_FILE")" 2>/dev/null || true
+    mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || sudo mkdir -p "$(dirname "$LOG_FILE")"
+    sudo chown $CURRENT_USER:$CURRENT_USER "$(dirname "$LOG_FILE")" 2>/dev/null || true
 }
 
 # Memory optimization for Pi
@@ -81,8 +88,8 @@ install_dependencies() {
     if ! command -v pm2 &> /dev/null; then
         log "Installing PM2 process manager..."
         sudo npm install -g pm2
-        pm2 startup systemd -u pi --hp /home/pi
-        sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u pi --hp /home/pi
+        pm2 startup systemd -u $CURRENT_USER --hp /home/$CURRENT_USER
+        sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $CURRENT_USER --hp /home/$CURRENT_USER
     fi
     
     # Install Git if not present
@@ -270,7 +277,7 @@ manage_service() {
     pm2 delete $SERVICE_NAME 2>/dev/null || true
     
     # Start with Pi optimizations
-    PM2_HOME=/home/pi/.pm2 NODE_OPTIONS="--max-old-space-size=256" pm2 start index.js \
+    PM2_HOME=/home/$CURRENT_USER/.pm2 NODE_OPTIONS="--max-old-space-size=256" pm2 start index.js \
         --name $SERVICE_NAME \
         --max-memory-restart 200M \
         --node-args="--max-old-space-size=256" \

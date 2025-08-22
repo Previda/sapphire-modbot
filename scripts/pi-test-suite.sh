@@ -12,9 +12,10 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Configuration
-BOT_DIR="/home/pi/sapphire-bot"
+CURRENT_USER=$(whoami)
+BOT_DIR="/home/$CURRENT_USER/sapphire-bot"
 TEST_LOG="/tmp/sapphire-test-$(date +%Y%m%d-%H%M%S).log"
-BACKUP_DIR="/home/pi/bot-backups"
+BACKUP_DIR="/home/$CURRENT_USER/bot-backups"
 MAX_MEMORY_MB=200
 MAX_CPU_PERCENT=50
 TEST_TIMEOUT=30
@@ -313,7 +314,7 @@ test_service_management() {
         pm2 delete sapphire-bot 2>/dev/null || true
         
         # Test service start
-        if PM2_HOME=/home/pi/.pm2 NODE_OPTIONS="--max-old-space-size=256" pm2 start index.js --name sapphire-bot-test --max-memory-restart 200M >/dev/null 2>&1; then
+        if PM2_HOME=/home/$CURRENT_USER/.pm2 NODE_OPTIONS="--max-old-space-size=256" pm2 start index.js --name sapphire-bot-test --max-memory-restart 200M >/dev/null 2>&1; then
             sleep 3
             
             if pm2 list | grep -q "sapphire-bot-test.*online"; then
