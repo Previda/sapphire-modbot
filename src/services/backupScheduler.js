@@ -1,4 +1,4 @@
-const { pool } = require('../models/database');
+const { connectToMongoDB, isConnected, getConnection } = require('../models/database');
 const { EmbedBuilder } = require('discord.js');
 const fs = require('fs').promises;
 
@@ -43,14 +43,16 @@ class BackupScheduler {
 
     async checkDueBackups() {
         try {
-            const [schedules] = await pool.execute(`
-                SELECT * FROM backup_schedules 
-                WHERE active = true AND nextBackup <= NOW()
-            `);
-
-            for (const schedule of schedules) {
-                await this.performScheduledBackup(schedule);
+            // Skip if using local storage fallback
+            if (!isConnected()) {
+                console.log('📦 Backup scheduler: Using local storage, skipping database backups');
+                return;
             }
+
+            // TODO: Implement MongoDB backup schedules when needed
+            // For now, skip scheduled backups in MongoDB mode
+            console.log('📦 Backup scheduler: MongoDB mode - scheduled backups not yet implemented');
+            
         } catch (error) {
             console.error('Error checking due backups:', error);
         }
@@ -113,20 +115,18 @@ class BackupScheduler {
     async collectBackupData(guildID) {
         const data = {};
         
-        const tables = [
-            'tickets', 'notes', 'strikes', 'invites', 'threat_scores',
-            'automod_configs', 'appeal_questions', 'appeals', 'pi_runners',
-            'punishments', 'verifications', 'guild_configs', 'user_economy'
-        ];
-
-        for (const table of tables) {
-            try {
-                const [rows] = await pool.execute(`SELECT * FROM ${table} WHERE guildID = ?`, [guildID]);
-                data[table] = rows;
-            } catch (error) {
-                console.warn(`Table ${table} not found or error:`, error.message);
-                data[table] = [];
-            }
+        // For local storage fallback, create empty backup data structure
+        if (!isConnected()) {
+            console.log('📦 Creating backup with local storage data structure');
+            const collections = [
+                'tickets', 'notes', 'strikes', 'invites', 'threat_scores',
+                'automod_configs', 'appeal_questions', 'appeals', 'pi_runners',
+                'punishments', 'verifications', 'guild_configs', 'user_economy'
+            ];
+            
+            collections.forEach(collection => {
+                data[collection] = []; // Empty for now - TODO: implement local storage backup
+            });
         }
 
         return data;
@@ -167,36 +167,27 @@ class BackupScheduler {
     }
 
     async updateNextBackup(schedule) {
-        let nextBackup;
-        const now = new Date();
-
-        switch (schedule.frequency) {
-            case 'daily':
-                nextBackup = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-                break;
-            case 'weekly':
-                nextBackup = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-                break;
-            case 'monthly':
-                nextBackup = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-                break;
-            default:
-                nextBackup = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        // Skip if using local storage fallback
+        if (!isConnected()) {
+            console.log('📦 Backup scheduler: Local storage mode - skipping next backup update');
+            return;
         }
 
-        await pool.execute(
-            'UPDATE backup_schedules SET nextBackup = ? WHERE id = ?',
-            [nextBackup, schedule.id]
-        );
+        // TODO: Implement MongoDB backup schedule updates when needed
+        console.log('📦 MongoDB backup schedule update - not yet implemented');
     }
 
     async storeBackupInfo(backupId, guildID, type, filename, size) {
         try {
-            await pool.execute(`
-                INSERT INTO backup_history (backupId, guildID, type, filename, size, status, createdAt)
-                VALUES (?, ?, ?, ?, ?, 'created', NOW())
-            `, [backupId, guildID, type, filename, size]);
+            // Skip if using local storage fallback
+            if (!isConnected()) {
+                console.log('📦 Backup info stored locally (not implemented yet)');
+                return;
+            }
 
+            // TODO: Implement MongoDB backup history storage
+            console.log('📦 MongoDB backup history - not yet implemented');
+            
             await this.logDisasterRecoveryEvent(guildID, 'backup_created', {
                 backup_id: backupId,
                 type,
@@ -209,10 +200,14 @@ class BackupScheduler {
 
     async logDisasterRecoveryEvent(guildID, eventType, details, performedBy = 'system') {
         try {
-            await pool.execute(`
-                INSERT INTO disaster_recovery_log (guildID, event_type, details, performed_by, timestamp)
-                VALUES (?, ?, ?, ?, NOW())
-            `, [guildID, eventType, JSON.stringify(details), performedBy]);
+            // Skip if using local storage fallback
+            if (!isConnected()) {
+                console.log(`📦 Disaster recovery event logged locally: ${eventType}`);
+                return;
+            }
+
+            // TODO: Implement MongoDB disaster recovery logging
+            console.log(`📦 MongoDB disaster recovery log - not yet implemented: ${eventType}`);
         } catch (error) {
             console.warn('Failed to log disaster recovery event:', error.message);
         }
@@ -270,18 +265,12 @@ class BackupScheduler {
         const data = {};
         const criticalTables = ['guild_configs', 'punishments', 'tickets', 'user_economy', 'automod_configs'];
         
-        for (const table of criticalTables) {
-            try {
-                // Limit to most recent 1000 records for emergency backup
-                const [rows] = await pool.execute(
-                    `SELECT * FROM ${table} WHERE guildID = ? ORDER BY createdAt DESC LIMIT 1000`, 
-                    [guildID]
-                );
-                data[table] = rows;
-            } catch (error) {
-                console.warn(`Critical table ${table} backup failed:`, error.message);
-                data[table] = [];
-            }
+        // For local storage fallback, create empty data structure
+        if (!isConnected()) {
+            console.log('📦 Creating critical backup with local storage data structure');
+            criticalTables.forEach(table => {
+                data[table] = []; // Empty for now - TODO: implement local storage backup
+            });
         }
         
         return data;
@@ -289,15 +278,11 @@ class BackupScheduler {
 
     async sendEmergencyBackup(guildID, backup, buffer, filename) {
         try {
-            // Try to find backup channel first
-            const [scheduleRows] = await pool.execute(
-                'SELECT channelID FROM backup_schedules WHERE guildID = ? AND active = true',
-                [guildID]
-            );
-
             let channel = null;
-            if (scheduleRows.length > 0 && scheduleRows[0].channelID) {
-                channel = await this.client.channels.fetch(scheduleRows[0].channelID).catch(() => null);
+            
+            // Skip database lookup if using local storage fallback
+            if (!isConnected()) {
+                console.log('📦 Emergency backup: Local storage mode - skipping backup channel lookup');
             }
 
             // If no backup channel, try to find admin or owner
@@ -344,25 +329,14 @@ class BackupScheduler {
     // Cleanup old backups
     async cleanupOldBackups() {
         try {
-            // Delete backup records older than 90 days
-            const [result] = await pool.execute(`
-                DELETE FROM backup_history 
-                WHERE createdAt < DATE_SUB(NOW(), INTERVAL 90 DAY)
-            `);
-
-            if (result.affectedRows > 0) {
-                console.log(`🧹 Cleaned up ${result.affectedRows} old backup records`);
+            // Skip if using local storage fallback
+            if (!isConnected()) {
+                console.log('🧹 Backup cleanup: Local storage mode - skipping database cleanup');
+                return;
             }
 
-            // Clean disaster recovery logs older than 180 days
-            const [logResult] = await pool.execute(`
-                DELETE FROM disaster_recovery_log 
-                WHERE timestamp < DATE_SUB(NOW(), INTERVAL 180 DAY)
-            `);
-
-            if (logResult.affectedRows > 0) {
-                console.log(`🧹 Cleaned up ${logResult.affectedRows} old disaster recovery logs`);
-            }
+            // TODO: Implement MongoDB backup cleanup when needed
+            console.log('🧹 MongoDB backup cleanup - not yet implemented');
 
         } catch (error) {
             console.error('Error cleaning up old backups:', error);
@@ -372,24 +346,25 @@ class BackupScheduler {
     // Health check for backup system
     async healthCheck() {
         try {
-            const [activeSchedules] = await pool.execute(
-                'SELECT COUNT(*) as count FROM backup_schedules WHERE active = true'
-            );
+            // Return basic health check for local storage mode
+            if (!isConnected()) {
+                return {
+                    isHealthy: this.isRunning,
+                    activeSchedules: 0,
+                    recentBackups: 0,
+                    failedBackups: 0,
+                    mode: 'local_storage',
+                    lastCheck: new Date()
+                };
+            }
 
-            const [recentBackups] = await pool.execute(
-                'SELECT COUNT(*) as count FROM backup_history WHERE createdAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)'
-            );
-
-            const [failedBackups] = await pool.execute(`
-                SELECT COUNT(*) as count FROM disaster_recovery_log 
-                WHERE event_type = 'backup_failed' AND timestamp >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-            `);
-
+            // TODO: Implement MongoDB backup health check when needed
             return {
                 isHealthy: this.isRunning,
-                activeSchedules: activeSchedules[0].count,
-                recentBackups: recentBackups[0].count,
-                failedBackups: failedBackups[0].count,
+                activeSchedules: 0,
+                recentBackups: 0,
+                failedBackups: 0,
+                mode: 'mongodb_not_implemented',
                 lastCheck: new Date()
             };
 
