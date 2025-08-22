@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const moderationManager = require('../../utils/moderationUtils');
+const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,33 +35,52 @@ module.exports = {
                 }
             }
 
-            // Create moderation case
-            const moderationCase = moderationManager.createCase({
+            // Create case
+            const newCase = await createCase({
                 type: 'warn',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
                 guildId: interaction.guild.id,
                 reason: reason,
-                guildName: interaction.guild.name,
-                moderatorTag: interaction.user.tag,
-                userTag: targetUser.tag,
+                status: 'active',
                 appealable: true
             });
 
             // Send DM to user (unless silent)
             let dmSent = false;
             if (!silent) {
-                dmSent = await moderationManager.sendDM(targetUser, moderationCase, interaction.client);
-                moderationManager.updateCase(moderationCase.caseId, { dmSent });
+                try {
+                    const dmEmbed = new EmbedBuilder()
+                        .setTitle('⚠️ You have been warned')
+                        .setColor(0xffff00)
+                        .addFields(
+                            { name: '🏢 Server', value: interaction.guild.name, inline: true },
+                            { name: '🆔 Case ID', value: newCase.caseId, inline: true },
+                            { name: '📝 Reason', value: reason, inline: false },
+                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId}\` if you believe this is unfair`, inline: false }
+                        )
+                        .setTimestamp();
+
+                    await targetUser.send({ embeds: [dmEmbed] });
+                    dmSent = true;
+                } catch (error) {
+                    console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
+                }
             }
 
             // Create response embed
-            const embed = moderationManager.createModerationEmbed(
-                { ...moderationCase, dmSent },
-                interaction.guild,
-                interaction.user,
-                targetUser
-            );
+            const embed = new EmbedBuilder()
+                .setTitle('⚠️ Member Warned')
+                .setColor(0xffff00)
+                .addFields(
+                    { name: '👤 User', value: `${targetUser.tag}\n\`${targetUser.id}\``, inline: true },
+                    { name: '👮 Moderator', value: interaction.user.tag, inline: true },
+                    { name: '🆔 Case ID', value: newCase.caseId, inline: true },
+                    { name: '📝 Reason', value: reason, inline: false },
+                    { name: '💬 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true }
+                )
+                .setThumbnail(targetUser.displayAvatarURL())
+                .setTimestamp();
 
             // Add warning-specific information
             embed.addFields({

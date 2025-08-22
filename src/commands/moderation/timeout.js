@@ -3,57 +3,62 @@ const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('ban')
-        .setDescription('🔨 Ban a member from the server')
+        .setName('timeout')
+        .setDescription('⏰ Timeout a member (remove them from chat)')
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('The member to ban')
+                .setDescription('The member to timeout')
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('duration')
+                .setDescription('Duration in minutes (1-10080, max 7 days)')
+                .setMinValue(1)
+                .setMaxValue(10080)
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('reason')
-                .setDescription('Reason for the ban')
-                .setRequired(false))
-        .addIntegerOption(option =>
-            option.setName('deletedays')
-                .setDescription('Days of messages to delete (0-7)')
-                .setMinValue(0)
-                .setMaxValue(7)
+                .setDescription('Reason for the timeout')
                 .setRequired(false))
         .addBooleanOption(option =>
             option.setName('silent')
                 .setDescription('Don\'t send DM to user')
                 .setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
         const targetUser = interaction.options.getUser('user');
+        const duration = interaction.options.getInteger('duration');
         const reason = interaction.options.getString('reason') || 'No reason provided';
-        const deletedays = interaction.options.getInteger('deletedays') || 0;
         const silent = interaction.options.getBoolean('silent') || false;
 
         try {
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             
+            if (!member) {
+                return interaction.reply({ 
+                    content: '❌ User not found in this server.', 
+                    ephemeral: true 
+                });
+            }
+
             // Permission checks
-            if (member) {
-                if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                    return interaction.reply({ content: '❌ You cannot ban this member due to role hierarchy.', ephemeral: true });
-                }
-                if (!member.bannable) {
-                    return interaction.reply({ content: '❌ I cannot ban this member.', ephemeral: true });
-                }
+            if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                return interaction.reply({ content: '❌ You cannot timeout this member due to role hierarchy.', ephemeral: true });
+            }
+            if (!member.moderatable) {
+                return interaction.reply({ content: '❌ I cannot timeout this member.', ephemeral: true });
             }
 
             // Create case
             const newCase = await createCase({
-                type: 'ban',
+                type: 'timeout',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
                 guildId: interaction.guild.id,
                 reason: reason,
                 status: 'active',
                 appealable: true,
-                duration: null
+                duration: duration
             });
 
             // Send DM to user (unless silent)
@@ -61,12 +66,12 @@ module.exports = {
             if (!silent) {
                 try {
                     const dmEmbed = new EmbedBuilder()
-                        .setTitle('🔨 You have been banned')
-                        .setColor(0xff0000)
+                        .setTitle('⏰ You have been timed out')
+                        .setColor(0xff6600)
                         .addFields(
                             { name: '🏢 Server', value: interaction.guild.name, inline: true },
                             { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                            { name: '⏱️ Duration', value: 'Permanent', inline: true },
+                            { name: '⏱️ Duration', value: `${duration} minutes`, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
                             { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId}\` if you believe this is unfair`, inline: false }
                         )
@@ -79,29 +84,25 @@ module.exports = {
                 }
             }
 
-            // Execute the ban
-            await interaction.guild.bans.create(targetUser.id, { 
-                reason: `${reason} | Moderator: ${interaction.user.tag} | Case: ${newCase.caseId}`,
-                deleteMessageDays: deletedays 
-            });
+            // Execute the timeout
+            const timeoutUntil = new Date(Date.now() + (duration * 60 * 1000));
+            await member.timeout(duration * 60 * 1000, `${reason} | Moderator: ${interaction.user.tag} | Case: ${newCase.caseId}`);
 
             // Create response embed
             const embed = new EmbedBuilder()
-                .setTitle('🔨 Member Banned')
-                .setColor(0xff0000)
+                .setTitle('⏰ Member Timed Out')
+                .setColor(0xff6600)
                 .addFields(
                     { name: '👤 User', value: `${targetUser.tag}\n\`${targetUser.id}\``, inline: true },
                     { name: '👮 Moderator', value: interaction.user.tag, inline: true },
                     { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                    { name: '⏱️ Duration', value: 'Permanent', inline: true },
-                    { name: '🗑️ Delete Messages', value: `${deletedays} days`, inline: true },
+                    { name: '⏱️ Duration', value: `${duration} minutes`, inline: true },
+                    { name: '⏰ Expires', value: `<t:${Math.floor(timeoutUntil.getTime() / 1000)}:R>`, inline: true },
                     { name: '💬 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true },
                     { name: '📝 Reason', value: reason, inline: false }
                 )
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setTimestamp();
-
-            embed.addFields({ name: '🗑️ Messages Deleted', value: `${deletedays} days`, inline: true });
 
             await interaction.reply({ embeds: [embed] });
 
@@ -115,11 +116,11 @@ module.exports = {
             }
 
         } catch (error) {
-            console.error('Ban command error:', error);
-            await interaction.reply({ 
-                content: '❌ Failed to ban the user. Please check my permissions.', 
-                ephemeral: true 
+            console.error('Timeout command error:', error);
+            await interaction.reply({
+                content: '❌ Failed to timeout the user. Please check my permissions.',
+                ephemeral: true
             });
         }
-    },
+    }
 };

@@ -3,26 +3,21 @@ const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('kick')
-        .setDescription('🦵 Kick a member from the server')
+        .setName('untimeout')
+        .setDescription('⏰ Remove timeout from a member')
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('The member to kick')
+                .setDescription('The member to remove timeout from')
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('reason')
-                .setDescription('Reason for the kick')
+                .setDescription('Reason for removing the timeout')
                 .setRequired(false))
-        .addBooleanOption(option =>
-            option.setName('silent')
-                .setDescription('Don\'t send DM to user')
-                .setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
         const targetUser = interaction.options.getUser('user');
         const reason = interaction.options.getString('reason') || 'No reason provided';
-        const silent = interaction.options.getBoolean('silent') || false;
 
         try {
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
@@ -34,65 +29,68 @@ module.exports = {
                 });
             }
 
+            // Check if user is actually timed out
+            if (!member.isCommunicationDisabled()) {
+                return interaction.reply({ 
+                    content: '❌ This member is not currently timed out.', 
+                    ephemeral: true 
+                });
+            }
+
             // Permission checks
             if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                return interaction.reply({ content: '❌ You cannot kick this member due to role hierarchy.', ephemeral: true });
+                return interaction.reply({ content: '❌ You cannot untimeout this member due to role hierarchy.', ephemeral: true });
             }
-            if (!member.kickable) {
-                return interaction.reply({ content: '❌ I cannot kick this member.', ephemeral: true });
+            if (!member.moderatable) {
+                return interaction.reply({ content: '❌ I cannot modify this member\'s timeout.', ephemeral: true });
             }
 
             // Create case
             const newCase = await createCase({
-                type: 'kick',
+                type: 'untimeout',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
                 guildId: interaction.guild.id,
                 reason: reason,
                 status: 'active',
-                appealable: true
+                appealable: false
             });
 
-            // Send DM to user (unless silent)
-            let dmSent = false;
-            if (!silent) {
-                try {
-                    const dmEmbed = new EmbedBuilder()
-                        .setTitle('🦵 You have been kicked')
-                        .setColor(0xff9900)
-                        .addFields(
-                            { name: '🏢 Server', value: interaction.guild.name, inline: true },
-                            { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                            { name: '📝 Reason', value: reason, inline: false },
-                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId}\` if you believe this is unfair`, inline: false }
-                        )
-                        .setTimestamp();
-
-                    await targetUser.send({ embeds: [dmEmbed] });
-                    dmSent = true;
-                } catch (error) {
-                    console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
-                }
-            }
-
-            // Execute the kick
-            await member.kick(`${reason} | Moderator: ${interaction.user.tag} | Case: ${newCase.caseId}`);
+            // Remove the timeout
+            await member.timeout(null, `${reason} | Moderator: ${interaction.user.tag} | Case: ${newCase.caseId}`);
 
             // Create response embed
             const embed = new EmbedBuilder()
-                .setTitle('🦵 Member Kicked')
-                .setColor(0xff9900)
+                .setTitle('✅ Timeout Removed')
+                .setColor(0x00ff00)
                 .addFields(
                     { name: '👤 User', value: `${targetUser.tag}\n\`${targetUser.id}\``, inline: true },
                     { name: '👮 Moderator', value: interaction.user.tag, inline: true },
                     { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                    { name: '📝 Reason', value: reason, inline: false },
-                    { name: '💬 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true }
+                    { name: '📝 Reason', value: reason, inline: false }
                 )
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setTimestamp();
 
             await interaction.reply({ embeds: [embed] });
+
+            // Send DM to user
+            try {
+                const dmEmbed = new EmbedBuilder()
+                    .setTitle('✅ Your timeout has been removed')
+                    .setColor(0x00ff00)
+                    .addFields(
+                        { name: '🏢 Server', value: interaction.guild.name, inline: true },
+                        { name: '🆔 Case ID', value: newCase.caseId, inline: true },
+                        { name: '📝 Reason', value: reason, inline: false },
+                        { name: '🎉 Status', value: 'You can now participate in chat again!', inline: false }
+                    )
+                    .setTimestamp();
+
+                await targetUser.send({ embeds: [dmEmbed] });
+            } catch (error) {
+                console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
+            }
 
             // Log to mod channel if configured
             const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
@@ -104,9 +102,9 @@ module.exports = {
             }
 
         } catch (error) {
-            console.error('Kick command error:', error);
+            console.error('Untimeout command error:', error);
             await interaction.reply({
-                content: '❌ Failed to kick the user. Please check my permissions.',
+                content: '❌ Failed to remove timeout. Please check my permissions.',
                 ephemeral: true
             });
         }
