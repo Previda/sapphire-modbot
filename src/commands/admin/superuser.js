@@ -22,7 +22,18 @@ module.exports = {
                             { name: 'Restart Bot', value: 'restart' },
                             { name: 'Clear Cache', value: 'cache' },
                             { name: 'Force Sync', value: 'sync' }
-                        ))),
+                        )))
+        .addSubcommand(sub =>
+            sub.setName('add')
+                .setDescription('Add another superuser')
+                .addUserOption(opt =>
+                    opt.setName('user')
+                        .setDescription('User to grant superuser access')
+                        .setRequired(true)))
+        .addSubcommand(sub =>
+            sub.setName('list')
+                .setDescription('List all superusers')
+        ),
 
     async execute(interaction) {
         // Check if user is the superuser
@@ -33,7 +44,25 @@ module.exports = {
             });
         }
 
-        const subcommand = interaction.options.getSubcommand();
+        let subcommand;
+        try {
+            subcommand = interaction.options.getSubcommand();
+        } catch (error) {
+            // No subcommand provided, show available actions
+            const embed = new EmbedBuilder()
+                .setTitle('👑 Superuser Commands')
+                .setColor(0xffd700)
+                .setDescription('Available superuser actions:')
+                .addFields(
+                    { name: '/superuser status', value: 'Check superuser status and bot info', inline: false },
+                    { name: '/superuser emergency', value: 'Emergency bot controls (restart, cache, sync)', inline: false },
+                    { name: '/superuser add', value: 'Add another superuser', inline: false },
+                    { name: '/superuser list', value: 'List all superusers', inline: false }
+                )
+                .setTimestamp();
+            
+            return interaction.reply({ embeds: [embed], ephemeral: true });
+        }
 
         try {
             if (subcommand === 'status') {
@@ -99,6 +128,33 @@ module.exports = {
                     
                     await interaction.reply({ embeds: [embed], ephemeral: true });
                 }
+
+            } else if (subcommand === 'add') {
+                const user = interaction.options.getUser('user');
+                
+                const embed = new EmbedBuilder()
+                    .setTitle('👑 Superuser Management')
+                    .setColor(0xffd700)
+                    .setDescription(`🔧 This feature is not yet implemented.\n\nTo add ${user.tag} as superuser, manually add their ID to the SUPERUSER_ID array in the code.`)
+                    .addFields(
+                        { name: '👤 Target User', value: `${user.tag}`, inline: true },
+                        { name: '🆔 User ID', value: user.id, inline: true }
+                    )
+                    .setTimestamp();
+                
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+
+            } else if (subcommand === 'list') {
+                const embed = new EmbedBuilder()
+                    .setTitle('👑 Superuser List')
+                    .setColor(0xffd700)
+                    .addFields(
+                        { name: '👤 Primary Superuser', value: `<@${SUPERUSER_ID}>`, inline: false },
+                        { name: '🆔 User ID', value: SUPERUSER_ID, inline: false }
+                    )
+                    .setTimestamp();
+                
+                await interaction.reply({ embeds: [embed], ephemeral: true });
             }
 
         } catch (error) {

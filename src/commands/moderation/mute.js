@@ -9,10 +9,12 @@ module.exports = {
             option.setName('user')
                 .setDescription('The member to mute')
                 .setRequired(true))
-        .addStringOption(option =>
+        .addIntegerOption(option =>
             option.setName('duration')
-                .setDescription('Mute duration (e.g., 10m, 1h, 1d, max 28d)')
-                .setRequired(false))
+                .setDescription('Mute duration in minutes (max 40320 = 28 days)')
+                .setRequired(false)
+                .setMinValue(1)
+                .setMaxValue(40320))
         .addStringOption(option =>
             option.setName('reason')
                 .setDescription('Reason for the mute')
@@ -24,8 +26,17 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
+        // Check if user is server owner or has required permissions
+        if (interaction.guild.ownerId !== interaction.user.id && 
+            !interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+            return interaction.reply({
+                content: '❌ You need the "Moderate Members" permission or be the server owner to use this command.',
+                ephemeral: true
+            });
+        }
+
         const targetUser = interaction.options.getUser('user');
-        const duration = interaction.options.getString('duration') || '1h';
+        const durationMinutes = interaction.options.getInteger('duration') || 60; // Default 1 hour
         const reason = interaction.options.getString('reason') || 'No reason provided';
         const silent = interaction.options.getBoolean('silent') || false;
 
@@ -39,22 +50,20 @@ module.exports = {
                 });
             }
 
-            // Permission checks
-            if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                return interaction.reply({ content: '❌ You cannot mute this member due to role hierarchy.', ephemeral: true });
+            // Permission checks (skip for server owner)
+            if (interaction.guild.ownerId !== interaction.user.id) {
+                if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                    return interaction.reply({ content: '❌ You cannot mute this member due to role hierarchy.', ephemeral: true });
+                }
             }
+            
             if (!member.moderatable) {
                 return interaction.reply({ content: '❌ I cannot mute this member.', ephemeral: true });
             }
 
-            // Calculate timeout duration
-            const timeoutDuration = parseDuration(duration);
-            if (!timeoutDuration) {
-                return interaction.reply({
-                    content: '❌ Invalid duration format. Use: 10s, 5m, 1h, 2d, etc. (max 28 days)',
-                    ephemeral: true
-                });
-            }
+            // Calculate timeout duration in milliseconds
+            const timeoutDuration = durationMinutes * 60 * 1000;
+            const durationText = `${durationMinutes}m`;
 
             // Create moderation case
             const moderationCase = moderationManager.createCase({
@@ -62,8 +71,8 @@ module.exports = {
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
                 guildId: interaction.guild.id,
-                reason: `${reason} (Duration: ${duration})`,
-                duration: duration,
+                reason: `${reason} (Duration: ${durationText})`,
+                duration: durationText,
                 guildName: interaction.guild.name,
                 moderatorTag: interaction.user.tag,
                 userTag: targetUser.tag,
@@ -91,7 +100,7 @@ module.exports = {
             // Add mute-specific information
             const expiresAt = Date.now() + timeoutDuration;
             embed.addFields(
-                { name: '⏱️ Duration', value: duration, inline: true },
+                { name: '⏱️ Duration', value: durationText, inline: true },
                 { name: '🕐 Expires', value: `<t:${Math.floor(expiresAt / 1000)}:R>`, inline: true }
             );
 
