@@ -54,17 +54,9 @@ module.exports = {
             subcommand
                 .setName('transcript')
                 .setDescription('Generate ticket transcript'))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+        .setDefaultMemberPermissions(null), // Allow all users to create tickets
 
     async execute(interaction) {
-        // Check if user is server owner or has required permissions
-        if (interaction.guild.ownerId !== interaction.user.id && 
-            !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-            return interaction.reply({
-                content: '❌ You need the "Manage Channels" permission or be the server owner to use this command.',
-                flags: 64
-            });
-        }
 
         let subcommand;
         try {
@@ -92,15 +84,40 @@ module.exports = {
                 await handleOpenTicket(interaction);
                 break;
             case 'close':
+                // Only admins can close tickets manually
+                if (interaction.guild.ownerId !== interaction.user.id && 
+                    !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
+                    return interaction.reply({
+                        content: '❌ You need the "Manage Channels" permission or be the server owner to close tickets.',
+                        flags: 64
+                    });
+                }
                 await handleCloseTicket(interaction);
                 break;
             case 'add':
+                // Only admins can add users
+                if (interaction.guild.ownerId !== interaction.user.id && 
+                    !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
+                    return interaction.reply({
+                        content: '❌ You need the "Manage Channels" permission or be the server owner to add users to tickets.',
+                        flags: 64
+                    });
+                }
                 await handleAddUser(interaction);
                 break;
             case 'remove':
+                // Only admins can remove users
+                if (interaction.guild.ownerId !== interaction.user.id && 
+                    !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
+                    return interaction.reply({
+                        content: '❌ You need the "Manage Channels" permission or be the server owner to remove users from tickets.',
+                        flags: 64
+                    });
+                }
                 await handleRemoveUser(interaction);
                 break;
             case 'transcript':
+                // Anyone can generate transcript of their own ticket
                 await handleTranscript(interaction);
                 break;
         }
@@ -114,16 +131,8 @@ async function handleOpenTicket(interaction) {
     const guild = interaction.guild;
 
     try {
-        // Check if user already has an open ticket using moderation manager
-        const existingCases = moderationManager.getUserCases(user.id, guild.id);
-        const openTickets = existingCases.filter(c => c.type === 'ticket' && c.status === 'open');
-
-        if (openTickets.length > 0) {
-            return interaction.reply({
-                content: `❌ You already have an open ticket! Check <#${openTickets[0].channelId}>`,
-                flags: 64
-            });
-        }
+        // Allow users to create multiple tickets - removed restriction
+        // This fixes the issue where deleted tickets still prevent new ones
 
         // Create moderation case for ticket
         const ticketCase = moderationManager.createCase({
