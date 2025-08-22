@@ -1,6 +1,5 @@
 const { Client, Collection, GatewayIntentBits, EmbedBuilder } = require('discord.js');
-const { pool } = require('./src/models/database');
-const { initializeDatabase } = require('./src/models/init-database');
+const { initializeDatabase } = require('./src/models/database');
 const { handleDMCommand } = require('./src/utils/dmHandler');
 const { handleTicketMenu } = require('./src/utils/ticketMenu');
 const BackupScheduler = require('./src/services/backupScheduler');
@@ -61,7 +60,7 @@ client.once('ready', async () => {
     console.log(`⚡ Loaded ${client.commands.size} commands`);
     
     // Initialize database (non-blocking)
-    console.log('🗄️ Initializing MySQL database connection...');
+    console.log('🗄️ Initializing MongoDB database connection...');
     initializeDatabase()
         .then(() => {
             console.log('✅ Database initialized successfully');
@@ -69,25 +68,10 @@ client.once('ready', async () => {
             backupScheduler.start();
             console.log('💾 Backup scheduler started');
         })
-        .catch((error) => {
-            console.log('❌ Database connection failed - bot running in limited mode');
-            console.log('📝 Database features (tickets, notes, strikes) will be disabled');
-            console.log('✅ All other commands will work normally');
-            console.log('⚠️ Backup scheduler disabled due to database issues');
-            
-            // Provide specific help for DNS issues
-            if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
-                console.log('\n🔧 DNS Resolution Issue Detected:');
-                console.log('💡 Quick fix: Run one of these commands:');
-                console.log('   node fix-dns.js');
-                console.log('   bash quick-fix.sh');
-                console.log('   node fix-mysql.js');
-                console.log('\n🌐 Or manually update DNS:');
-                console.log('   sudo nano /etc/resolv.conf');
-                console.log('   Add: nameserver 8.8.8.8');
-            }
-            
-            console.log('\n🔄 Bot will continue running without database features');
+        .catch(error => {
+            console.error('❌ Database connection failed:', error.message);
+            console.log('💡 Bot will continue with local JSON storage for data persistence');
+            console.log('🔧 To use MongoDB, set MONGODB_URI in your .env file');
         });
 });
 
