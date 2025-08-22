@@ -1,5 +1,7 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ChannelType } = require('discord.js');
 const moderationManager = require('../../utils/moderationUtils');
+const { cleanupDeletedTickets } = require('../../utils/ticketUtils');
+const { createCase } = require('../../utils/caseManager');
 const fs = require('fs');
 const path = require('path');
 
@@ -131,21 +133,17 @@ async function handleOpenTicket(interaction) {
     const guild = interaction.guild;
 
     try {
-        // Allow users to create multiple tickets - removed restriction
-        // This fixes the issue where deleted tickets still prevent new ones
+        // Clean up any tickets with deleted channels first
+        await cleanupDeletedTickets(interaction.guild);
 
-        // Create moderation case for ticket
-        const ticketCase = moderationManager.createCase({
+        // Create case for ticket using new case system
+        const ticketCase = await createCase({
             type: 'ticket',
             userId: user.id,
             moderatorId: user.id, // User creates their own ticket
             guildId: guild.id,
             reason: reason,
-            category: category,
             status: 'open',
-            guildName: guild.name,
-            moderatorTag: user.tag,
-            userTag: user.tag,
             appealable: false
         });
 
@@ -166,25 +164,37 @@ async function handleOpenTicket(interaction) {
             ]
         });
 
-        // Update case with channel ID
-        moderationManager.updateCase(ticketCase.caseId, { 
-            channelId: channel.id,
-            channelName: channel.name
+        // Store ticket in local storage using ticket utils
+        const { saveTicket } = require('../../utils/ticketUtils');
+        await saveTicket({
+            ticketID: `ticket-${ticketCase.caseId}`,
+            caseId: ticketCase.caseId,
+            userID: user.id,
+            guildID: guild.id,
+            channelID: channel.id,
+            status: 'open',
+            reason: reason,
+            category: category,
+            createdAt: new Date().toISOString(),
+            createdBy: user.id
         });
 
+        // Import required components
+        const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+        
         // Create ticket control buttons
         const controlRow = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`ticket_close_${ticketCase.caseId}`)
+                    .setCustomId(`close_ticket`)
                     .setLabel('Close Ticket')
                     .setStyle(ButtonStyle.Danger)
                     .setEmoji('🔒'),
                 new ButtonBuilder()
-                    .setCustomId(`ticket_transcript_${ticketCase.caseId}`)
+                    .setCustomId(`generate_transcript`)
                     .setLabel('Generate Transcript')
                     .setStyle(ButtonStyle.Secondary)
-                    .setEmoji('📄')
+                    .setEmoji('📋')
             );
 
         // Send welcome message
@@ -211,8 +221,8 @@ async function handleOpenTicket(interaction) {
         });
 
         await interaction.reply({
-            content: `✅ Ticket created successfully! Please check ${channel}\n🆔 **Case ID:** #${ticketCase.caseId}`,
-            flags: 64
+            content: `✅ Ticket created successfully! ${channel}`,
+            ephemeral: true
         });
 
         // Log to mod channel if configured

@@ -32,8 +32,18 @@ module.exports = {
                         .setRequired(true)))
         .addSubcommand(sub =>
             sub.setName('list')
-                .setDescription('List all superusers')
-        ),
+                .setDescription('List all superusers'))
+        .addSubcommand(sub =>
+            sub.setName('alias')
+                .setDescription('Create command alias')
+                .addStringOption(opt =>
+                    opt.setName('original')
+                        .setDescription('Original command name')
+                        .setRequired(true))
+                .addStringOption(opt =>
+                    opt.setName('alias')
+                        .setDescription('Alias name for the command')
+                        .setRequired(true))),
 
     async execute(interaction) {
         // Check if user is the superuser
@@ -57,7 +67,8 @@ module.exports = {
                     { name: '/superuser status', value: 'Check superuser status and bot info', inline: false },
                     { name: '/superuser emergency', value: 'Emergency bot controls (restart, cache, sync)', inline: false },
                     { name: '/superuser add', value: 'Add another superuser', inline: false },
-                    { name: '/superuser list', value: 'List all superusers', inline: false }
+                    { name: '/superuser list', value: 'List all superusers', inline: false },
+                    { name: '/superuser alias', value: 'Create command aliases', inline: false }
                 )
                 .setTimestamp();
             
@@ -151,6 +162,23 @@ module.exports = {
                     .addFields(
                         { name: '👤 Primary Superuser', value: `<@${SUPERUSER_ID}>`, inline: false },
                         { name: '🆔 User ID', value: SUPERUSER_ID, inline: false }
+                    )
+                    .setTimestamp();
+                
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+
+            } else if (subcommand === 'alias') {
+                const original = interaction.options.getString('original');
+                const alias = interaction.options.getString('alias');
+                
+                const embed = new EmbedBuilder()
+                    .setTitle('🔗 Command Alias')
+                    .setColor(0x3498db)
+                    .setDescription('⚠️ Command alias functionality is not yet implemented.')
+                    .addFields(
+                        { name: '📝 Original Command', value: `/${original}`, inline: true },
+                        { name: '🏷️ Alias', value: `/${alias}`, inline: true },
+                        { name: '💡 Note', value: 'This feature requires bot restart to take effect.', inline: false }
                     )
                     .setTimestamp();
                 

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const moderationManager = require('../../utils/moderationUtils');
+const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -65,44 +66,60 @@ module.exports = {
             const timeoutDuration = durationMinutes * 60 * 1000;
             const durationText = `${durationMinutes}m`;
 
-            // Create moderation case
-            const moderationCase = moderationManager.createCase({
+            // Create moderation case with proper case ID
+            const muteCase = await createCase({
                 type: 'mute',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
                 guildId: interaction.guild.id,
-                reason: `${reason} (Duration: ${durationText})`,
-                duration: durationText,
-                guildName: interaction.guild.name,
-                moderatorTag: interaction.user.tag,
-                userTag: targetUser.tag,
+                reason: reason,
+                expires: new Date(Date.now() + timeoutDuration).toISOString(),
                 appealable: true
             });
 
             // Apply timeout
-            await member.timeout(timeoutDuration, `${reason} | Moderator: ${interaction.user.tag} | Case #${moderationCase.caseId}`);
+            await member.timeout(timeoutDuration, `${reason} | Moderator: ${interaction.user.tag} | Case #${muteCase.caseId}`);
 
             // Send DM to user (unless silent)
             let dmSent = false;
             if (!silent) {
-                dmSent = await moderationManager.sendDM(targetUser, moderationCase, interaction.client);
-                moderationManager.updateCase(moderationCase.caseId, { dmSent });
+                try {
+                    const dmEmbed = new EmbedBuilder()
+                        .setTitle('🔇 You have been muted')
+                        .setColor(0xff9900)
+                        .addFields(
+                            { name: '🏢 Server', value: interaction.guild.name, inline: true },
+                            { name: '⏱️ Duration', value: durationText, inline: true },
+                            { name: '📝 Reason', value: reason, inline: false },
+                            { name: '🆔 Case ID', value: muteCase.caseId, inline: true },
+                            { name: '📋 Appeal', value: 'Use `/appeal submit` with your case ID if you believe this is unfair', inline: false }
+                        )
+                        .setTimestamp();
+                    
+                    await targetUser.send({ embeds: [dmEmbed] });
+                    dmSent = true;
+                } catch (error) {
+                    console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
+                    dmSent = false;
+                }
             }
 
-            // Create response embed
-            const embed = moderationManager.createModerationEmbed(
-                { ...moderationCase, dmSent },
-                interaction.guild,
-                interaction.user,
-                targetUser
-            );
-
-            // Add mute-specific information
+            // Create response embed with real information
             const expiresAt = Date.now() + timeoutDuration;
-            embed.addFields(
-                { name: '⏱️ Duration', value: durationText, inline: true },
-                { name: '🕐 Expires', value: `<t:${Math.floor(expiresAt / 1000)}:R>`, inline: true }
-            );
+            const embed = new EmbedBuilder()
+                .setTitle('🔇 Member Muted')
+                .setColor(0xff9900)
+                .addFields(
+                    { name: '👤 User', value: `${targetUser.tag} (${targetUser.id})`, inline: true },
+                    { name: '👮 Moderator', value: interaction.user.tag, inline: true },
+                    { name: '🆔 Case ID', value: muteCase.caseId, inline: true },
+                    { name: '⏱️ Duration', value: durationText, inline: true },
+                    { name: '🕐 Expires', value: `<t:${Math.floor(expiresAt / 1000)}:R>`, inline: true },
+                    { name: '💬 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true },
+                    { name: '📝 Reason', value: reason, inline: false }
+                )
+                .setThumbnail(targetUser.displayAvatarURL())
+                .setTimestamp();
 
             await interaction.reply({ embeds: [embed] });
 

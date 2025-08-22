@@ -171,18 +171,7 @@ async function createTicketForUser(interaction) {
     const category = interaction.options.getString('category') || 'staff';
 
     try {
-        // Check if user already has an open ticket
-        const [existingTickets] = await pool.execute(
-            'SELECT * FROM tickets WHERE userID = ? AND guildID = ? AND status = "open"',
-            [user.id, interaction.guild.id]
-        );
-
-        if (existingTickets.length > 0) {
-            return interaction.reply({
-                content: `❌ ${user.tag} already has an open ticket!`,
-                ephemeral: true
-            });
-        }
+        // Allow multiple tickets per user - restriction removed
 
         // Generate ticket ID
         const ticketID = `ticket-${Date.now()}`;
@@ -208,11 +197,19 @@ async function createTicketForUser(interaction) {
             ]
         });
 
-        // Store ticket in database
-        await pool.execute(
-            'INSERT INTO tickets (ticketID, userID, guildID, channelID, status, reason) VALUES (?, ?, ?, ?, ?, ?)',
-            [ticketID, user.id, interaction.guild.id, channel.id, 'open', reason]
-        );
+        // Store ticket data locally using ticketUtils
+        const { saveTicket } = require('../../utils/ticketUtils');
+        await saveTicket({
+            ticketID: ticketID,
+            userID: user.id,
+            guildID: interaction.guild.id,
+            channelID: channel.id,
+            status: 'open',
+            reason: reason,
+            category: category,
+            createdAt: new Date().toISOString(),
+            createdBy: interaction.user.id
+        });
 
         // Send welcome message with user mention
         const welcomeEmbed = new EmbedBuilder()

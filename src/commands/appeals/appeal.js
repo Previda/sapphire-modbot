@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-const { getPunishmentByCase, updateAppealStatus } = require('../../utils/punishmentUtils');
+const { createPunishment, getPunishments, updatePunishment } = require('../../utils/punishmentUtils');
+const { getCaseById, appealCase, getUserCases } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -68,25 +69,32 @@ async function handleAppealSubmit(interaction) {
     const caseID = interaction.options.getString('case_id').toUpperCase();
 
     try {
-        const punishment = await getPunishmentByCase(caseID);
+        const caseData = await getCaseById(caseID, interaction.guild.id);
         
-        if (!punishment) {
+        if (!caseData) {
             return interaction.reply({
-                content: '❌ Case not found. Please check the case ID and try again.',
+                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`,
                 flags: 64
             });
         }
 
-        if (punishment.userID !== interaction.user.id) {
+        if (caseData.userId !== interaction.user.id) {
             return interaction.reply({
                 content: '❌ You can only appeal your own cases.',
                 flags: 64
             });
         }
 
-        if (punishment.appealStatus && punishment.appealStatus !== 'none') {
+        if (!caseData.appealable) {
             return interaction.reply({
-                content: `❌ This case has already been appealed. Status: ${punishment.appealStatus}`,
+                content: '❌ This case is not appealable.',
+                flags: 64
+            });
+        }
+
+        if (caseData.appealed) {
+            return interaction.reply({
+                content: `❌ This case has already been appealed. Status: ${caseData.status}`,
                 flags: 64
             });
         }
@@ -141,45 +149,48 @@ async function handleAppealStatus(interaction) {
     const caseID = interaction.options.getString('case_id').toUpperCase();
 
     try {
-        const punishment = await getPunishmentByCase(caseID);
+        const caseData = await getCaseById(caseID, interaction.guild.id);
         
-        if (!punishment) {
+        if (!caseData) {
             return interaction.reply({
-                content: '❌ Case not found. Please check the case ID and try again.',
+                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`,
                 flags: 64
             });
         }
 
-        if (punishment.userID !== interaction.user.id) {
+        if (caseData.userId !== interaction.user.id) {
             return interaction.reply({
                 content: '❌ You can only check the status of your own appeals.',
                 flags: 64
             });
         }
 
+        const statusColors = {
+            'active': 0xff9900,
+            'appealed': 0x3498db,
+            'approved': 0x00ff00,
+            'denied': 0xff0000,
+            'closed': 0x808080
+        };
+
         const embed = new EmbedBuilder()
-            .setTitle(`📋 Appeal Status: ${caseID}`)
-            .setColor(getStatusColor(punishment.appealStatus))
+            .setTitle(`📝 Appeal Status: ${caseID}`)
+            .setColor(statusColors[caseData.status] || 0x3498db)
             .addFields(
-                { name: '⚖️ Original Punishment', value: punishment.type.toUpperCase(), inline: true },
-                { name: '📅 Date', value: new Date(punishment.timestamp).toLocaleString(), inline: true },
-                { name: '📝 Reason', value: punishment.reason || 'No reason provided', inline: false },
-                { name: '🔍 Appeal Status', value: getStatusText(punishment.appealStatus), inline: true },
-                { name: '📊 Reviewed', value: punishment.appealReviewed ? '✅ Yes' : '⏳ Pending', inline: true }
+                { name: '⚖️ Case Type', value: caseData.type.charAt(0).toUpperCase() + caseData.type.slice(1), inline: true },
+                { name: '📅 Created', value: `<t:${Math.floor(new Date(caseData.createdAt).getTime() / 1000)}:F>`, inline: true },
+                { name: '📝 Reason', value: caseData.reason || 'No reason provided', inline: false },
+                { name: '🔍 Status', value: caseData.status.charAt(0).toUpperCase() + caseData.status.slice(1), inline: true },
+                { name: '📊 Appealable', value: caseData.appealable ? '✅ Yes' : '❌ No', inline: true },
+                { name: '🎯 Appealed', value: caseData.appealed ? '✅ Yes' : '❌ No', inline: true }
             )
             .setTimestamp();
 
-        if (punishment.appealReason) {
-            try {
-                const appealData = JSON.parse(punishment.appealReason);
-                embed.addFields(
-                    { name: '📝 Your Appeal Reason', value: appealData.reason || 'No reason provided', inline: false }
-                );
-            } catch (e) {
-                embed.addFields(
-                    { name: '📝 Your Appeal', value: punishment.appealReason, inline: false }
-                );
-            }
+        if (caseData.appealed && caseData.appealReason) {
+            embed.addFields(
+                { name: '📝 Appeal Reason', value: caseData.appealReason, inline: false },
+                { name: '📅 Appeal Date', value: `<t:${Math.floor(new Date(caseData.appealedAt).getTime() / 1000)}:F>`, inline: true }
+            );
         }
 
         await interaction.reply({ embeds: [embed], flags: 64 });

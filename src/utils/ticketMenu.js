@@ -1,31 +1,6 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const { isConnected } = require('../models/database');
-const fs = require('fs').promises;
-const path = require('path');
-
-// Local storage for tickets
-const TICKETS_FILE = path.join(process.cwd(), 'data', 'tickets.json');
-
-// Load tickets from local storage
-async function loadTickets() {
-    try {
-        const data = await fs.readFile(TICKETS_FILE, 'utf-8');
-        return JSON.parse(data);
-    } catch (error) {
-        return [];
-    }
-}
-
-// Save tickets to local storage
-async function saveTickets(tickets) {
-    try {
-        const dataDir = path.dirname(TICKETS_FILE);
-        await fs.mkdir(dataDir, { recursive: true });
-        await fs.writeFile(TICKETS_FILE, JSON.stringify(tickets, null, 2));
-    } catch (error) {
-        console.error('Failed to save tickets:', error);
-    }
-}
+const { loadTicketsData, saveTicketsData, saveTicket, getGuildTickets, getUserTickets, getTicketByChannel, updateTicketStatus, closeTicket } = require('./ticketUtils');
 
 // Handle ticket menu command (!ticket)
 async function handleTicketMenu(message) {
@@ -139,15 +114,7 @@ async function handleTicketMenuInteraction(interaction) {
 // List all open tickets
 async function handleListTickets(interaction) {
     try {
-        let tickets = [];
-        
-        if (!isConnected()) {
-            // Use local storage
-            const ticketData = await loadTickets();
-            tickets = ticketData.filter(t => t.guildID === interaction.guild.id && t.status === 'open');
-        } else {
-            console.log('📝 MongoDB ticket listing - not yet implemented');
-        }
+        const tickets = await getGuildTickets(interaction.guild.id, 'open');
 
         if (tickets.length === 0) {
             return interaction.reply({
@@ -240,20 +207,16 @@ async function handleSlowmodeModal(interaction) {
 // Handle close ticket menu
 async function handleCloseTicketMenu(interaction) {
     try {
-        // Check if current channel is a ticket
-        const [tickets] = await pool.execute(
-            'SELECT * FROM tickets WHERE channelID = ? AND status = "open"',
-            [interaction.channel.id]
-        );
+        // Check if current channel is a ticket using utility function
+        const ticket = await getTicketByChannel(interaction.channel.id);
 
-        if (tickets.length === 0) {
+        if (!ticket || ticket.status !== 'open') {
             return interaction.reply({
                 content: '❌ This channel is not an active ticket.',
                 ephemeral: true
             });
         }
 
-        const ticket = tickets[0];
         const user = await interaction.client.users.fetch(ticket.userID).catch(() => null);
 
         const embed = new EmbedBuilder()
@@ -340,11 +303,18 @@ async function handleCreateTicketSubmit(interaction) {
             ]
         });
 
-        // Store in database
-        await pool.execute(
-            'INSERT INTO tickets (ticketID, userID, guildID, channelID, status, reason) VALUES (?, ?, ?, ?, ?, ?)',
-            [ticketID, user.id, interaction.guild.id, channel.id, 'open', reason]
-        );
+        // Store ticket using utility function
+        await saveTicket({
+            ticketID: ticketID,
+            userID: user.id,
+            guildID: interaction.guild.id,
+            channelID: channel.id,
+            status: 'open',
+            reason: reason,
+            category: category,
+            createdAt: new Date().toISOString(),
+            createdBy: interaction.user.id
+        });
 
         // Send welcome message with user mention
         const welcomeEmbed = new EmbedBuilder()
