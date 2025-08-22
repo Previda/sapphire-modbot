@@ -2,9 +2,9 @@ name: Raspberry Pi Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -15,81 +15,70 @@ jobs:
         node-version: [18.x]
     
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run syntax check
-      run: node -c index.js
-    
-    - name: Check required files
-      run: |
-        test -f index.js
-        test -f package.json
-        test -d src/commands
-        test -d src/events
-    
-    - name: Test Discord.js compatibility
-      run: node -e "const { Client } = require('discord.js'); console.log('Discord.js test passed');"
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run syntax check
+        run: node -c index.js
+      
+      - name: Check required files
+        run: |
+          test -f index.js
+          test -f package.json
+          test -d src/commands
+          test -d src/events
+      
+      - name: Test Discord.js compatibility
+        run: node -e "const { Client } = require('discord.js'); console.log('Discord.js test passed');"
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
     
     steps:
-    - name: Check deployment secrets
-      id: check-secrets
-      run: |
-        if [[ -n "${{ secrets.PI_HOST }}" && -n "${{ secrets.PI_USER }}" && -n "${{ secrets.PI_SSH_KEY }}" ]]; then
-          echo "secrets-available=true" >> $GITHUB_OUTPUT
-          echo "✅ All deployment secrets are configured"
-        else
-          echo "secrets-available=false" >> $GITHUB_OUTPUT
-          echo "⚠️ Deployment secrets not configured. Skipping deployment."
-          echo "To enable automatic deployment, configure these repository secrets:"
-          echo "- PI_HOST: Your Raspberry Pi IP address"
-          echo "- PI_USER: SSH username for Pi access"
-          echo "- PI_SSH_KEY: SSH private key for authentication"
-        fi
-
-    - name: Deploy to Raspberry Pi
-      if: steps.check-secrets.outputs.secrets-available == 'true'
-      uses: appleboy/ssh-action@v0.1.8
-      with:
-        host: ${{ secrets.PI_HOST }}
-        username: ${{ secrets.PI_USER }}
-        key: ${{ secrets.PI_SSH_KEY }}
-        port: 22
-        timeout: 30s
-        command_timeout: 10m
-        script: |
-          echo "🚀 Starting automated deployment..."
-          
-          # Get current user for flexible paths
-          CURRENT_USER=$(whoami)
-          BOT_DIR="/home/$CURRENT_USER/sapphire-bot"
-          
-          # Check if bot directory exists
-          if [ ! -d "$BOT_DIR" ]; then
-            echo "📥 Bot not installed yet, running fresh installation..."
-            curl -sSL https://raw.githubusercontent.com/Previda/sapphire-modbot/main/scripts/pi-auto-update.sh | bash -s install
-          else
-            echo "🔄 Bot found, running update..."
-            cd "$BOT_DIR"
-            if [ -f "scripts/pi-auto-update.sh" ]; then
-              bash scripts/pi-auto-update.sh update
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to Raspberry Pi
+        uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
+        with:
+          host: ${{ secrets.PI_HOST }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          port: 22
+          timeout: 30s
+          command_timeout: 10m
+          script: |
+            echo "🚀 Starting automated deployment..."
+            
+            # Get current user for flexible paths
+            CURRENT_USER=$(whoami)
+            BOT_DIR="/home/$CURRENT_USER/sapphire-bot"
+            
+            # Check if bot directory exists
+            if [ ! -d "$BOT_DIR" ]; then
+              echo "📥 Bot not installed yet, running fresh installation..."
+              curl -sSL https://raw.githubusercontent.com/Previda/sapphire-modbot/main/scripts/pi-auto-update.sh | bash -s install
             else
-              echo "❌ Auto-update script not found, manual deployment needed"
-              exit 1
+              echo "🔄 Bot found, running update..."
+              cd "$BOT_DIR"
+              if [ -f "scripts/pi-auto-update.sh" ]; then
+                bash scripts/pi-auto-update.sh update
+              else
+                echo "❌ Auto-update script not found, manual deployment needed"
+                exit 1
+              fi
             fi
-          fi
-          
-          echo "✅ Deployment completed successfully"
+            
+            echo "✅ Deployment completed successfully"
