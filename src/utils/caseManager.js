@@ -30,7 +30,7 @@ function generateCaseId(guildId) {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substr(2, 4);
     const guildShort = guildId.slice(-4);
-    return `${guildShort}-${timestamp}-${random}`.toUpperCase();
+    return `${guildShort}${timestamp}${random}`.toUpperCase();
 }
 
 // Create a new case

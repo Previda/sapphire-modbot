@@ -12,7 +12,7 @@ module.exports = {
                 .setDescription('Submit an appeal for a punishment')
                 .addStringOption(option =>
                     option.setName('case_id')
-                        .setDescription('Case ID to appeal (e.g., CASE-ABC123)')
+                        .setDescription('Case ID to appeal (e.g., A2B3K1J2X4Y5)')
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand
