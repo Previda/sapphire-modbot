@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
-const { pool } = require('../../models/database');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const moderationManager = require('../../utils/moderationUtils');
 const fs = require('fs');
 const path = require('path');
 
@@ -86,27 +86,37 @@ async function handleOpenTicket(interaction) {
     const guild = interaction.guild;
 
     try {
-        // Check if user already has an open ticket
-        const [existingTickets] = await pool.execute(
-            'SELECT * FROM tickets WHERE userID = ? AND guildID = ? AND status = "open"',
-            [user.id, guild.id]
-        );
+        // Check if user already has an open ticket using moderation manager
+        const existingCases = moderationManager.getUserCases(user.id, guild.id);
+        const openTickets = existingCases.filter(c => c.type === 'ticket' && c.status === 'open');
 
-        if (existingTickets.length > 0) {
+        if (openTickets.length > 0) {
             return interaction.reply({
-                content: '❌ You already have an open ticket!',
+                content: `❌ You already have an open ticket! Check <#${openTickets[0].channelId}>`,
                 ephemeral: true
             });
         }
 
-        // Generate ticket ID
-        const ticketID = `ticket-${Date.now()}`;
-        
+        // Create moderation case for ticket
+        const ticketCase = moderationManager.createCase({
+            type: 'ticket',
+            userId: user.id,
+            moderatorId: user.id, // User creates their own ticket
+            guildId: guild.id,
+            reason: reason,
+            category: category,
+            status: 'open',
+            guildName: guild.name,
+            moderatorTag: user.tag,
+            userTag: user.tag,
+            appealable: false
+        });
+
         // Create ticket channel
         const channel = await guild.channels.create({
-            name: `${category}-${user.username}`,
+            name: `${category}-${user.username}-${ticketCase.caseId}`,
             type: ChannelType.GuildText,
-            topic: `Ticket by ${user.tag} | Reason: ${reason}`,
+            topic: `Ticket by ${user.tag} | Case #${ticketCase.caseId} | Reason: ${reason}`,
             permissionOverwrites: [
                 {
                     id: guild.roles.everyone,
@@ -114,40 +124,84 @@ async function handleOpenTicket(interaction) {
                 },
                 {
                     id: user.id,
-                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles']
                 }
             ]
         });
 
-        // Store ticket in database
-        await pool.execute(
-            'INSERT INTO tickets (ticketID, userID, guildID, channelID, status, reason) VALUES (?, ?, ?, ?, ?, ?)',
-            [ticketID, user.id, guild.id, channel.id, 'open', reason]
-        );
+        // Update case with channel ID
+        moderationManager.updateCase(ticketCase.caseId, { 
+            channelId: channel.id,
+            channelName: channel.name
+        });
+
+        // Create ticket control buttons
+        const controlRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`ticket_close_${ticketCase.caseId}`)
+                    .setLabel('Close Ticket')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('🔒'),
+                new ButtonBuilder()
+                    .setCustomId(`ticket_transcript_${ticketCase.caseId}`)
+                    .setLabel('Generate Transcript')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('📄')
+            );
 
         // Send welcome message
         const embed = new EmbedBuilder()
             .setTitle('🎫 Support Ticket Created')
-            .setDescription(`Hello ${user}, your ticket has been created!`)
+            .setDescription(`Hello ${user}, your support ticket has been created!`)
             .addFields(
-                { name: 'Reason', value: reason, inline: false },
-                { name: 'Category', value: category, inline: true },
-                { name: 'Ticket ID', value: ticketID, inline: true }
+                { name: '📝 Reason', value: reason, inline: false },
+                { name: '📂 Category', value: category.charAt(0).toUpperCase() + category.slice(1), inline: true },
+                { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                { name: '⏰ Created', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },
+                { name: '📋 Status', value: '🟢 Open', inline: true },
+                { name: '🔧 Actions', value: 'Use the buttons below to manage this ticket', inline: false }
             )
             .setColor(0x00ff00)
+            .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+            .setFooter({ text: `Sapphire Ticket System • Case #${ticketCase.caseId}`, iconURL: guild.iconURL() })
             .setTimestamp();
 
-        await channel.send({ embeds: [embed] });
+        await channel.send({ 
+            content: `${user} Welcome to your support ticket!`, 
+            embeds: [embed], 
+            components: [controlRow] 
+        });
 
         await interaction.reply({
-            content: `✅ Ticket created! Please check ${channel}`,
+            content: `✅ Ticket created successfully! Please check ${channel}\n🆔 **Case ID:** #${ticketCase.caseId}`,
             ephemeral: true
         });
+
+        // Log to mod channel if configured
+        const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
+        if (modLogChannelId) {
+            const modLogChannel = guild.channels.cache.get(modLogChannelId);
+            if (modLogChannel) {
+                const logEmbed = new EmbedBuilder()
+                    .setTitle('🎫 New Ticket Opened')
+                    .addFields(
+                        { name: '👤 User', value: `${user.tag}\n\`${user.id}\``, inline: true },
+                        { name: '📂 Category', value: category, inline: true },
+                        { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                        { name: '📝 Reason', value: reason, inline: false },
+                        { name: '📍 Channel', value: `${channel}`, inline: true }
+                    )
+                    .setColor(0x00ff00)
+                    .setTimestamp();
+                await modLogChannel.send({ embeds: [logEmbed] });
+            }
+        }
 
     } catch (error) {
         console.error('Error creating ticket:', error);
         await interaction.reply({
-            content: '❌ Failed to create ticket. Please try again.',
+            content: '❌ Failed to create ticket. Please try again later.',
             ephemeral: true
         });
     }
@@ -158,99 +212,263 @@ async function handleCloseTicket(interaction) {
     const channel = interaction.channel;
 
     try {
-        // Check if this is a ticket channel
-        const [tickets] = await pool.execute(
-            'SELECT * FROM tickets WHERE channelID = ? AND status = "open"',
-            [channel.id]
-        );
+        // Find ticket case by channel ID
+        const allCases = moderationManager.getAllCases();
+        const ticketCase = allCases.find(c => c.channelId === channel.id && c.type === 'ticket' && c.status === 'open');
 
-        if (tickets.length === 0) {
+        if (!ticketCase) {
             return interaction.reply({
                 content: '❌ This is not an active ticket channel.',
                 ephemeral: true
             });
         }
 
-        const ticket = tickets[0];
-
         // Generate transcript before closing
-        await generateTranscript(channel, ticket);
+        const transcriptFile = await generateTranscript(channel, ticketCase);
 
-        // Update ticket status
-        await pool.execute(
-            'UPDATE tickets SET status = "closed", closedAt = NOW() WHERE ticketID = ?',
-            [ticket.ticketID]
-        );
+        // Update ticket status to closed
+        moderationManager.updateCase(ticketCase.caseId, { 
+            status: 'closed',
+            closedBy: interaction.user.id,
+            closedByTag: interaction.user.tag,
+            closeReason: reason,
+            closedAt: Date.now(),
+            transcriptFile: transcriptFile ? transcriptFile.name : null
+        });
 
         const embed = new EmbedBuilder()
             .setTitle('🔒 Ticket Closed')
-            .setDescription(`Ticket closed by ${interaction.user.tag}`)
+            .setDescription(`Ticket has been closed by ${interaction.user.tag}`)
             .addFields(
-                { name: 'Reason', value: reason, inline: false },
-                { name: 'Ticket ID', value: ticket.ticketID, inline: true }
+                { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                { name: '👤 Closed By', value: interaction.user.tag, inline: true },
+                { name: '📋 Status', value: '🔴 Closed', inline: true },
+                { name: '📝 Close Reason', value: reason, inline: false },
+                { name: '⏰ Closed At', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true },
+                { name: '📄 Transcript', value: transcriptFile ? '✅ Generated' : '❌ Failed to generate', inline: true }
             )
             .setColor(0xff0000)
+            .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+            .setFooter({ text: `Sapphire Ticket System • Case #${ticketCase.caseId}`, iconURL: interaction.guild.iconURL() })
             .setTimestamp();
+
+        if (transcriptFile) {
+            embed.addFields({
+                name: '📎 Download Transcript',
+                value: 'Transcript has been saved and will be available in mod logs.',
+                inline: false
+            });
+        }
 
         await interaction.reply({ embeds: [embed] });
 
-        // Delete channel after 10 seconds
+        // Log to mod channel if configured
+        const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
+        if (modLogChannelId) {
+            const modLogChannel = interaction.guild.channels.cache.get(modLogChannelId);
+            if (modLogChannel) {
+                const logEmbed = new EmbedBuilder()
+                    .setTitle('🔒 Ticket Closed')
+                    .addFields(
+                        { name: '👤 Original User', value: `<@${ticketCase.userId}>\n\`${ticketCase.userId}\``, inline: true },
+                        { name: '👮 Closed By', value: `${interaction.user.tag}\n\`${interaction.user.id}\``, inline: true },
+                        { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                        { name: '📂 Category', value: ticketCase.category || 'general', inline: true },
+                        { name: '📝 Original Reason', value: ticketCase.reason, inline: false },
+                        { name: '📝 Close Reason', value: reason, inline: false }
+                    )
+                    .setColor(0xff0000)
+                    .setTimestamp();
+
+                const components = [];
+                if (transcriptFile) {
+                    components.push({ files: [transcriptFile.attachment] });
+                    logEmbed.addFields({
+                        name: '📄 Transcript',
+                        value: 'See attached file',
+                        inline: true
+                    });
+                }
+
+                await modLogChannel.send({ embeds: [logEmbed], ...components });
+            }
+        }
+
+        // Delete channel after 30 seconds to allow reading
         setTimeout(async () => {
             try {
-                await channel.delete();
+                await channel.delete('Ticket closed and archived');
             } catch (error) {
                 console.error('Error deleting ticket channel:', error);
             }
-        }, 10000);
+        }, 30000);
 
     } catch (error) {
         console.error('Error closing ticket:', error);
         await interaction.reply({
-            content: '❌ Failed to close ticket. Please try again.',
+            content: '❌ Failed to close ticket. Please try again later.',
             ephemeral: true
         });
     }
 }
 
 async function handleAddUser(interaction) {
-    const user = interaction.options.getUser('user');
+    const targetUser = interaction.options.getUser('user');
     const channel = interaction.channel;
 
     try {
-        await channel.permissionOverwrites.create(user, {
+        // Find ticket case by channel ID
+        const allCases = moderationManager.getAllCases();
+        const ticketCase = allCases.find(c => c.channelId === channel.id && c.type === 'ticket' && c.status === 'open');
+
+        if (!ticketCase) {
+            return interaction.reply({
+                content: '❌ This is not an active ticket channel.',
+                ephemeral: true
+            });
+        }
+
+        // Check if user is already in ticket
+        const existingPermissions = channel.permissionOverwrites.cache.get(targetUser.id);
+        if (existingPermissions && existingPermissions.allow.has('ViewChannel')) {
+            return interaction.reply({
+                content: `❌ ${targetUser.tag} is already added to this ticket.`,
+                ephemeral: true
+            });
+        }
+
+        // Add user permissions
+        await channel.permissionOverwrites.create(targetUser, {
             ViewChannel: true,
             SendMessages: true,
-            ReadMessageHistory: true
+            ReadMessageHistory: true,
+            AttachFiles: true
         });
 
-        await interaction.reply({
-            content: `✅ Added ${user.tag} to the ticket.`,
-            ephemeral: false
-        });
+        // Update case with added user
+        const currentUsers = ticketCase.addedUsers || [];
+        if (!currentUsers.includes(targetUser.id)) {
+            currentUsers.push(targetUser.id);
+            moderationManager.updateCase(ticketCase.caseId, { addedUsers: currentUsers });
+        }
+
+        const embed = new EmbedBuilder()
+            .setTitle('👤 User Added to Ticket')
+            .setDescription(`${targetUser.tag} has been added to this ticket.`)
+            .addFields(
+                { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                { name: '👤 Added User', value: `${targetUser.tag}\n\`${targetUser.id}\``, inline: true },
+                { name: '👮 Added By', value: interaction.user.tag, inline: true }
+            )
+            .setColor(0x00ff00)
+            .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+
+        // Send notification to added user
+        try {
+            const dmEmbed = new EmbedBuilder()
+                .setTitle('🎫 Added to Support Ticket')
+                .setDescription(`You have been added to a support ticket in **${interaction.guild.name}**.`)
+                .addFields(
+                    { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                    { name: '📍 Channel', value: `${channel}`, inline: true },
+                    { name: '👮 Added By', value: interaction.user.tag, inline: true }
+                )
+                .setColor(0x00ff00)
+                .setTimestamp();
+
+            await targetUser.send({ embeds: [dmEmbed] });
+        } catch (error) {
+            console.log('Could not DM added user');
+        }
+
     } catch (error) {
         console.error('Error adding user to ticket:', error);
         await interaction.reply({
-            content: '❌ Failed to add user to ticket.',
+            content: '❌ Failed to add user to ticket. Please check permissions.',
             ephemeral: true
         });
     }
 }
 
 async function handleRemoveUser(interaction) {
-    const user = interaction.options.getUser('user');
+    const targetUser = interaction.options.getUser('user');
     const channel = interaction.channel;
 
     try {
-        await channel.permissionOverwrites.delete(user);
+        // Find ticket case by channel ID
+        const allCases = moderationManager.getAllCases();
+        const ticketCase = allCases.find(c => c.channelId === channel.id && c.type === 'ticket' && c.status === 'open');
 
-        await interaction.reply({
-            content: `✅ Removed ${user.tag} from the ticket.`,
-            ephemeral: false
-        });
+        if (!ticketCase) {
+            return interaction.reply({
+                content: '❌ This is not an active ticket channel.',
+                ephemeral: true
+            });
+        }
+
+        // Check if user is the ticket owner
+        if (targetUser.id === ticketCase.userId) {
+            return interaction.reply({
+                content: '❌ Cannot remove the ticket owner from their own ticket.',
+                ephemeral: true
+            });
+        }
+
+        // Check if user has permissions in ticket
+        const existingPermissions = channel.permissionOverwrites.cache.get(targetUser.id);
+        if (!existingPermissions || !existingPermissions.allow.has('ViewChannel')) {
+            return interaction.reply({
+                content: `❌ ${targetUser.tag} is not currently in this ticket.`,
+                ephemeral: true
+            });
+        }
+
+        // Remove user permissions
+        await channel.permissionOverwrites.delete(targetUser);
+
+        // Update case by removing user from added users
+        const currentUsers = ticketCase.addedUsers || [];
+        const updatedUsers = currentUsers.filter(userId => userId !== targetUser.id);
+        moderationManager.updateCase(ticketCase.caseId, { addedUsers: updatedUsers });
+
+        const embed = new EmbedBuilder()
+            .setTitle('👤 User Removed from Ticket')
+            .setDescription(`${targetUser.tag} has been removed from this ticket.`)
+            .addFields(
+                { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                { name: '👤 Removed User', value: `${targetUser.tag}\n\`${targetUser.id}\``, inline: true },
+                { name: '👮 Removed By', value: interaction.user.tag, inline: true }
+            )
+            .setColor(0xff9900)
+            .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+
+        // Send notification to removed user
+        try {
+            const dmEmbed = new EmbedBuilder()
+                .setTitle('🎫 Removed from Support Ticket')
+                .setDescription(`You have been removed from a support ticket in **${interaction.guild.name}**.`)
+                .addFields(
+                    { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                    { name: '👮 Removed By', value: interaction.user.tag, inline: true }
+                )
+                .setColor(0xff9900)
+                .setTimestamp();
+
+            await targetUser.send({ embeds: [dmEmbed] });
+        } catch (error) {
+            console.log('Could not DM removed user');
+        }
+
     } catch (error) {
         console.error('Error removing user from ticket:', error);
         await interaction.reply({
-            content: '❌ Failed to remove user from ticket.',
+            content: '❌ Failed to remove user from ticket. Please check permissions.',
             ephemeral: true
         });
     }
@@ -260,12 +478,11 @@ async function handleTranscript(interaction) {
     const channel = interaction.channel;
 
     try {
-        const [tickets] = await pool.execute(
-            'SELECT * FROM tickets WHERE channelID = ?',
-            [channel.id]
-        );
+        // Find ticket case by channel ID
+        const allCases = moderationManager.getAllCases();
+        const ticketCase = allCases.find(c => c.channelId === channel.id && c.type === 'ticket');
 
-        if (tickets.length === 0) {
+        if (!ticketCase) {
             return interaction.reply({
                 content: '❌ This is not a ticket channel.',
                 ephemeral: true
@@ -274,22 +491,28 @@ async function handleTranscript(interaction) {
 
         await interaction.deferReply();
 
-        const transcript = await generateTranscript(channel, tickets[0]);
+        const transcript = await generateTranscript(channel, ticketCase);
         
-        await interaction.editReply({
-            content: '✅ Transcript generated!',
-            files: [transcript]
-        });
+        if (transcript) {
+            await interaction.editReply({
+                content: '✅ Transcript generated successfully!',
+                files: [transcript.attachment]
+            });
+        } else {
+            await interaction.editReply({
+                content: '❌ Failed to generate transcript.'
+            });
+        }
 
     } catch (error) {
         console.error('Error generating transcript:', error);
         await interaction.editReply({
-            content: '❌ Failed to generate transcript.'
+            content: '❌ Failed to generate transcript. Please try again later.'
         });
     }
 }
 
-async function generateTranscript(channel, ticket) {
+async function generateTranscript(channel, ticketCase) {
     try {
         // Fetch all messages
         const messages = [];
@@ -309,57 +532,182 @@ async function generateTranscript(channel, ticket) {
         // Sort messages by timestamp
         messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-        // Generate HTML transcript
+        // Generate HTML transcript with improved styling
         let html = `
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ticket Transcript - ${ticket.ticketID}</title>
+    <title>Ticket Transcript - Case #${ticketCase.caseId}</title>
+    <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #36393f; color: #dcddde; }
-        .header { background: #2f3136; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .message { margin: 10px 0; padding: 10px; background: #40444b; border-radius: 5px; }
-        .author { font-weight: bold; color: #7289da; }
-        .timestamp { color: #72767d; font-size: 12px; }
-        .content { margin-top: 5px; }
-        .embed { border-left: 4px solid #7289da; padding-left: 10px; margin: 10px 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #36393f; 
+            color: #dcddde; 
+            line-height: 1.4;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { 
+            background: linear-gradient(135deg, #5865f2, #7289da); 
+            padding: 30px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+        .header h1 { margin: 0 0 20px 0; font-size: 28px; }
+        .header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .header-item { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; }
+        .header-item strong { display: block; margin-bottom: 5px; }
+        .message { 
+            margin: 15px 0; 
+            padding: 15px; 
+            background: #40444b; 
+            border-radius: 8px; 
+            border-left: 4px solid #7289da;
+            transition: all 0.2s ease;
+        }
+        .message:hover { background: #42464d; }
+        .message-header { display: flex; align-items: center; margin-bottom: 8px; }
+        .author { 
+            font-weight: bold; 
+            color: #7289da; 
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        .timestamp { 
+            color: #72767d; 
+            font-size: 12px; 
+            background: rgba(0,0,0,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .content { 
+            margin-top: 8px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+        }
+        .embed { 
+            border-left: 4px solid #faa61a; 
+            background: rgba(250, 166, 26, 0.1);
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 0 8px 8px 0;
+        }
+        .embed-title { font-weight: bold; margin-bottom: 8px; color: #faa61a; }
+        .attachment { 
+            background: rgba(114, 137, 218, 0.1);
+            border: 1px solid #7289da;
+            padding: 10px; 
+            margin: 5px 0; 
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .attachment a { color: #7289da; text-decoration: none; }
+        .attachment a:hover { text-decoration: underline; }
+        .stats { 
+            background: #2f3136; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 30px;
+            text-align: center;
+        }
+        .bot-message { border-left-color: #5865f2; }
+        .system-message { border-left-color: #faa61a; background: #42424242; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Ticket Transcript</h1>
-        <p><strong>Ticket ID:</strong> ${ticket.ticketID}</p>
-        <p><strong>User:</strong> ${ticket.userID}</p>
-        <p><strong>Reason:</strong> ${ticket.reason}</p>
-        <p><strong>Created:</strong> ${new Date(ticket.createdAt).toLocaleString()}</p>
-        <p><strong>Channel:</strong> #${channel.name}</p>
-    </div>
+    <div class="container">
+        <div class="header">
+            <h1>🎫 Sapphire Ticket Transcript</h1>
+            <div class="header-grid">
+                <div class="header-item">
+                    <strong>🆔 Case ID</strong>
+                    #${ticketCase.caseId}
+                </div>
+                <div class="header-item">
+                    <strong>👤 User</strong>
+                    ${ticketCase.userTag} (${ticketCase.userId})
+                </div>
+                <div class="header-item">
+                    <strong>📂 Category</strong>
+                    ${ticketCase.category || 'General'}
+                </div>
+                <div class="header-item">
+                    <strong>📝 Reason</strong>
+                    ${ticketCase.reason}
+                </div>
+                <div class="header-item">
+                    <strong>⏰ Created</strong>
+                    ${new Date(ticketCase.timestamp).toLocaleString()}
+                </div>
+                <div class="header-item">
+                    <strong>📍 Channel</strong>
+                    #${channel.name}
+                </div>
+                <div class="header-item">
+                    <strong>📋 Status</strong>
+                    ${ticketCase.status === 'open' ? '🟢 Open' : '🔴 Closed'}
+                </div>
+                <div class="header-item">
+                    <strong>🏠 Server</strong>
+                    ${ticketCase.guildName}
+                </div>
+            </div>
+        </div>
 `;
 
         for (const message of messages) {
+            const isBot = message.author.bot;
+            const isSystem = message.author.system;
+            const messageClass = isBot ? 'bot-message' : isSystem ? 'system-message' : '';
+            
             html += `
-    <div class="message">
-        <div class="author">${message.author.tag}</div>
-        <div class="timestamp">${message.createdAt.toLocaleString()}</div>
-        <div class="content">${message.content || '<em>No content</em>'}</div>
+        <div class="message ${messageClass}">
+            <div class="message-header">
+                <div class="author">${message.author.bot ? '🤖 ' : ''}${message.author.tag}</div>
+                <div class="timestamp">${message.createdAt.toLocaleString()}</div>
+            </div>
+            <div class="content">${message.content ? message.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '<em>No text content</em>'}</div>
 `;
             
             if (message.embeds.length > 0) {
                 for (const embed of message.embeds) {
-                    html += `<div class="embed"><strong>Embed:</strong> ${embed.title || 'No title'}<br>${embed.description || ''}</div>`;
+                    html += `
+            <div class="embed">
+                ${embed.title ? `<div class="embed-title">${embed.title}</div>` : ''}
+                ${embed.description ? `<div>${embed.description}</div>` : ''}
+                ${embed.fields && embed.fields.length > 0 ? 
+                    embed.fields.map(field => 
+                        `<div><strong>${field.name}:</strong> ${field.value}</div>`
+                    ).join('') : ''
+                }
+            </div>`;
                 }
             }
 
             if (message.attachments.size > 0) {
                 for (const attachment of message.attachments.values()) {
-                    html += `<div>📎 <a href="${attachment.url}">${attachment.name}</a></div>`;
+                    html += `
+            <div class="attachment">
+                📎 <a href="${attachment.url}" target="_blank">${attachment.name}</a>
+                <small>(${(attachment.size / 1024).toFixed(1)} KB)</small>
+            </div>`;
                 }
             }
 
-            html += `    </div>`;
+            html += `        </div>`;
         }
 
         html += `
+        <div class="stats">
+            <h3>📊 Transcript Statistics</h3>
+            <p><strong>Total Messages:</strong> ${messages.length}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Transcript ID:</strong> transcript-${ticketCase.caseId}-${Date.now()}</p>
+        </div>
+    </div>
 </body>
 </html>`;
 
@@ -369,7 +717,7 @@ async function generateTranscript(channel, ticket) {
             fs.mkdirSync(transcriptPath, { recursive: true });
         }
 
-        const filename = `transcript-${ticket.ticketID}-${Date.now()}.html`;
+        const filename = `transcript-case-${ticketCase.caseId}-${Date.now()}.html`;
         const filepath = path.join(transcriptPath, filename);
         
         fs.writeFileSync(filepath, html);
@@ -381,6 +729,6 @@ async function generateTranscript(channel, ticket) {
 
     } catch (error) {
         console.error('Error generating transcript:', error);
-        throw error;
+        return null;
     }
 }

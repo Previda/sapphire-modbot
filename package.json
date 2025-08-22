@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js",
-    "deploy": "bash deploy.sh",
+    "dev": "nodemon index.js",
     "register": "node register-commands.js",
-    "pi-setup": "bash pi-setup.sh",
+    "setup-pi": "bash pi-setup.sh",
+    "start-pi": "bash start-pi.sh",
+    "deploy": "bash deploy.sh",
+    "clean": "rm -rf node_modules package-lock.json && npm install",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [

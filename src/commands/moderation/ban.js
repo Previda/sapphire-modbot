@@ -1,114 +1,103 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { createPunishment } = require('../../utils/punishmentUtils');
+const moderationManager = require('../../utils/moderationUtils');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ban')
-        .setDescription('Ban a user from the server')
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+        .setDescription('🔨 Ban a member from the server')
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('User to ban')
-                .setRequired(false))
-        .addStringOption(option =>
-            option.setName('userid')
-                .setDescription('User ID to ban (if user not in server)')
-                .setRequired(false))
+                .setDescription('The member to ban')
+                .setRequired(true))
         .addStringOption(option =>
             option.setName('reason')
-                .setDescription('Reason for ban')
-                .setRequired(true))
+                .setDescription('Reason for the ban')
+                .setRequired(false))
         .addIntegerOption(option =>
-            option.setName('delete_days')
+            option.setName('deletedays')
                 .setDescription('Days of messages to delete (0-7)')
-                .setRequired(false)
                 .setMinValue(0)
-                .setMaxValue(7))
+                .setMaxValue(7)
+                .setRequired(false))
         .addBooleanOption(option =>
             option.setName('silent')
                 .setDescription('Don\'t send DM to user')
-                .setRequired(false)),
+                .setRequired(false))
+        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
     async execute(interaction) {
-        const user = interaction.options.getUser('user');
-        const userId = user ? user.id : interaction.options.getString('userid');
-        const reason = interaction.options.getString('reason');
-        const deleteDays = interaction.options.getInteger('delete_days') || 0;
+        const targetUser = interaction.options.getUser('user');
+        const reason = interaction.options.getString('reason') || 'No reason provided';
+        const deletedays = interaction.options.getInteger('deletedays') || 0;
         const silent = interaction.options.getBoolean('silent') || false;
 
-        if (!userId) {
-            return interaction.reply({ 
-                content: '❌ Please specify a user or user ID.', 
-                ephemeral: true 
-            });
-        }
-
         try {
-            // Try to get member and user info
-            const member = await interaction.guild.members.fetch(userId).catch(() => null);
-            const targetUser = user || await interaction.client.users.fetch(userId).catch(() => null);
+            const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             
-            // Ban the user
-            await interaction.guild.members.ban(userId, { 
-                reason: `${reason} (by ${interaction.user.tag})`,
-                deleteMessageDays: deleteDays
-            });
-
-            // Create punishment record
-            const punishment = await createPunishment({
-                userID: userId,
-                modID: interaction.user.id,
-                guildID: interaction.guild.id,
-                type: 'ban',
-                reason
-            });
-
-            // Try to DM the user if not silent
-            let dmSent = false;
-            if (!silent && targetUser) {
-                try {
-                    const dmEmbed = new EmbedBuilder()
-                        .setTitle('🔨 You have been banned')
-                        .setColor(0xff0000)
-                        .addFields(
-                            { name: '🏠 Server', value: interaction.guild.name, inline: true },
-                            { name: '👤 Moderator', value: interaction.user.tag, inline: true },
-                            { name: '📝 Reason', value: reason, inline: false },
-                            { name: '🆔 Case ID', value: punishment.caseID, inline: true },
-                            { name: '📞 Appeal', value: `DM me with \`!appeal ${punishment.caseID}\` to appeal`, inline: false }
-                        )
-                        .setTimestamp();
-
-                    await targetUser.send({ embeds: [dmEmbed] });
-                    dmSent = true;
-                } catch (error) {
-                    console.log('Could not DM banned user');
+            // Permission checks
+            if (member) {
+                if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                    return interaction.reply({ content: '❌ You cannot ban this member due to role hierarchy.', ephemeral: true });
+                }
+                if (!member.bannable) {
+                    return interaction.reply({ content: '❌ I cannot ban this member.', ephemeral: true });
                 }
             }
 
-            // Send success embed
-            const successEmbed = new EmbedBuilder()
-                .setTitle('🔨 User Banned')
-                .setColor(0xff0000)
-                .addFields(
-                    { name: '👤 User', value: targetUser ? `${targetUser.tag} (${userId})` : userId, inline: true },
-                    { name: '👮 Moderator', value: interaction.user.tag, inline: true },
-                    { name: '📝 Reason', value: reason, inline: false },
-                    { name: '🆔 Case ID', value: punishment.caseID, inline: true },
-                    { name: '🗑️ Messages Deleted', value: `${deleteDays} day(s)`, inline: true },
-                    { name: '📨 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true }
-                )
-                .setTimestamp()
-                .setFooter({ text: `User can appeal with: !appeal ${punishment.caseID}` });
+            // Create moderation case
+            const moderationCase = moderationManager.createCase({
+                type: 'ban',
+                userId: targetUser.id,
+                moderatorId: interaction.user.id,
+                guildId: interaction.guild.id,
+                reason: reason,
+                deleteMessageDays: deletedays,
+                guildName: interaction.guild.name,
+                moderatorTag: interaction.user.tag,
+                userTag: targetUser.tag,
+                appealable: true
+            });
 
-            await interaction.reply({ embeds: [successEmbed] });
+            // Execute the ban
+            await interaction.guild.bans.create(targetUser.id, { 
+                reason: `${reason} | Moderator: ${interaction.user.tag} | Case #${moderationCase.caseId}`,
+                deleteMessageDays: deletedays 
+            });
+
+            // Send DM to user (unless silent)
+            let dmSent = false;
+            if (!silent) {
+                dmSent = await moderationManager.sendDM(targetUser, moderationCase, interaction.client);
+                moderationManager.updateCase(moderationCase.caseId, { dmSent });
+            }
+
+            // Create response embed
+            const embed = moderationManager.createModerationEmbed(
+                { ...moderationCase, dmSent },
+                interaction.guild,
+                interaction.user,
+                targetUser
+            );
+
+            embed.addFields({ name: '🗑️ Messages Deleted', value: `${deletedays} days`, inline: true });
+
+            await interaction.reply({ embeds: [embed] });
+
+            // Log to mod channel if configured
+            const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
+            if (modLogChannelId) {
+                const modLogChannel = interaction.guild.channels.cache.get(modLogChannelId);
+                if (modLogChannel) {
+                    await modLogChannel.send({ embeds: [embed] });
+                }
+            }
 
         } catch (error) {
             console.error('Ban command error:', error);
-            await interaction.reply({
-                content: '❌ Failed to ban user. Check permissions and try again.',
-                ephemeral: true
+            await interaction.reply({ 
+                content: '❌ Failed to ban the user. Please check my permissions.', 
+                ephemeral: true 
             });
         }
-    }
+    },
 };

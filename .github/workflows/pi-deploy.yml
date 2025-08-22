@@ -1,0 +1,60 @@
+name: Raspberry Pi Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run syntax check
+      run: node -c index.js
+    
+    - name: Check required files
+      run: |
+        test -f index.js
+        test -f package.json
+        test -d src/commands
+        test -d src/events
+    
+    - name: Test Discord.js compatibility
+      run: node -e "const { Client } = require('discord.js'); console.log('Discord.js test passed');"
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Deploy to Raspberry Pi
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.PI_HOST }}
+        username: ${{ secrets.PI_USER }}
+        key: ${{ secrets.PI_SSH_KEY }}
+        script: |
+          cd /home/pi
+          if [ -f "sapphire-bot/scripts/pi-auto-update.sh" ]; then
+            bash sapphire-bot/scripts/pi-auto-update.sh update
+          else
+            echo "Auto-update script not found, manual deployment needed"
+          fi

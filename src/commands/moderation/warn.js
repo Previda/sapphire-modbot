@@ -1,84 +1,90 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { createPunishment } = require('../../utils/punishmentUtils');
+const moderationManager = require('../../utils/moderationUtils');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('warn')
-        .setDescription('Warn a user')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+        .setDescription('⚠️ Warn a member for rule violations')
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('User to warn')
+                .setDescription('The member to warn')
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('reason')
-                .setDescription('Reason for warning')
-                .setRequired(true))
+                .setDescription('Reason for the warning')
+                .setRequired(false))
         .addBooleanOption(option =>
             option.setName('silent')
                 .setDescription('Don\'t send DM to user')
-                .setRequired(false)),
+                .setRequired(false))
+        .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
-        const user = interaction.options.getUser('user');
-        const reason = interaction.options.getString('reason');
+        const targetUser = interaction.options.getUser('user');
+        const reason = interaction.options.getString('reason') || 'No reason provided';
         const silent = interaction.options.getBoolean('silent') || false;
 
         try {
-            const member = await interaction.guild.members.fetch(user.id).catch(() => null);
+            const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
 
-            // Create punishment record
-            const punishment = await createPunishment({
-                userID: user.id,
-                modID: interaction.user.id,
-                guildID: interaction.guild.id,
-                type: 'warn',
-                reason
-            });
-
-            // Try to DM the user if not silent
-            let dmSent = false;
-            if (!silent) {
-                try {
-                    const dmEmbed = new EmbedBuilder()
-                        .setTitle('⚠️ You have been warned')
-                        .setColor(0xffff00)
-                        .addFields(
-                            { name: '🏠 Server', value: interaction.guild.name, inline: true },
-                            { name: '👤 Moderator', value: interaction.user.tag, inline: true },
-                            { name: '📝 Reason', value: reason, inline: false },
-                            { name: '🆔 Case ID', value: punishment.caseID, inline: true },
-                            { name: '📞 Appeal', value: `DM me with \`!appeal ${punishment.caseID}\` to appeal`, inline: false }
-                        )
-                        .setTimestamp();
-
-                    await user.send({ embeds: [dmEmbed] });
-                    dmSent = true;
-                } catch (error) {
-                    console.log('Could not DM warned user');
+            // Check if user is in server (optional for warnings)
+            if (member) {
+                // Permission checks for in-server warnings
+                if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                    return interaction.reply({ content: '❌ You cannot warn this member due to role hierarchy.', ephemeral: true });
                 }
             }
 
-            // Send success embed
-            const successEmbed = new EmbedBuilder()
-                .setTitle('⚠️ User Warned')
-                .setColor(0xffff00)
-                .addFields(
-                    { name: '👤 User', value: `${user.tag} (${user.id})`, inline: true },
-                    { name: '👮 Moderator', value: interaction.user.tag, inline: true },
-                    { name: '📝 Reason', value: reason, inline: false },
-                    { name: '🆔 Case ID', value: punishment.caseID, inline: true },
-                    { name: '📨 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true }
-                )
-                .setTimestamp()
-                .setFooter({ text: `User can appeal with: !appeal ${punishment.caseID}` });
+            // Create moderation case
+            const moderationCase = moderationManager.createCase({
+                type: 'warn',
+                userId: targetUser.id,
+                moderatorId: interaction.user.id,
+                guildId: interaction.guild.id,
+                reason: reason,
+                guildName: interaction.guild.name,
+                moderatorTag: interaction.user.tag,
+                userTag: targetUser.tag,
+                appealable: true
+            });
 
-            await interaction.reply({ embeds: [successEmbed] });
+            // Send DM to user (unless silent)
+            let dmSent = false;
+            if (!silent) {
+                dmSent = await moderationManager.sendDM(targetUser, moderationCase, interaction.client);
+                moderationManager.updateCase(moderationCase.caseId, { dmSent });
+            }
+
+            // Create response embed
+            const embed = moderationManager.createModerationEmbed(
+                { ...moderationCase, dmSent },
+                interaction.guild,
+                interaction.user,
+                targetUser
+            );
+
+            // Add warning-specific information
+            embed.addFields({
+                name: '📝 Note',
+                value: member ? 'User is in server and has been notified.' : 'User is not in server but warning has been logged.',
+                inline: false
+            });
+
+            await interaction.reply({ embeds: [embed] });
+
+            // Log to mod channel if configured
+            const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
+            if (modLogChannelId) {
+                const modLogChannel = interaction.guild.channels.cache.get(modLogChannelId);
+                if (modLogChannel) {
+                    await modLogChannel.send({ embeds: [embed] });
+                }
+            }
 
         } catch (error) {
             console.error('Warn command error:', error);
             await interaction.reply({
-                content: '❌ Failed to warn user. Check permissions and try again.',
+                content: '❌ Failed to warn the user. Please check my permissions.',
                 ephemeral: true
             });
         }

@@ -1,26 +1,31 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { createPunishment } = require('../../utils/punishmentUtils');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const moderationManager = require('../../utils/moderationUtils');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('kick')
-        .setDescription('Kick a user from the server')
-        .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
+        .setDescription('🦵 Kick a member from the server')
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('User to kick')
+                .setDescription('The member to kick')
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('reason')
-                .setDescription('Reason for kick')
-                .setRequired(true)),
+                .setDescription('Reason for the kick')
+                .setRequired(false))
+        .addBooleanOption(option =>
+            option.setName('silent')
+                .setDescription('Don\'t send DM to user')
+                .setRequired(false))
+        .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
     async execute(interaction) {
-        const user = interaction.options.getUser('user');
-        const reason = interaction.options.getString('reason');
+        const targetUser = interaction.options.getUser('user');
+        const reason = interaction.options.getString('reason') || 'No reason provided';
+        const silent = interaction.options.getBoolean('silent') || false;
 
         try {
-            const member = await interaction.guild.members.fetch(user.id);
+            const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             
             if (!member) {
                 return interaction.reply({ 
@@ -29,34 +34,60 @@ module.exports = {
                 });
             }
 
-            // Create punishment record
-            const punishment = await createPunishment({
-                userID: user.id,
-                modID: interaction.user.id,
-                guildID: interaction.guild.id,
-                type: 'kick',
-                reason
-            });
-
-            // Try to DM the user before kicking
-            try {
-                await member.send(`You have been kicked from **${interaction.guild.name}**.\nReason: ${reason}\nCase ID: ${punishment.caseID}`);
-            } catch (error) {
-                console.log('Could not DM kicked user');
+            // Permission checks
+            if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                return interaction.reply({ content: '❌ You cannot kick this member due to role hierarchy.', ephemeral: true });
+            }
+            if (!member.kickable) {
+                return interaction.reply({ content: '❌ I cannot kick this member.', ephemeral: true });
             }
 
-            // Kick the user
-            await member.kick(`${reason} (by ${interaction.user.tag})`);
-
-            await interaction.reply({
-                content: `✅ User ${user.tag} has been kicked.\n**Reason:** ${reason}\n**Case ID:** ${punishment.caseID}`,
-                ephemeral: false
+            // Create moderation case
+            const moderationCase = moderationManager.createCase({
+                type: 'kick',
+                userId: targetUser.id,
+                moderatorId: interaction.user.id,
+                guildId: interaction.guild.id,
+                reason: reason,
+                guildName: interaction.guild.name,
+                moderatorTag: interaction.user.tag,
+                userTag: targetUser.tag,
+                appealable: true
             });
+
+            // Send DM to user (unless silent)
+            let dmSent = false;
+            if (!silent) {
+                dmSent = await moderationManager.sendDM(targetUser, moderationCase, interaction.client);
+                moderationManager.updateCase(moderationCase.caseId, { dmSent });
+            }
+
+            // Execute the kick
+            await member.kick(`${reason} | Moderator: ${interaction.user.tag} | Case #${moderationCase.caseId}`);
+
+            // Create response embed
+            const embed = moderationManager.createModerationEmbed(
+                { ...moderationCase, dmSent },
+                interaction.guild,
+                interaction.user,
+                targetUser
+            );
+
+            await interaction.reply({ embeds: [embed] });
+
+            // Log to mod channel if configured
+            const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
+            if (modLogChannelId) {
+                const modLogChannel = interaction.guild.channels.cache.get(modLogChannelId);
+                if (modLogChannel) {
+                    await modLogChannel.send({ embeds: [embed] });
+                }
+            }
 
         } catch (error) {
             console.error('Kick command error:', error);
             await interaction.reply({
-                content: '❌ Failed to kick user. Check permissions and try again.',
+                content: '❌ Failed to kick the user. Please check my permissions.',
                 ephemeral: true
             });
         }
