@@ -1,12 +1,39 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-const { pool } = require('../models/database');
+const { isConnected } = require('../models/database');
+const fs = require('fs').promises;
+const path = require('path');
+
+// Local storage for tickets
+const TICKETS_FILE = path.join(process.cwd(), 'data', 'tickets.json');
+
+// Load tickets from local storage
+async function loadTickets() {
+    try {
+        const data = await fs.readFile(TICKETS_FILE, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        return [];
+    }
+}
+
+// Save tickets to local storage
+async function saveTickets(tickets) {
+    try {
+        const dataDir = path.dirname(TICKETS_FILE);
+        await fs.mkdir(dataDir, { recursive: true });
+        await fs.writeFile(TICKETS_FILE, JSON.stringify(tickets, null, 2));
+    } catch (error) {
+        console.error('Failed to save tickets:', error);
+    }
+}
 
 // Handle ticket menu command (!ticket)
 async function handleTicketMenu(message) {
     try {
-        // Check if user has manage channels permission
-        if (!message.member.permissions.has('ManageChannels')) {
-            return message.reply('❌ You need Manage Channels permission to use ticket management.');
+        // Check if user is server owner or has manage channels permission
+        if (message.guild.ownerId !== message.author.id && 
+            !message.member.permissions.has('ManageChannels')) {
+            return message.reply('❌ You need Manage Channels permission or be the server owner to use ticket management.');
         }
 
         const embed = new EmbedBuilder()

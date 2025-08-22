@@ -57,7 +57,35 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
     async execute(interaction) {
-        const subcommand = interaction.options.getSubcommand();
+        // Check if user is server owner or has required permissions
+        if (interaction.guild.ownerId !== interaction.user.id && 
+            !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
+            return interaction.reply({
+                content: '❌ You need the "Manage Channels" permission or be the server owner to use this command.',
+                flags: 64
+            });
+        }
+
+        let subcommand;
+        try {
+            subcommand = interaction.options.getSubcommand();
+        } catch (error) {
+            // No subcommand provided, show available actions
+            const embed = new EmbedBuilder()
+                .setTitle('🎫 Ticket System')
+                .setColor(0x3498db)
+                .setDescription('Available ticket commands:')
+                .addFields(
+                    { name: '/ticket open', value: 'Open a support ticket', inline: false },
+                    { name: '/ticket close', value: 'Close the current ticket', inline: false },
+                    { name: '/ticket add', value: 'Add user to ticket', inline: false },
+                    { name: '/ticket remove', value: 'Remove user from ticket', inline: false },
+                    { name: '/ticket transcript', value: 'Generate ticket transcript', inline: false }
+                )
+                .setTimestamp();
+            
+            return interaction.reply({ embeds: [embed], flags: 64 });
+        }
 
         switch (subcommand) {
             case 'open':
@@ -93,7 +121,7 @@ async function handleOpenTicket(interaction) {
         if (openTickets.length > 0) {
             return interaction.reply({
                 content: `❌ You already have an open ticket! Check <#${openTickets[0].channelId}>`,
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -175,7 +203,7 @@ async function handleOpenTicket(interaction) {
 
         await interaction.reply({
             content: `✅ Ticket created successfully! Please check ${channel}\n🆔 **Case ID:** #${ticketCase.caseId}`,
-            ephemeral: true
+            flags: 64
         });
 
         // Log to mod channel if configured
@@ -202,7 +230,7 @@ async function handleOpenTicket(interaction) {
         console.error('Error creating ticket:', error);
         await interaction.reply({
             content: '❌ Failed to create ticket. Please try again later.',
-            ephemeral: true
+            flags: 64
         });
     }
 }
@@ -219,7 +247,7 @@ async function handleCloseTicket(interaction) {
         if (!ticketCase) {
             return interaction.reply({
                 content: '❌ This is not an active ticket channel.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -324,7 +352,7 @@ async function handleAddUser(interaction) {
         if (!ticketCase) {
             return interaction.reply({
                 content: '❌ This is not an active ticket channel.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -333,7 +361,7 @@ async function handleAddUser(interaction) {
         if (existingPermissions && existingPermissions.allow.has('ViewChannel')) {
             return interaction.reply({
                 content: `❌ ${targetUser.tag} is already added to this ticket.`,
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -405,7 +433,7 @@ async function handleRemoveUser(interaction) {
         if (!ticketCase) {
             return interaction.reply({
                 content: '❌ This is not an active ticket channel.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -413,7 +441,7 @@ async function handleRemoveUser(interaction) {
         if (targetUser.id === ticketCase.userId) {
             return interaction.reply({
                 content: '❌ Cannot remove the ticket owner from their own ticket.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -422,7 +450,7 @@ async function handleRemoveUser(interaction) {
         if (!existingPermissions || !existingPermissions.allow.has('ViewChannel')) {
             return interaction.reply({
                 content: `❌ ${targetUser.tag} is not currently in this ticket.`,
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -485,7 +513,7 @@ async function handleTranscript(interaction) {
         if (!ticketCase) {
             return interaction.reply({
                 content: '❌ This is not a ticket channel.',
-                ephemeral: true
+                flags: 64
             });
         }
 
