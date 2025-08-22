@@ -125,7 +125,11 @@ class ModerationManager {
             this.updateCase(moderationCase.caseId, { dmSent: true });
             return true;
         } catch (error) {
-            console.error(`Failed to send DM to user ${user.id}:`, error);
+            if (error.code === 50007) {
+                console.log(`💬 User ${user.tag} has DMs disabled - skipping notification`);
+            } else {
+                console.error(`Failed to send DM to user ${user.id}:`, error);
+            }
             return false;
         }
     }

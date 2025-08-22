@@ -31,7 +31,24 @@ module.exports = {
                         .setRequired(false))),
 
     async execute(interaction) {
-        const subcommand = interaction.options.getSubcommand();
+        let subcommand;
+        try {
+            subcommand = interaction.options.getSubcommand();
+        } catch (error) {
+            // No subcommand provided, show available actions
+            const embed = new EmbedBuilder()
+                .setTitle('📋 Appeal System')
+                .setColor(0x3498db)
+                .setDescription('Available appeal commands:')
+                .addFields(
+                    { name: '/appeal submit', value: 'Submit an appeal for a case', inline: false },
+                    { name: '/appeal status', value: 'Check your appeal status', inline: false },
+                    { name: '/appeal review', value: 'Review appeals (Staff only)', inline: false }
+                )
+                .setTimestamp();
+            
+            return interaction.reply({ embeds: [embed], flags: 64 }); // 64 = ephemeral
+        }
 
         switch (subcommand) {
             case 'submit':
@@ -56,21 +73,21 @@ async function handleAppealSubmit(interaction) {
         if (!punishment) {
             return interaction.reply({
                 content: '❌ Case not found. Please check the case ID and try again.',
-                ephemeral: true
+                flags: 64
             });
         }
 
         if (punishment.userID !== interaction.user.id) {
             return interaction.reply({
                 content: '❌ You can only appeal your own cases.',
-                ephemeral: true
+                flags: 64
             });
         }
 
         if (punishment.appealStatus && punishment.appealStatus !== 'none') {
             return interaction.reply({
                 content: `❌ This case has already been appealed. Status: ${punishment.appealStatus}`,
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -115,7 +132,7 @@ async function handleAppealSubmit(interaction) {
         console.error('Error handling appeal submit:', error);
         await interaction.reply({
             content: '❌ An error occurred while processing your appeal.',
-            ephemeral: true
+            flags: 64
         });
     }
 }
@@ -129,14 +146,14 @@ async function handleAppealStatus(interaction) {
         if (!punishment) {
             return interaction.reply({
                 content: '❌ Case not found. Please check the case ID and try again.',
-                ephemeral: true
+                flags: 64
             });
         }
 
         if (punishment.userID !== interaction.user.id) {
             return interaction.reply({
                 content: '❌ You can only check the status of your own appeals.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -165,13 +182,13 @@ async function handleAppealStatus(interaction) {
             }
         }
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
 
     } catch (error) {
         console.error('Error checking appeal status:', error);
         await interaction.reply({
             content: '❌ An error occurred while checking appeal status.',
-            ephemeral: true
+            flags: 64
         });
     }
 }
@@ -181,7 +198,7 @@ async function handleAppealReview(interaction) {
     if (!interaction.member.permissions.has('ModerateMembers')) {
         return interaction.reply({
             content: '❌ You need Moderate Members permission to review appeals.',
-            ephemeral: true
+            flags: 64
         });
     }
 
@@ -203,14 +220,14 @@ async function reviewSpecificAppeal(interaction, caseID) {
         if (!punishment) {
             return interaction.reply({
                 content: '❌ Case not found.',
-                ephemeral: true
+                flags: 64
             });
         }
 
         if (!punishment.appealStatus || punishment.appealStatus === 'none') {
             return interaction.reply({
                 content: '❌ This case has no pending appeal.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -241,13 +258,13 @@ async function reviewSpecificAppeal(interaction, caseID) {
             }
         }
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
 
     } catch (error) {
         console.error('Error reviewing appeal:', error);
         await interaction.reply({
             content: '❌ An error occurred while reviewing appeal.',
-            ephemeral: true
+            flags: 64
         });
     }
 }
@@ -264,7 +281,7 @@ async function listPendingAppeals(interaction) {
         )
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: 64 });
 }
 
 function getStatusColor(status) {

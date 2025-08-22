@@ -4,6 +4,13 @@ require('dotenv').config();
 // MongoDB connection URL - supports both local and cloud (MongoDB Atlas)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sapphire-bot';
 
+// Fix for DNS resolution issues
+const connectionOptions = {
+    family: 4, // Use IPv4, skip trying IPv6
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s
+    socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+};
+
 let isConnected = false;
 
 // Connect to MongoDB
@@ -12,6 +19,7 @@ async function connectToMongoDB() {
         console.log('🔍 Connecting to MongoDB...');
         
         await mongoose.connect(MONGODB_URI, {
+            ...connectionOptions,
             serverSelectionTimeoutMS: 15000,
             connectTimeoutMS: 15000,
         });
