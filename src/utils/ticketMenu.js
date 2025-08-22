@@ -96,7 +96,11 @@ async function handleTicketMenu(message) {
 
     } catch (error) {
         console.error('Error showing ticket menu:', error);
-        await message.reply('❌ Failed to show ticket menu.');
+        try {
+            await message.reply('❌ Failed to show ticket menu.');
+        } catch (replyError) {
+            console.error('Error sending error message:', replyError);
+        }
     }
 }
 
@@ -135,15 +139,20 @@ async function handleTicketMenuInteraction(interaction) {
 // List all open tickets
 async function handleListTickets(interaction) {
     try {
-        const [tickets] = await pool.execute(
-            'SELECT * FROM tickets WHERE guildID = ? AND status = "open" ORDER BY createdAt DESC',
-            [interaction.guild.id]
-        );
+        let tickets = [];
+        
+        if (!isConnected()) {
+            // Use local storage
+            const ticketData = await loadTickets();
+            tickets = ticketData.filter(t => t.guildID === interaction.guild.id && t.status === 'open');
+        } else {
+            console.log('📝 MongoDB ticket listing - not yet implemented');
+        }
 
         if (tickets.length === 0) {
             return interaction.reply({
                 content: '📋 No open tickets found.',
-                ephemeral: true
+                flags: 64
             });
         }
 
@@ -401,8 +410,101 @@ async function handleSlowmodeSubmit(interaction) {
     }
 }
 
+// Handle button interactions
+async function handleTicketButtonInteraction(interaction) {
+    const customId = interaction.customId;
+    
+    try {
+        if (customId.startsWith('ticket_close_')) {
+            const caseId = customId.split('_')[2];
+            await handleTicketClose(interaction, caseId);
+        } else if (customId.startsWith('ticket_transcript_')) {
+            const caseId = customId.split('_')[2];
+            await handleTicketTranscript(interaction, caseId);
+        } else {
+            await interaction.reply({
+                content: '❌ Unknown ticket action.',
+                flags: 64
+            });
+        }
+    } catch (error) {
+        console.error('Ticket button interaction error:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ An error occurred processing your request.',
+                flags: 64
+            });
+        }
+    }
+}
+
+// Handle ticket close button
+async function handleTicketClose(interaction, caseId) {
+    const channel = interaction.channel;
+    
+    try {
+        await interaction.reply({
+            content: '🔒 Closing ticket in 10 seconds...',
+            flags: 64
+        });
+        
+        setTimeout(async () => {
+            try {
+                await channel.delete('Ticket closed by user');
+            } catch (error) {
+                console.error('Error deleting ticket channel:', error);
+            }
+        }, 10000);
+        
+    } catch (error) {
+        console.error('Error closing ticket:', error);
+        await interaction.reply({
+            content: '❌ Failed to close ticket.',
+            flags: 64
+        });
+    }
+}
+
+// Handle ticket transcript button
+async function handleTicketTranscript(interaction, caseId) {
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const channel = interaction.channel;
+        const messages = await channel.messages.fetch({ limit: 100 });
+        
+        let transcript = `=== TICKET TRANSCRIPT ===\n`;
+        transcript += `Case ID: ${caseId}\n`;
+        transcript += `Channel: ${channel.name}\n`;
+        transcript += `Generated: ${new Date().toISOString()}\n\n`;
+        
+        messages.reverse().forEach(msg => {
+            transcript += `[${msg.createdAt.toISOString()}] ${msg.author.tag}: ${msg.content}\n`;
+        });
+        
+        // Save transcript to file
+        const fs = require('fs').promises;
+        const path = require('path');
+        const transcriptPath = path.join(process.cwd(), 'data', 'transcripts', `ticket-${caseId}.txt`);
+        
+        await fs.mkdir(path.dirname(transcriptPath), { recursive: true });
+        await fs.writeFile(transcriptPath, transcript);
+        
+        await interaction.editReply({
+            content: `✅ Transcript generated and saved to: ticket-${caseId}.txt`,
+        });
+        
+    } catch (error) {
+        console.error('Error generating transcript:', error);
+        await interaction.editReply({
+            content: '❌ Failed to generate transcript.'
+        });
+    }
+}
+
 module.exports = {
     handleTicketMenu,
     handleTicketMenuInteraction,
-    handleModalSubmit
+    handleModalSubmit,
+    handleTicketButtonInteraction
 };

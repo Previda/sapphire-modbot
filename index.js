@@ -104,7 +104,8 @@ client.on('interactionCreate', async interaction => {
 
     // Handle button interactions for ticket menu
     if (interaction.isButton()) {
-        await handleTicketMenu(interaction);
+        const { handleTicketButtonInteraction } = require('./src/utils/ticketMenu');
+        await handleTicketButtonInteraction(interaction);
     }
 
     // Handle modal submissions
