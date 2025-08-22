@@ -45,20 +45,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-    - name: Check deployment secrets
-      run: |
-        if [[ -z "${{ secrets.PI_HOST }}" || -z "${{ secrets.PI_USER }}" || -z "${{ secrets.PI_SSH_KEY }}" ]]; then
-          echo "⚠️ Deployment secrets not configured. Skipping deployment."
-          echo "To enable automatic deployment, configure these repository secrets:"
-          echo "- PI_HOST: Your Raspberry Pi IP address"
-          echo "- PI_USER: SSH username (usually the current user)"
-          echo "- PI_SSH_KEY: SSH private key for authentication"
-          exit 0
-        fi
-        echo "✅ Deployment secrets configured"
-    
     - name: Deploy to Raspberry Pi
-      if: ${{ secrets.PI_HOST != '' && secrets.PI_USER != '' && secrets.PI_SSH_KEY != '' }}
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.PI_HOST }}

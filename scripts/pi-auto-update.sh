@@ -11,7 +11,12 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-CURRENT_USER=$(whoami)
+# Detect actual user (handles sudo usage)
+if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+    CURRENT_USER="$SUDO_USER"
+else
+    CURRENT_USER=$(whoami)
+fi
 BOT_DIR="/home/$CURRENT_USER/sapphire-bot"
 REPO_URL="https://github.com/Previda/sapphire-modbot.git"
 BACKUP_DIR="/home/$CURRENT_USER/bot-backups"
