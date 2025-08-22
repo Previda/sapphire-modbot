@@ -194,14 +194,66 @@ async function handleSlowmodeModal(interaction) {
 
     const durationInput = new TextInputBuilder()
         .setCustomId('slowmode_duration')
-        .setLabel('Slowmode Duration (seconds)')
+        .setLabel('Duration in seconds (0-21600)')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('0-21600 (0 to disable, max 6 hours)')
+        .setPlaceholder('Enter duration in seconds (0 to disable)')
         .setRequired(true);
 
     const row = new ActionRowBuilder().addComponents(durationInput);
     modal.addComponents(row);
     await interaction.showModal(modal);
+}
+
+// Handle add user modal
+async function handleAddUserModal(interaction) {
+    const modal = new ModalBuilder()
+        .setCustomId('add_user_modal')
+        .setTitle('Add User to Ticket');
+
+    const userInput = new TextInputBuilder()
+        .setCustomId('user_input')
+        .setLabel('User ID or @mention')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('Enter user ID or @mention')
+        .setRequired(true);
+
+    const row = new ActionRowBuilder().addComponents(userInput);
+    modal.addComponents(row);
+    await interaction.showModal(modal);
+}
+
+// Handle remove user modal
+async function handleRemoveUserModal(interaction) {
+    const modal = new ModalBuilder()
+        .setCustomId('remove_user_modal')
+        .setTitle('Remove User from Ticket');
+
+    const userInput = new TextInputBuilder()
+        .setCustomId('user_input')
+        .setLabel('User ID or @mention')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('Enter user ID or @mention')
+        .setRequired(true);
+
+    const row = new ActionRowBuilder().addComponents(userInput);
+    modal.addComponents(row);
+    await interaction.showModal(modal);
+}
+
+// Handle settings menu
+async function handleSettingsMenu(interaction) {
+    const embed = new EmbedBuilder()
+        .setTitle('⚙️ Ticket Settings')
+        .setDescription('Configure ticket system settings')
+        .setColor(0x9b59b6)
+        .addFields(
+            { name: '📂 Category', value: 'Use `/setup tickets` to configure', inline: true },
+            { name: '👥 Support Role', value: 'Use `/setup tickets` to configure', inline: true },
+            { name: '📝 Status', value: 'Active', inline: true }
+        )
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
 }
 
 // Handle close ticket menu
@@ -256,10 +308,25 @@ async function handleCloseTicketMenu(interaction) {
 async function handleModalSubmit(interaction) {
     const customId = interaction.customId;
 
-    if (customId === 'create_ticket_modal') {
-        await handleCreateTicketSubmit(interaction);
-    } else if (customId === 'slowmode_modal') {
-        await handleSlowmodeSubmit(interaction);
+    switch (customId) {
+        case 'create_ticket_modal':
+            await handleCreateTicketSubmit(interaction);
+            break;
+        case 'slowmode_modal':
+            await handleSlowmodeSubmit(interaction);
+            break;
+        case 'add_user_modal':
+            await handleAddUserSubmit(interaction);
+            break;
+        case 'remove_user_modal':
+            await handleRemoveUserSubmit(interaction);
+            break;
+        default:
+            await interaction.reply({
+                content: '❌ Unknown modal submission.',
+                ephemeral: true
+            });
+            break;
     }
 }
 
@@ -380,29 +447,155 @@ async function handleSlowmodeSubmit(interaction) {
     }
 }
 
+// Handle add user submission
+async function handleAddUserSubmit(interaction) {
+    try {
+        const userInput = interaction.fields.getTextInputValue('user_input');
+        let userId = userInput.replace(/[<@!>]/g, '');
+        
+        const user = await interaction.client.users.fetch(userId).catch(() => null);
+        if (!user) {
+            return interaction.reply({
+                content: '❌ Invalid user ID or mention.',
+                ephemeral: true
+            });
+        }
+
+        const member = await interaction.guild.members.fetch(userId).catch(() => null);
+        if (!member) {
+            return interaction.reply({
+                content: '❌ User is not in this server.',
+                ephemeral: true
+            });
+        }
+
+        await interaction.channel.permissionOverwrites.edit(userId, {
+            ViewChannel: true,
+            SendMessages: true,
+            ReadMessageHistory: true
+        });
+
+        const embed = new EmbedBuilder()
+            .setTitle('✅ User Added to Ticket')
+            .setColor(0x00ff00)
+            .addFields(
+                { name: 'User', value: user.tag, inline: true },
+                { name: 'Channel', value: interaction.channel.toString(), inline: true },
+                { name: 'Added by', value: interaction.user.tag, inline: true }
+            )
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+
+    } catch (error) {
+        console.error('Error adding user:', error);
+        await interaction.reply({
+            content: '❌ Failed to add user to ticket.',
+            ephemeral: true
+        });
+    }
+}
+
+// Handle remove user submission
+async function handleRemoveUserSubmit(interaction) {
+    try {
+        const userInput = interaction.fields.getTextInputValue('user_input');
+        let userId = userInput.replace(/[<@!>]/g, '');
+        
+        const user = await interaction.client.users.fetch(userId).catch(() => null);
+        if (!user) {
+            return interaction.reply({
+                content: '❌ Invalid user ID or mention.',
+                ephemeral: true
+            });
+        }
+
+        await interaction.channel.permissionOverwrites.edit(userId, {
+            ViewChannel: false,
+            SendMessages: false,
+            ReadMessageHistory: false
+        });
+
+        const embed = new EmbedBuilder()
+            .setTitle('🚫 User Removed from Ticket')
+            .setColor(0xff0000)
+            .addFields(
+                { name: 'User', value: user.tag, inline: true },
+                { name: 'Channel', value: interaction.channel.toString(), inline: true },
+                { name: 'Removed by', value: interaction.user.tag, inline: true }
+            )
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+
+    } catch (error) {
+        console.error('Error removing user:', error);
+        await interaction.reply({
+            content: '❌ Failed to remove user from ticket.',
+            ephemeral: true
+        });
+    }
+}
+
 // Handle button interactions
 async function handleTicketButtonInteraction(interaction) {
     const customId = interaction.customId;
     
     try {
-        if (customId.startsWith('ticket_close_')) {
-            const caseId = customId.split('_')[2];
-            await handleTicketClose(interaction, caseId);
-        } else if (customId.startsWith('ticket_transcript_')) {
-            const caseId = customId.split('_')[2];
-            await handleTicketTranscript(interaction, caseId);
-        } else {
-            await interaction.reply({
-                content: '❌ Unknown ticket action.',
-                flags: 64
-            });
+        switch (customId) {
+            case 'ticket_list':
+                await handleListTickets(interaction);
+                break;
+            case 'ticket_create':
+                await handleCreateTicketModal(interaction);
+                break;
+            case 'ticket_close_menu':
+                await handleCloseTicketMenu(interaction);
+                break;
+            case 'ticket_add_user':
+                await handleAddUserModal(interaction);
+                break;
+            case 'ticket_remove_user':
+                await handleRemoveUserModal(interaction);
+                break;
+            case 'ticket_slowmode':
+                await handleSlowmodeModal(interaction);
+                break;
+            case 'ticket_transcript':
+                await handleTicketTranscript(interaction, null);
+                break;
+            case 'ticket_settings':
+                await handleSettingsMenu(interaction);
+                break;
+            case 'cancel_close':
+                await interaction.update({
+                    content: '❌ Ticket close cancelled.',
+                    embeds: [],
+                    components: []
+                });
+                break;
+            default:
+                // Handle dynamic button IDs
+                if (customId.startsWith('close_ticket_')) {
+                    const ticketId = customId.replace('close_ticket_', '');
+                    await handleTicketClose(interaction, ticketId);
+                } else if (customId.startsWith('ticket_transcript_')) {
+                    const caseId = customId.split('_')[2];
+                    await handleTicketTranscript(interaction, caseId);
+                } else {
+                    await interaction.reply({
+                        content: '❌ Unknown ticket action.',
+                        ephemeral: true
+                    });
+                }
+                break;
         }
     } catch (error) {
         console.error('Ticket button interaction error:', error);
         if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({
                 content: '❌ An error occurred processing your request.',
-                flags: 64
+                ephemeral: true
             });
         }
     }
