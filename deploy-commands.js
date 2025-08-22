@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const commands = [];
 
+const commandNames = new Set();
+
 // Load commands recursively
 function loadCommands(dir) {
     const files = fs.readdirSync(dir);
@@ -19,8 +21,16 @@ function loadCommands(dir) {
             try {
                 const command = require(filePath);
                 if (command.data && command.execute) {
+                    const commandName = command.data.name;
+                    
+                    if (commandNames.has(commandName)) {
+                        console.log(`⚠️ Duplicate command found: ${commandName} in ${filePath} - skipping`);
+                        continue;
+                    }
+                    
+                    commandNames.add(commandName);
                     commands.push(command.data.toJSON());
-                    console.log(`✅ Found command: ${command.data.name}`);
+                    console.log(`✅ Found command: ${commandName} (${filePath})`);
                 }
             } catch (error) {
                 console.error(`❌ Error loading command ${file}:`, error.message);
