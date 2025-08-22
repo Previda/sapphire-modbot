@@ -198,30 +198,54 @@ async function handleModlogSetup(interaction, guildConfig, serverConfig) {
 }
 
 async function handleTicketSetup(interaction, guildConfig, serverConfig) {
-    const category = interaction.options.getChannel('category');
-    const supportRole = interaction.options.getRole('support_role');
+    try {
+        const category = interaction.options.getChannel('category');
+        const supportRole = interaction.options.getRole('support_role');
 
-    if (category) {
-        serverConfig.tickets.category = category.id;
+        if (category) {
+            // Validate category is actually a category channel
+            if (category.type !== ChannelType.GuildCategory) {
+                return interaction.reply({
+                    content: '❌ Please select a category channel for tickets.',
+                    ephemeral: true
+                });
+            }
+            serverConfig.tickets.category = category.id;
+        }
+        
+        if (supportRole) {
+            // Validate role exists and bot can see it
+            if (!supportRole) {
+                return interaction.reply({
+                    content: '❌ Could not find the specified support role.',
+                    ephemeral: true
+                });
+            }
+            serverConfig.tickets.supportRole = supportRole.id;
+        }
+
+        await saveGuildConfig(guildConfig);
+
+        const embed = new EmbedBuilder()
+            .setTitle('🎫 Ticket System Configured')
+            .setColor(0x3498db)
+            .addFields(
+                { name: '📂 Category', value: category ? `${category.name} (\`${category.id}\`)` : 'Not changed', inline: true },
+                { name: '👥 Support Role', value: supportRole ? supportRole.toString() : 'Not changed', inline: true },
+                { name: '✅ Status', value: 'Enabled', inline: true }
+            )
+            .setDescription('Ticket system has been configured successfully.')
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+        
+    } catch (error) {
+        console.error('Error in handleTicketSetup:', error);
+        await interaction.reply({
+            content: '❌ Failed to configure ticket system. Please check my permissions and try again.',
+            ephemeral: true
+        });
     }
-    if (supportRole) {
-        serverConfig.tickets.supportRole = supportRole.id;
-    }
-
-    await saveGuildConfig(guildConfig);
-
-    const embed = new EmbedBuilder()
-        .setTitle('🎫 Ticket System Configured')
-        .setColor(0x3498db)
-        .addFields(
-            { name: '📂 Category', value: category ? category.name : 'Not set', inline: true },
-            { name: '👥 Support Role', value: supportRole ? supportRole.toString() : 'Not set', inline: true },
-            { name: '✅ Status', value: 'Enabled', inline: true }
-        )
-        .setDescription('Ticket system has been configured successfully.')
-        .setTimestamp();
-
-    await interaction.reply({ embeds: [embed] });
 }
 
 async function handleAutomodSetup(interaction, guildConfig, serverConfig) {
