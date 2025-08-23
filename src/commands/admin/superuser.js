@@ -1,7 +1,45 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const fs = require('fs').promises;
+const path = require('path');
 
-// Superuser whitelist - hardcoded for security
-const SUPERUSER_ID = '1340043754048061582';
+// Primary superuser - hardcoded for security
+const PRIMARY_SUPERUSER_ID = '1340043754048061582';
+const SUPERUSERS_FILE = path.join(process.cwd(), 'data', 'superusers.json');
+
+// Load superusers from file
+async function loadSuperusers() {
+    try {
+        const data = await fs.readFile(SUPERUSERS_FILE, 'utf-8');
+        const superusers = JSON.parse(data);
+        // Always include primary superuser
+        if (!superusers.includes(PRIMARY_SUPERUSER_ID)) {
+            superusers.push(PRIMARY_SUPERUSER_ID);
+        }
+        return superusers;
+    } catch (error) {
+        // File doesn't exist, return primary only
+        return [PRIMARY_SUPERUSER_ID];
+    }
+}
+
+// Save superusers to file
+async function saveSuperusers(superusers) {
+    try {
+        const dataDir = path.dirname(SUPERUSERS_FILE);
+        await fs.mkdir(dataDir, { recursive: true });
+        await fs.writeFile(SUPERUSERS_FILE, JSON.stringify(superusers, null, 2));
+        return true;
+    } catch (error) {
+        console.error('Error saving superusers:', error);
+        return false;
+    }
+}
+
+// Check if user is superuser
+async function isSuperuser(userId) {
+    const superusers = await loadSuperusers();
+    return superusers.includes(userId);
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -46,8 +84,8 @@ module.exports = {
                         .setRequired(true))),
 
     async execute(interaction) {
-        // Check if user is the superuser
-        if (interaction.user.id !== SUPERUSER_ID) {
+        // Check if user is a superuser
+        if (!(await isSuperuser(interaction.user.id))) {
             return interaction.reply({
                 content: '❌ Access denied. This command is restricted to authorized personnel only.',
                 ephemeral: true
@@ -142,28 +180,79 @@ module.exports = {
 
             } else if (subcommand === 'add') {
                 const user = interaction.options.getUser('user');
+                const superusers = await loadSuperusers();
                 
-                const embed = new EmbedBuilder()
-                    .setTitle('👑 Superuser Management')
-                    .setColor(0xffd700)
-                    .setDescription(`🔧 This feature is not yet implemented.\n\nTo add ${user.tag} as superuser, manually add their ID to the SUPERUSER_ID array in the code.`)
-                    .addFields(
-                        { name: '👤 Target User', value: `${user.tag}`, inline: true },
-                        { name: '🆔 User ID', value: user.id, inline: true }
-                    )
-                    .setTimestamp();
+                if (superusers.includes(user.id)) {
+                    const embed = new EmbedBuilder()
+                        .setTitle('👑 Superuser Management')
+                        .setColor(0xffaa00)
+                        .setDescription(`⚠️ ${user.tag} is already a superuser!`)
+                        .addFields(
+                            { name: '👤 User', value: user.tag, inline: true },
+                            { name: '🆔 User ID', value: user.id, inline: true }
+                        )
+                        .setTimestamp();
+                    
+                    return interaction.reply({ embeds: [embed], ephemeral: true });
+                }
                 
-                await interaction.reply({ embeds: [embed], ephemeral: true });
+                // Add user to superusers list
+                superusers.push(user.id);
+                const success = await saveSuperusers(superusers);
+                
+                if (success) {
+                    const embed = new EmbedBuilder()
+                        .setTitle('👑 Superuser Added Successfully')
+                        .setColor(0x00ff00)
+                        .setDescription(`✅ ${user.tag} has been granted superuser privileges!`)
+                        .addFields(
+                            { name: '👤 New Superuser', value: user.tag, inline: true },
+                            { name: '🆔 User ID', value: user.id, inline: true },
+                            { name: '👥 Total Superusers', value: superusers.length.toString(), inline: true }
+                        )
+                        .setTimestamp();
+                    
+                    await interaction.reply({ embeds: [embed], ephemeral: true });
+                } else {
+                    const embed = new EmbedBuilder()
+                        .setTitle('👑 Superuser Management Error')
+                        .setColor(0xff0000)
+                        .setDescription('❌ Failed to save superuser data. Please try again.')
+                        .addFields(
+                            { name: '👤 Target User', value: user.tag, inline: true },
+                            { name: '🆔 User ID', value: user.id, inline: true }
+                        )
+                        .setTimestamp();
+                    
+                    await interaction.reply({ embeds: [embed], ephemeral: true });
+                }
 
             } else if (subcommand === 'list') {
+                const superusers = await loadSuperusers();
+                
                 const embed = new EmbedBuilder()
                     .setTitle('👑 Superuser List')
                     .setColor(0xffd700)
-                    .addFields(
-                        { name: '👤 Primary Superuser', value: `<@${SUPERUSER_ID}>`, inline: false },
-                        { name: '🆔 User ID', value: SUPERUSER_ID, inline: false }
-                    )
+                    .setDescription(`📊 Total Superusers: **${superusers.length}**`)
                     .setTimestamp();
+
+                let userList = '';
+                for (let i = 0; i < superusers.length; i++) {
+                    const userId = superusers[i];
+                    const isPrimary = userId === PRIMARY_SUPERUSER_ID;
+                    const user = interaction.client.users.cache.get(userId);
+                    const userTag = user ? user.tag : 'Unknown User';
+                    
+                    userList += `${isPrimary ? '👑' : '🔹'} <@${userId}> ${isPrimary ? '(Primary)' : ''}\n`;
+                    userList += `   \`${userId}\` • ${userTag}\n\n`;
+                }
+
+                if (userList.length > 1024) {
+                    // Split into multiple fields if too long
+                    embed.addFields({ name: '👤 Superusers', value: userList.substring(0, 1024), inline: false });
+                } else {
+                    embed.addFields({ name: '👤 Superusers', value: userList || 'No superusers found', inline: false });
+                }
                 
                 await interaction.reply({ embeds: [embed], ephemeral: true });
 
