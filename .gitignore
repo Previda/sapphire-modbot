@@ -1,7 +1,13 @@
+# Database
+data/
+
 # Environment variables
 .env
-.env.*
-!.env.example
+.env.local
+.env.production
+
+# Firebase credentials
+firebase-service-account.json
 
 # Dependencies
 node_modules/
