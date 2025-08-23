@@ -102,83 +102,22 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // Handle button interactions for ticket menu
+    // Handle button interactions
     if (interaction.isButton()) {
         const customId = interaction.customId;
         
-        if (customId === 'close_ticket') {
-            // Handle ticket close button
-            const { getTicketByChannel, closeTicket } = require('./src/utils/ticketUtils');
-            
-            try {
-                const ticket = await getTicketByChannel(interaction.channel.id);
-                if (!ticket) {
-                    return interaction.reply({ content: '❌ This is not an active ticket channel.', ephemeral: true });
-                }
-                
-                await closeTicket(interaction.channel.id, interaction.user.id);
-                
-                const { EmbedBuilder } = require('discord.js');
-                const embed = new EmbedBuilder()
-                    .setTitle('🔒 Ticket Closed')
-                    .setDescription(`Ticket closed by ${interaction.user.tag}`)
-                    .setColor(0xff0000)
-                    .setTimestamp();
-                
-                await interaction.reply({ embeds: [embed] });
-                
-                // Delete channel after 10 seconds
-                setTimeout(async () => {
-                    try {
-                        await interaction.channel.delete('Ticket closed');
-                    } catch (error) {
-                        console.error('Error deleting ticket channel:', error);
-                    }
-                }, 10000);
-                
-            } catch (error) {
-                console.error('Error closing ticket:', error);
-                await interaction.reply({ content: '❌ Failed to close ticket.', ephemeral: true });
-            }
-            
-        } else if (customId === 'generate_transcript') {
-            // Handle transcript generation
-            try {
-                await interaction.deferReply({ ephemeral: true });
-                
-                // Generate simple transcript
-                const messages = await interaction.channel.messages.fetch({ limit: 100 });
-                const transcript = messages.reverse().map(m => 
-                    `[${m.createdAt.toLocaleString()}] ${m.author.tag}: ${m.content}`
-                ).join('\n');
-                
-                // Save transcript to file
-                const fs = require('fs').promises;
-                const path = require('path');
-                const transcriptDir = path.join(process.cwd(), 'data', 'transcripts');
-                await fs.mkdir(transcriptDir, { recursive: true });
-                
-                const filename = `transcript-${interaction.channel.name}-${Date.now()}.txt`;
-                const filepath = path.join(transcriptDir, filename);
-                await fs.writeFile(filepath, transcript);
-                
-                await interaction.editReply({ content: `✅ Transcript saved as \`${filename}\`` });
-                
-            } catch (error) {
-                console.error('Error generating transcript:', error);
-                await interaction.editReply({ content: '❌ Failed to generate transcript.' });
-            }
-            
-        } else {
-            // Handle other ticket menu buttons
+        // Route all ticket-related buttons to the ticket menu handler
+        if (customId.startsWith('ticket_') || customId.startsWith('close_ticket_') || customId === 'cancel_close') {
             const { handleTicketButtonInteraction } = require('./src/utils/ticketMenu');
             await handleTicketButtonInteraction(interaction);
         }
+        // Handle other button interactions here if needed
     }
 
     // Handle modal submissions
     if (interaction.isModalSubmit()) {
-        await handleTicketMenu(interaction);
+        const { handleModalSubmit } = require('./src/utils/ticketMenu');
+        await handleModalSubmit(interaction);
     }
 });
 
