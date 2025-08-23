@@ -759,7 +759,7 @@ async function generateTranscript(channel, ticketCase) {
 </html>`;
 
         // Save transcript file
-        const transcriptPath = path.join(__dirname, '../../transcripts');
+        const transcriptPath = path.join(process.cwd(), 'data', 'transcripts');
         if (!fs.existsSync(transcriptPath)) {
             fs.mkdirSync(transcriptPath, { recursive: true });
         }

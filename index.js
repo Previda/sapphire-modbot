@@ -3,6 +3,9 @@ const { initializeDatabase } = require('./src/models/database');
 const { handleDMCommand } = require('./src/utils/dmHandler');
 const { handleTicketMenu } = require('./src/utils/ticketMenu');
 const BackupScheduler = require('./src/services/backupScheduler');
+const { AutoModerationModule } = require('./src/modules/automod');
+const { XPSystem } = require('./src/modules/xpSystem');
+const { LoggingModule } = require('./src/modules/logging');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -14,14 +17,19 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.GuildMembers
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildModeration
     ]
 });
 
 client.commands = new Collection();
 
-// Initialize backup scheduler
+// Initialize modules
 const backupScheduler = new BackupScheduler(client);
+const autoMod = new AutoModerationModule();
+const xpSystem = new XPSystem();
+const logger = new LoggingModule();
 
 // Load commands recursively
 function loadCommands(dir) {
@@ -129,6 +137,15 @@ client.on('messageCreate', async message => {
     if (message.channel.type === 1) { // DM channel
         await handleDMCommand(message, client);
         return;
+    }
+    
+    // Process message through modules (guild messages only)
+    if (message.guild) {
+        // Process through AutoMod
+        await autoMod.processMessage(message);
+        
+        // Process through XP system
+        await xpSystem.processMessage(message);
     }
     
     // Handle !ticket command in guilds
