@@ -18,10 +18,7 @@ module.exports = {
         const member = interaction.guild.members.cache.get(targetUser.id);
         
         if (!member) {
-            return interaction.reply({
-                content: '❌ User not found in this server!',
-                ephemeral: true
-            });
+            return interaction.reply({ content: '❌ **Error:** Unable to fetch your XP data.', flags: 64 });
         }
 
         try {
@@ -65,7 +62,7 @@ module.exports = {
                 });
             }
 
-            await interaction.reply({ embeds: [embed] });
+            return interaction.reply({ embeds: [embed], flags: 64 });
 
         } catch (error) {
             console.error('Error fetching rank:', error);

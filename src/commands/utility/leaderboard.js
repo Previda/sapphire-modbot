@@ -24,10 +24,7 @@ module.exports = {
             const pageLeaderboard = fullLeaderboard.slice(startIndex, startIndex + pageSize);
             
             if (pageLeaderboard.length === 0) {
-                return interaction.reply({
-                    content: page === 1 ? '📊 No XP data found for this server yet!' : `📊 Page ${page} is empty! Try a lower page number.`,
-                    ephemeral: true
-                });
+                return interaction.reply({ content: '❌ **Error:** No XP data found for this server.', flags: 64 });
             }
 
             const embed = new EmbedBuilder()
@@ -73,7 +70,7 @@ module.exports = {
                 });
             }
 
-            await interaction.reply({ embeds: [embed] });
+            return interaction.reply({ embeds: [embed], flags: 64 });
 
         } catch (error) {
             console.error('Error fetching leaderboard:', error);

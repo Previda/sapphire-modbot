@@ -93,7 +93,7 @@ client.on('interactionCreate', async interaction => {
             console.log(`❌ Invalid command attempted: /${interaction.commandName} by ${interaction.user.tag}`);
             return interaction.reply({ 
                 content: '❌ **Invalid command!** Use `/commands` to see all available commands.', 
-                ephemeral: true 
+                flags: 64 
             });
         }
 
@@ -101,7 +101,7 @@ client.on('interactionCreate', async interaction => {
             await command.execute(interaction);
         } catch (error) {
             console.error('Command execution error:', error);
-            const reply = { content: '❌ There was an error executing this command!', ephemeral: true };
+            const reply = { content: '❌ There was an error executing this command!', flags: 64 };
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp(reply);
             } else {
@@ -114,18 +114,37 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
         const customId = interaction.customId;
         
-        // Route all ticket-related buttons to the ticket menu handler
-        if (customId.startsWith('ticket_') || customId.startsWith('close_ticket_') || customId === 'cancel_close') {
-            const { handleTicketButtonInteraction } = require('./src/utils/ticketMenu');
-            await handleTicketButtonInteraction(interaction);
+        // Ticket management buttons from /manage command
+        if (customId.startsWith('ticket_') || customId === 'confirm_close' || customId === 'cancel_close') {
+            const { handleTicketButtons } = require('./src/utils/ticketButtons');
+            await handleTicketButtons(interaction);
         }
-        // Handle other button interactions here if needed
+        // General ticket menu buttons (open/close tickets)
+        else {
+            const { ticketMenu } = require('./src/utils/ticketMenu');
+            await ticketMenu(interaction);
+        }
     }
-
+    
     // Handle modal submissions
     if (interaction.isModalSubmit()) {
-        const { handleModalSubmit } = require('./src/utils/ticketMenu');
-        await handleModalSubmit(interaction);
+        const modalId = interaction.customId;
+        
+        // Appeal modal submissions
+        if (modalId.startsWith('appeal_modal_')) {
+            const { handleAppealModal } = require('./src/utils/appealHandler');
+            await handleAppealModal(interaction);
+        }
+        // Ticket management modals
+        else if (modalId.includes('ticket') || modalId.includes('user') || modalId.includes('slowmode')) {
+            const { handleTicketModals } = require('./src/utils/ticketModals');
+            await handleTicketModals(interaction);
+        }
+        // Other modal handlers
+        else {
+            const { ticketMenu } = require('./src/utils/ticketMenu');
+            await ticketMenu(interaction);
+        }
     }
 });
 
