@@ -78,9 +78,22 @@ async function listAllTickets(interaction) {
 }
 
 async function showCreateTicketModal(interaction) {
+    // Determine ticket type from button ID
+    const ticketType = interaction.customId.includes('_') ? 
+        interaction.customId.split('_')[2] : 'general';
+    
+    const ticketTypeMap = {
+        'general': { title: 'General Support', emoji: '🎫' },
+        'technical': { title: 'Technical Help', emoji: '⚙️' },
+        'report': { title: 'Report Issue', emoji: '📝' },
+        'billing': { title: 'Billing Support', emoji: '💰' }
+    };
+    
+    const typeInfo = ticketTypeMap[ticketType] || ticketTypeMap.general;
+
     const modal = new ModalBuilder()
-        .setCustomId('create_ticket_modal')
-        .setTitle('Create Ticket for User');
+        .setCustomId(`create_ticket_modal_${ticketType}`)
+        .setTitle(`${typeInfo.emoji} ${typeInfo.title}`);
 
     const userInput = new TextInputBuilder()
         .setCustomId('ticket_user')
@@ -89,12 +102,29 @@ async function showCreateTicketModal(interaction) {
         .setRequired(true)
         .setPlaceholder('Enter user ID or @username');
 
+    const subjectInput = new TextInputBuilder()
+        .setCustomId('ticket_subject')
+        .setLabel('Subject/Title')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setMaxLength(100)
+        .setPlaceholder('Brief title for your issue...');
+
     const reasonInput = new TextInputBuilder()
         .setCustomId('ticket_reason')
-        .setLabel('Reason for ticket')
+        .setLabel('Description')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true)
-        .setPlaceholder('Why is this ticket being created?');
+        .setMaxLength(1000)
+        .setPlaceholder('Please describe your issue or question in detail...');
+
+    const priorityInput = new TextInputBuilder()
+        .setCustomId('ticket_priority')
+        .setLabel('Priority Level (Low/Medium/High)')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setMaxLength(10)
+        .setPlaceholder('Low');
 
     const categoryInput = new TextInputBuilder()
         .setCustomId('ticket_category')
@@ -103,11 +133,19 @@ async function showCreateTicketModal(interaction) {
         .setRequired(false)
         .setValue('general');
 
-    const firstRow = new ActionRowBuilder().addComponents(userInput);
-    const secondRow = new ActionRowBuilder().addComponents(reasonInput);
-    const thirdRow = new ActionRowBuilder().addComponents(categoryInput);
-
-    modal.addComponents(firstRow, secondRow, thirdRow);
+    // For user-created tickets from panel, remove user input field
+    if (ticketType !== 'staff') {
+        const firstRow = new ActionRowBuilder().addComponents(subjectInput);
+        const secondRow = new ActionRowBuilder().addComponents(reasonInput);
+        const thirdRow = new ActionRowBuilder().addComponents(priorityInput);
+        modal.addComponents(firstRow, secondRow, thirdRow);
+    } else {
+        // For staff-created tickets, keep user input
+        const firstRow = new ActionRowBuilder().addComponents(userInput);
+        const secondRow = new ActionRowBuilder().addComponents(subjectInput);
+        const thirdRow = new ActionRowBuilder().addComponents(reasonInput);
+        modal.addComponents(firstRow, secondRow, thirdRow);
+    }
     await interaction.showModal(modal);
 }
 

@@ -4,8 +4,12 @@ const { handleDMCommand } = require('./src/utils/dmHandler');
 const { handleTicketMenu } = require('./src/utils/ticketMenu');
 const BackupScheduler = require('./src/services/backupScheduler');
 const { AutoModerationModule } = require('./src/modules/automod');
-const { XPSystem } = require('./src/modules/xpSystem');
-const { LoggingModule } = require('./src/modules/logging');
+const XPSystem = require('./src/services/xpSystem');
+const LoggingSystem = require('./src/services/loggingSystem');
+const AutoModSystem = require('./src/services/autoModSystem');
+const AntiRaidSystem = require('./src/utils/antiRaid');
+const AntiNukeSystem = require('./src/utils/antiNuke');
+const DashboardAPI = require('./src/api/dashboardAPI');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -28,8 +32,23 @@ client.commands = new Collection();
 // Initialize modules
 const backupScheduler = new BackupScheduler(client);
 const autoMod = new AutoModerationModule();
-const xpSystem = new XPSystem();
-const logger = new LoggingModule();
+let xpSystem, loggingSystem, autoModSystem, antiRaidSystem, antiNukeSystem, dashboardAPI;
+
+const initializeServices = () => {
+    xpSystem = new XPSystem(client);
+    loggingSystem = new LoggingSystem(client);
+    autoModSystem = new AutoModSystem(client);
+    antiRaidSystem = new AntiRaidSystem(client);
+    antiNukeSystem = new AntiNukeSystem(client);
+    dashboardAPI = new DashboardAPI(client);
+    
+    console.log('✅ All modular systems initialized');
+    console.log('🛡️ Anti-raid protection active');
+    console.log('🚨 Anti-nuke protection active');
+    
+    // Start dashboard API
+    dashboardAPI.start();
+};
 
 // Load commands recursively
 function loadCommands(dir) {
@@ -62,7 +81,7 @@ if (fs.existsSync(commandsPath)) {
 }
 
 // Bot ready event (updated for Discord.js v14+ compatibility)
-client.once('clientReady', async () => {
+client.once('ready', async () => {
     console.log(`🤖 ${client.user.tag} is online!`);
     console.log(`📊 Serving ${client.guilds.cache.size} servers`);
     console.log(`⚡ Loaded ${client.commands.size} commands`);
@@ -72,6 +91,7 @@ client.once('clientReady', async () => {
     initializeDatabase()
         .then(() => {
             console.log('✅ Database initialized successfully');
+            initializeServices();
             // Start backup scheduler after database is ready
             backupScheduler.start();
             console.log('💾 Backup scheduler started');
@@ -80,6 +100,8 @@ client.once('clientReady', async () => {
             console.error('❌ Database connection failed:', error.message);
             console.log('💡 Bot will continue with local JSON storage for data persistence');
             console.log('🔧 To use MongoDB, set MONGODB_URI in your .env file');
+            // Initialize services even without database
+            initializeServices();
         });
 });
 
