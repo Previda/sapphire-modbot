@@ -291,7 +291,7 @@ async function showTicketSettings(interaction) {
             { name: '🎫 Categories Available', value: 'General, Appeal, Report, Bug, Staff', inline: false },
             { name: '📋 Features Enabled', value: '• Auto transcripts\n• User mentions\n• Permission management\n• Slowmode control', inline: false },
             { name: '🔧 Management Options', value: 'Use `/manage menu` for interactive controls', inline: false },
-            { name: '💾 Storage', value: 'Using local JSON storage with Firebase backup', inline: false }
+            { name: '💾 Storage', value: 'Using local JSON storage with Google Cloud backup', inline: false }
         )
         .setTimestamp();
 

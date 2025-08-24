@@ -17,7 +17,7 @@ class DashboardAPI {
 
     setupMiddleware() {
         this.app.use(cors({
-            origin: ['http://localhost:3000', 'https://previda-bot.web.app', 'https://previda-bot.firebaseapp.com'],
+            origin: ['http://localhost:3000', 'https://your-domain.com'],
             credentials: true
         }));
         this.app.use(express.json());
