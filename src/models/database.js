@@ -17,17 +17,45 @@ const connectDB = async () => {
         console.log('📦 Falling back to local storage mode');
         isMongoConnected = false;
     }
-        if (!isConnected || !db) return [];
-        const snapshot = await db.collection(collection).limit(limit).get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+const initializeDatabase = async () => {
+    await connectDB();
+    return isMongoConnected;
+};
+
+const connectToMongoDB = connectDB;
+const getConnection = () => mongoose.connection;
+const isConnected = () => isMongoConnected;
+
+// Mock MySQL pool for compatibility with existing commands
+const pool = {
+    query: async (sql, params) => {
+        console.log('Mock DB Query:', sql);
+        return { rows: [], insertId: 1 };
+    },
+    execute: async (sql, params) => {
+        console.log('Mock DB Execute:', sql);
+        return [{ insertId: 1, affectedRows: 1 }];
     }
 };
 
-module.exports = { 
-    admin,
+// Compatibility functions
+const getCollection = () => null;
+const setDocument = async () => null;
+const getDocument = async () => null;
+const updateDocument = async () => null;
+const deleteDocument = async () => null;
+
+module.exports = {
     initializeDatabase,
-    checkDatabaseHealth,
-    isConnected: () => isConnected,
-    getFirestore: () => db,
-    FirestoreHelpers
+    connectToMongoDB,
+    getConnection,
+    isConnected,
+    getCollection,
+    setDocument,
+    getDocument,
+    updateDocument,
+    deleteDocument,
+    pool
 };
