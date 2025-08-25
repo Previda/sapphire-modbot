@@ -1,11 +1,11 @@
-# 🚀 Sapphire Moderation Bot - Complete Pi Automation
+# 🚀 Sapphire Bot - Secure Standalone Discord Bot
 
-> Production-ready Discord bot with **full Raspberry Pi automation** - one-command deployment, self-updating, and monitoring
+> **Firebase-free, crash-resistant Discord bot** designed for Raspberry Pi with local storage, security hardening, and stable performance
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-16+-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-v14-blue.svg)](https://discord.js.org/)
-[![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Automated-red.svg)](https://www.raspberrypi.org/)
-[![Memory](https://img.shields.io/badge/Memory-<85MB-success.svg)]()
+[![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Optimized-red.svg)](https://www.raspberrypi.org/)
+[![Security](https://img.shields.io/badge/Security-Hardened-blue.svg)]()
 
 ## ✨ Features
 

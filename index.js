@@ -14,6 +14,27 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+// Security and error handling
+process.on('uncaughtException', (error) => {
+    console.error(' Uncaught Exception:', error);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error(' Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Memory limit protection
+const MEMORY_LIMIT = parseInt(process.env.MAX_MEMORY) || 512; // MB
+setInterval(() => {
+    const memUsage = process.memoryUsage();
+    const memMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+    if (memMB > MEMORY_LIMIT) {
+        console.error(` Memory limit exceeded: ${memMB}MB > ${MEMORY_LIMIT}MB`);
+        process.exit(1);
+    }
+}, 30000);
+
 // Create Discord client
 const client = new Client({
     intents: [
@@ -110,20 +131,31 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isCommand()) {
         const command = client.commands.get(interaction.commandName);
         
+        // Security: Rate limiting check
+        if (isRateLimited(interaction.user.id, interaction.commandName)) {
+            return interaction.reply({
+                content: '⏱️ Please wait before using this command again.',
+                ephemeral: true
+            });
+        }
+
         // Global invalid command handler
         if (!command) {
             console.log(`❌ Invalid command attempted: /${interaction.commandName} by ${interaction.user.tag}`);
             return interaction.reply({ 
                 content: '❌ **Invalid command!** Use `/commands` to see all available commands.', 
-                flags: 64 
+                ephemeral: true 
             });
         }
 
         try {
             await command.execute(interaction);
         } catch (error) {
-            console.error('Command execution error:', error);
-            const reply = { content: '❌ There was an error executing this command!', flags: 64 };
+            console.error('❌ Command execution error:', error);
+            const reply = { 
+                content: '❌ An error occurred while executing this command. Please try again later.', 
+                ephemeral: true 
+            };
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp(reply);
             } else {
@@ -132,40 +164,45 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // Handle button interactions
+    // Handle button interactions with error handling
     if (interaction.isButton()) {
-        const customId = interaction.customId;
-        
-        // Ticket management buttons from /manage command
-        if (customId.startsWith('ticket_') || customId === 'confirm_close' || customId === 'cancel_close') {
-            const { handleTicketButtons } = require('./src/utils/ticketButtons');
-            await handleTicketButtons(interaction);
-        }
-        // General ticket menu buttons (open/close tickets)
-        else {
-            const { ticketMenu } = require('./src/utils/ticketMenu');
-            await ticketMenu(interaction);
+        try {
+            const customId = interaction.customId;
+            
+            // Ticket management buttons
+            if (customId.startsWith('ticket_') || customId === 'confirm_close' || customId === 'cancel_close') {
+                const { handleTicketButtonInteraction } = require('./src/utils/ticketMenu');
+                await handleTicketButtonInteraction(interaction);
+            }
+        } catch (error) {
+            console.error('❌ Button interaction error:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ An error occurred processing your request.',
+                    ephemeral: true
+                });
+            }
         }
     }
     
-    // Handle modal submissions
+    // Handle modal submissions with error handling
     if (interaction.isModalSubmit()) {
-        const modalId = interaction.customId;
-        
-        // Appeal modal submissions
-        if (modalId.startsWith('appeal_modal_')) {
-            const { handleAppealModal } = require('./src/utils/appealHandler');
-            await handleAppealModal(interaction);
-        }
-        // Ticket management modals
-        else if (modalId.includes('ticket') || modalId.includes('user') || modalId.includes('slowmode')) {
-            const { handleTicketModals } = require('./src/utils/ticketModals');
-            await handleTicketModals(interaction);
-        }
-        // Other modal handlers
-        else {
-            const { ticketMenu } = require('./src/utils/ticketMenu');
-            await ticketMenu(interaction);
+        try {
+            const modalId = interaction.customId;
+            
+            // Ticket-related modals
+            if (modalId.includes('ticket') || modalId.includes('user') || modalId.includes('slowmode')) {
+                const { handleModalSubmit } = require('./src/utils/ticketMenu');
+                await handleModalSubmit(interaction);
+            }
+        } catch (error) {
+            console.error('❌ Modal submission error:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ An error occurred processing your submission.',
+                    ephemeral: true
+                });
+            }
         }
     }
 });
@@ -180,13 +217,21 @@ client.on('messageCreate', async message => {
         return;
     }
     
-    // Process message through modules (guild messages only)
+    // Process message through modules with error handling (guild messages only)
     if (message.guild) {
-        // Process through AutoMod
-        await autoMod.processMessage(message);
-        
-        // Process through XP system
-        await xpSystem.processMessage(message);
+        try {
+            // Process through AutoMod with safety check
+            if (autoMod && typeof autoMod.processMessage === 'function') {
+                await autoMod.processMessage(message);
+            }
+            
+            // Process through XP system with safety check
+            if (xpSystem && typeof xpSystem.processMessage === 'function') {
+                await xpSystem.processMessage(message);
+            }
+        } catch (error) {
+            console.error('❌ Message processing error:', error);
+        }
     }
     
     // Handle !ticket command in guilds
@@ -232,14 +277,23 @@ client.on('messageCreate', async message => {
     }
 });
 
-// Global error handling
-process.on('unhandledRejection', error => {
-    console.error('Unhandled promise rejection:', error);
-});
+// Rate limiting protection
+const commandCooldowns = new Map();
+const COMMAND_COOLDOWN = 3000; // 3 seconds
 
-process.on('uncaughtException', error => {
-    console.error('Uncaught exception:', error);
-});
+// Security: Command rate limiting
+function isRateLimited(userId, commandName) {
+    const now = Date.now();
+    const cooldownKey = `${userId}:${commandName}`;
+    const lastUsed = commandCooldowns.get(cooldownKey);
+    
+    if (lastUsed && (now - lastUsed) < COMMAND_COOLDOWN) {
+        return true;
+    }
+    
+    commandCooldowns.set(cooldownKey, now);
+    return false;
+}
 
 // Start the bot
 client.login(process.env.DISCORD_TOKEN);

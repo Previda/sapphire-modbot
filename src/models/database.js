@@ -1,138 +1,155 @@
-const { Firestore } = require('@google-cloud/firestore');
 const mongoose = require('mongoose');
+const fs = require('fs').promises;
+const path = require('path');
 
-let db = null;
-let isFirestoreConnected = false;
 let isMongoConnected = false;
+let localDataCache = new Map();
 
-const initializeFirestore = async () => {
+// Local storage helpers
+const saveToLocal = async (collection, docId, data) => {
     try {
-        if (process.env.GOOGLE_CLOUD_PROJECT_ID) {
-            // Initialize Firestore with service account
-            db = new Firestore({
-                projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-                keyFilename: process.env.GOOGLE_CLOUD_KEY_FILE || './firebase-service-account.json'
-            });
-            
-            // Test connection
-            await db.collection('_health').doc('test').set({ 
-                timestamp: new Date(),
-                status: 'connected' 
-            });
-            
-            console.log('🔥 Google Cloud Firestore connected successfully');
-            isFirestoreConnected = true;
-            return true;
-        }
+        const dir = path.join(process.cwd(), 'data', collection);
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(path.join(dir, `${docId}.json`), JSON.stringify(data, null, 2));
+        localDataCache.set(`${collection}:${docId}`, data);
+        return true;
     } catch (error) {
-        console.error('Firestore connection failed:', error.message);
-        isFirestoreConnected = false;
+        console.error('Local save failed:', error);
+        return false;
     }
-    return false;
+};
+
+const loadFromLocal = async (collection, docId) => {
+    try {
+        const cacheKey = `${collection}:${docId}`;
+        if (localDataCache.has(cacheKey)) {
+            return localDataCache.get(cacheKey);
+        }
+        const filePath = path.join(process.cwd(), 'data', collection, `${docId}.json`);
+        const data = JSON.parse(await fs.readFile(filePath, 'utf8'));
+        localDataCache.set(cacheKey, data);
+        return data;
+    } catch (error) {
+        return null;
+    }
 };
 
 const connectDB = async () => {
     try {
         if (process.env.MONGODB_URI) {
-            const conn = await mongoose.connect(process.env.MONGODB_URI);
-            console.log(`MongoDB Connected: ${conn.connection.host}`);
+            const conn = await mongoose.connect(process.env.MONGODB_URI, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                maxPoolSize: 5,
+                serverSelectionTimeoutMS: 5000,
+                socketTimeoutMS: 45000,
+            });
+            console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
             isMongoConnected = true;
         } else {
-            console.log('📦 No MongoDB URI - using Firestore only');
+            console.log('📦 No MongoDB URI - using local storage');
             isMongoConnected = false;
         }
     } catch (error) {
-        console.error('MongoDB connection failed:', error.message);
+        console.error('❌ MongoDB connection failed:', error.message);
         isMongoConnected = false;
     }
 };
 
 const initializeDatabase = async () => {
-    const firestoreOk = await initializeFirestore();
     await connectDB();
-    
-    if (firestoreOk) {
-        console.log('✅ Database: Using Google Cloud Firestore');
-        return true;
-    } else if (isMongoConnected) {
-        console.log('✅ Database: Using MongoDB');
-        return true;
-    } else {
-        console.log('⚠️  Database: Local storage mode only');
-        return false;
-    }
+    console.log('🔧 Database initialization complete');
+    return true; // Always return true for local storage fallback
 };
 
-// Database helper functions
-const getCollection = (name) => {
-    if (isFirestoreConnected && db) {
-        return db.collection(name);
+// Graceful shutdown handler
+process.on('SIGINT', async () => {
+    console.log('🛑 Graceful shutdown initiated...');
+    if (isMongoConnected) {
+        await mongoose.connection.close();
+        console.log('✅ MongoDB connection closed');
     }
-    return null;
-};
-
-const setDocument = async (collection, docId, data) => {
-    if (isFirestoreConnected && db) {
-        await db.collection(collection).doc(docId).set(data);
-        return true;
-    }
-    console.log(`Mock: Set ${collection}/${docId}`, data);
-    return true;
-};
-
-const getDocument = async (collection, docId) => {
-    if (isFirestoreConnected && db) {
-        const doc = await db.collection(collection).doc(docId).get();
-        return doc.exists ? doc.data() : null;
-    }
-    console.log(`Mock: Get ${collection}/${docId}`);
-    return null;
-};
-
-const updateDocument = async (collection, docId, data) => {
-    if (isFirestoreConnected && db) {
-        await db.collection(collection).doc(docId).update(data);
-        return true;
-    }
-    console.log(`Mock: Update ${collection}/${docId}`, data);
-    return true;
-};
-
-const deleteDocument = async (collection, docId) => {
-    if (isFirestoreConnected && db) {
-        await db.collection(collection).doc(docId).delete();
-        return true;
-    }
-    console.log(`Mock: Delete ${collection}/${docId}`);
-    return true;
-};
-
-// MySQL pool compatibility
-const pool = {
-    query: async (sql, params) => {
-        console.log('Mock SQL Query:', sql, params);
-        return { rows: [], insertId: 1 };
-    },
-    execute: async (sql, params) => {
-        console.log('Mock SQL Execute:', sql, params);
-        return [{ insertId: 1, affectedRows: 1 }];
-    }
-};
-
-const connectToMongoDB = connectDB;
-const getConnection = () => mongoose.connection;
-const isConnected = () => isFirestoreConnected || isMongoConnected;
-
+    process.exit(0);
+});
 module.exports = {
     initializeDatabase,
-    connectToMongoDB,
-    getConnection,
-    isConnected,
-    getCollection,
-    setDocument,
-    getDocument,
-    updateDocument,
-    deleteDocument,
-    pool,
-    db: () => db
+    connectToMongoDB: connectDB,
+    getConnection: () => mongoose.connection,
+    isConnected: () => isMongoConnected || true, // Always true for local fallback
+    
+    // Document operations with local storage fallback
+    setDocument: async (collection, docId, data) => {
+        try {
+            await saveToLocal(collection, docId, data);
+            return true;
+        } catch (error) {
+            console.error('❌ Document save failed:', error);
+            return false;
+        }
+    },
+    
+    getDocument: async (collection, docId) => {
+        try {
+            return await loadFromLocal(collection, docId);
+        } catch (error) {
+            console.error('❌ Document load failed:', error);
+            return null;
+        }
+    },
+    
+    updateDocument: async (collection, docId, data) => {
+        try {
+            const existing = await loadFromLocal(collection, docId) || {};
+            const merged = { ...existing, ...data, updatedAt: new Date() };
+            await saveToLocal(collection, docId, merged);
+            return true;
+        } catch (error) {
+            console.error('❌ Document update failed:', error);
+            return false;
+        }
+    },
+    
+    deleteDocument: async (collection, docId) => {
+        try {
+            const filePath = path.join(process.cwd(), 'data', collection, `${docId}.json`);
+            await fs.unlink(filePath);
+            localDataCache.delete(`${collection}:${docId}`);
+            return true;
+        } catch (error) {
+            return true; // Don't fail if file doesn't exist
+        }
+    },
+    
+    // Enhanced mock MySQL pool for compatibility
+    pool: {
+        query: async (sql, params = []) => {
+            console.log('🔧 Mock SQL query:', sql.substring(0, 50) + '...');
+            return { 
+                rows: [], 
+                insertId: Math.floor(Math.random() * 1000) + 1,
+                affectedRows: 1 
+            };
+        },
+        execute: async (sql, params = []) => {
+            console.log('🔧 Mock SQL execute:', sql.substring(0, 50) + '...');
+            return [{ 
+                insertId: Math.floor(Math.random() * 1000) + 1, 
+                affectedRows: 1 
+            }];
+        }
+    },
+    
+    // Utility functions
+    clearCache: () => localDataCache.clear(),
+    getCacheSize: () => localDataCache.size,
+    
+    // Safe error wrapper for all operations
+    safeOperation: async (operation, fallback = null) => {
+        try {
+            return await operation();
+        } catch (error) {
+            console.error('❌ Database operation failed:', error);
+            return fallback;
+        }
+    }
 };
