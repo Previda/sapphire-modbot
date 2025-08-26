@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { createCase } = require('../../utils/caseManager');
+const webhookLogger = require('../../utils/webhookLogger');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -105,7 +106,18 @@ module.exports = {
 
             await interaction.reply({ embeds: [embed] });
 
-            // Log to mod channel if configured
+            // Log via webhook system
+            await webhookLogger.logModAction(interaction.guild.id, 'ban', {
+                targetTag: targetUser.tag,
+                targetId: targetUser.id,
+                moderatorTag: interaction.user.tag,
+                moderatorId: interaction.user.id,
+                caseId: newCase.caseId,
+                reason: reason,
+                duration: 'Permanent'
+            });
+
+            // Fallback: Log to mod channel if configured
             const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
             if (modLogChannelId) {
                 const modLogChannel = interaction.guild.channels.cache.get(modLogChannelId);

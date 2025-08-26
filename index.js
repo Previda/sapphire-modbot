@@ -41,12 +41,16 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.DirectMessages,
         GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildModeration
-    ]
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.GuildVoiceStates
+    ],
+    allowedMentions: { parse: ['users', 'roles'], repliedUser: false }
 });
+
+// Import webhook logger
+const webhookLogger = require('./src/utils/webhookLogger');
 
 client.commands = new Collection();
 
@@ -102,28 +106,104 @@ if (fs.existsSync(commandsPath)) {
 }
 
 // Bot ready event (updated for Discord.js v14+ compatibility)
-client.once('clientReady', async () => {
-    console.log(`🤖 ${client.user.tag} is online!`);
-    console.log(`📊 Serving ${client.guilds.cache.size} servers`);
-    console.log(`⚡ Loaded ${client.commands.size} commands`);
+client.on('ready', async () => {
+    console.log(`✅ ${client.user.tag} is online!`);
     
-    // Initialize database (non-blocking)
-    console.log('🗄️ Initializing MongoDB database connection...');
-    initializeDatabase()
-        .then(() => {
-            console.log('✅ Database initialized successfully');
-            initializeServices();
-            // Start backup scheduler after database is ready
-            backupScheduler.start();
-            console.log('💾 Backup scheduler started');
-        })
-        .catch(error => {
-            console.error('❌ Database connection failed:', error.message);
-            console.log('💡 Bot will continue with local JSON storage for data persistence');
-            console.log('🔧 To use MongoDB, set MONGODB_URI in your .env file');
-            // Initialize services even without database
-            initializeServices();
+    // Initialize services after client is ready
+    initializeServices();
+    
+    // Load additional modules
+    loadModules();
+});
+
+// Webhook logging event listeners
+client.on('guildMemberAdd', async (member) => {
+    try {
+        await webhookLogger.logMemberEvent(member.guild.id, 'join', member);
+    } catch (error) {
+        console.error('Error logging member join:', error);
+    }
+});
+
+client.on('guildMemberRemove', async (member) => {
+    try {
+        await webhookLogger.logMemberEvent(member.guild.id, 'leave', member);
+    } catch (error) {
+        console.error('Error logging member leave:', error);
+    }
+});
+
+client.on('messageDelete', async (message) => {
+    try {
+        if (message.author?.bot) return; // Ignore bot messages
+        if (!message.guild) return; // Ignore DMs
+        
+        await webhookLogger.logMessageEvent(message.guild.id, 'delete', {
+            author: message.author,
+            channel: message.channel,
+            content: message.content?.substring(0, 1000) || '[No content]'
         });
+    } catch (error) {
+        console.error('Error logging message delete:', error);
+    }
+});
+
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+    try {
+        if (newMessage.author?.bot) return; // Ignore bot messages
+        if (!newMessage.guild) return; // Ignore DMs
+        if (oldMessage.content === newMessage.content) return; // Ignore non-content changes
+        
+        await webhookLogger.logMessageEvent(newMessage.guild.id, 'edit', {
+            author: newMessage.author,
+            channel: newMessage.channel,
+            oldContent: oldMessage.content?.substring(0, 1000) || '[No content]',
+            newContent: newMessage.content?.substring(0, 1000) || '[No content]'
+        });
+    } catch (error) {
+        console.error('Error logging message edit:', error);
+    }
+});
+
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    try {
+        const member = newState.member || oldState.member;
+        if (!member) return;
+        
+        const oldChannel = oldState.channel;
+        const newChannel = newState.channel;
+        
+        if (!oldChannel && newChannel) {
+            // User joined a voice channel
+            await webhookLogger.logVoiceEvent(member.guild.id, 'join', member, oldChannel, newChannel);
+        } else if (oldChannel && !newChannel) {
+            // User left a voice channel
+            await webhookLogger.logVoiceEvent(member.guild.id, 'leave', member, oldChannel, newChannel);
+        } else if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+            // User moved between voice channels
+            await webhookLogger.logVoiceEvent(member.guild.id, 'move', member, oldChannel, newChannel);
+        }
+    } catch (error) {
+        console.error('Error logging voice state update:', error);
+    }
+});
+
+// Database connection and initialization
+connectDatabase()
+    .then(() => {
+        console.log('📊 Database connected successfully');
+        // Initialize services after database is ready
+        initializeServices();
+        // Start backup scheduler after database is ready
+        backupScheduler.start();
+        console.log('💾 Backup scheduler started');
+    })
+    .catch(error => {
+        console.error('❌ Database connection failed:', error.message);
+        console.log('💡 Bot will continue with local JSON storage for data persistence');
+        console.log('🔧 To use MongoDB, set MONGODB_URI in your .env file');
+        // Initialize services even without database
+        initializeServices();
 });
 
 // Global error handler for invalid commands
