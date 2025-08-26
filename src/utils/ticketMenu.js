@@ -634,33 +634,105 @@ async function handleTicketTranscript(interaction, caseId) {
         await interaction.deferReply({ ephemeral: true });
         
         const channel = interaction.channel;
-        const messages = await channel.messages.fetch({ limit: 100 });
+        const ticket = await getTicketByChannel(channel.id);
         
+        if (!ticket) {
+            return await interaction.editReply({
+                content: '❌ This channel is not a ticket.'
+            });
+        }
+        
+        // Fetch messages in batches to get full history
+        let allMessages = [];
+        let lastMessageId = null;
+        
+        while (true) {
+            const options = { limit: 100 };
+            if (lastMessageId) {
+                options.before = lastMessageId;
+            }
+            
+            const messages = await channel.messages.fetch(options);
+            if (messages.size === 0) break;
+            
+            allMessages = allMessages.concat(Array.from(messages.values()));
+            lastMessageId = messages.last().id;
+            
+            if (messages.size < 100) break; // No more messages
+        }
+        
+        // Sort messages by creation date (oldest first)
+        allMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+        
+        // Generate transcript
+        const transcriptId = `${ticket.ticketID}_${Date.now()}`;
         let transcript = `=== TICKET TRANSCRIPT ===\n`;
-        transcript += `Case ID: ${caseId}\n`;
-        transcript += `Channel: ${channel.name}\n`;
-        transcript += `Generated: ${new Date().toISOString()}\n\n`;
+        transcript += `Ticket ID: ${ticket.ticketID}\n`;
+        transcript += `Channel: ${channel.name} (${channel.id})\n`;
+        transcript += `User: ${ticket.userID}\n`;
+        transcript += `Reason: ${ticket.reason}\n`;
+        transcript += `Created: ${ticket.createdAt}\n`;
+        transcript += `Generated: ${new Date().toISOString()}\n`;
+        transcript += `Total Messages: ${allMessages.length}\n\n`;
+        transcript += `==========================================\n\n`;
         
-        messages.reverse().forEach(msg => {
-            transcript += `[${msg.createdAt.toISOString()}] ${msg.author.tag}: ${msg.content}\n`;
-        });
+        for (const msg of allMessages) {
+            const timestamp = msg.createdAt.toISOString();
+            const author = msg.author.tag;
+            const content = msg.content || '[No text content]';
+            
+            transcript += `[${timestamp}] ${author}: ${content}\n`;
+            
+            // Include attachments
+            if (msg.attachments.size > 0) {
+                msg.attachments.forEach(attachment => {
+                    transcript += `    📎 Attachment: ${attachment.name} (${attachment.url})\n`;
+                });
+            }
+            
+            // Include embeds
+            if (msg.embeds.length > 0) {
+                msg.embeds.forEach((embed, index) => {
+                    transcript += `    📋 Embed ${index + 1}: ${embed.title || 'No Title'}\n`;
+                    if (embed.description) {
+                        transcript += `        Description: ${embed.description.substring(0, 200)}...\n`;
+                    }
+                });
+            }
+        }
         
         // Save transcript to file
         const fs = require('fs').promises;
         const path = require('path');
-        const transcriptPath = path.join(process.cwd(), 'data', 'transcripts', `ticket-${caseId}.txt`);
+        const transcriptDir = path.join(process.cwd(), 'data', 'transcripts');
+        const transcriptPath = path.join(transcriptDir, `${transcriptId}.txt`);
         
-        await fs.mkdir(path.dirname(transcriptPath), { recursive: true });
+        await fs.mkdir(transcriptDir, { recursive: true });
         await fs.writeFile(transcriptPath, transcript);
         
+        // Update ticket with transcript info
+        const ticketsData = await loadTicketsData();
+        for (const guildId in ticketsData) {
+            const tickets = ticketsData[guildId];
+            const ticketIndex = tickets.findIndex(t => t.channelID === channel.id);
+            
+            if (ticketIndex !== -1) {
+                ticketsData[guildId][ticketIndex].transcriptId = transcriptId;
+                ticketsData[guildId][ticketIndex].transcriptPath = transcriptPath;
+                ticketsData[guildId][ticketIndex].transcriptGeneratedAt = new Date().toISOString();
+                await saveTicketsData(ticketsData);
+                break;
+            }
+        }
+        
         await interaction.editReply({
-            content: `✅ Transcript generated and saved to: ticket-${caseId}.txt`,
+            content: `✅ **Transcript Generated Successfully**\n📄 File: \`${transcriptId}.txt\`\n📊 Messages captured: ${allMessages.length}\n💾 Saved to: \`/data/transcripts/\``,
         });
         
     } catch (error) {
         console.error('Error generating transcript:', error);
         await interaction.editReply({
-            content: '❌ Failed to generate transcript.'
+            content: '❌ Failed to generate transcript. Check logs for details.'
         });
     }
 }
