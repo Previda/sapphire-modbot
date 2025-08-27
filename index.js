@@ -111,9 +111,6 @@ client.on('ready', async () => {
     
     // Initialize services after client is ready
     initializeServices();
-    
-    // Load additional modules
-    loadModules();
 });
 
 // Webhook logging event listeners
