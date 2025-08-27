@@ -37,7 +37,7 @@ module.exports = {
                 },
                 {
                     name: '💾 System',
-                    value: `\`\`\`\n${memStatus} Memory: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB\n⚡ Platform: Raspberry Pi\n🔧 Node.js: ${process.version}\n\`\`\``,
+                    value: `\`\`\`\n${memStatus} Memory: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB\n⚡ Platform: Skyfall\n🔧 Node.js: ${process.version}\n\`\`\``,
                     inline: true
                 },
                 {
@@ -47,7 +47,7 @@ module.exports = {
                 }
             )
             .setFooter({ 
-                text: 'Sapphire Bot • Optimized for Raspberry Pi', 
+                text: 'Sapphire Bot • Powered by Skyfall', 
                 iconURL: interaction.client.user.avatarURL() 
             })
             .setTimestamp();

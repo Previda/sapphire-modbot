@@ -383,7 +383,19 @@ async function handleCreateTicketSubmit(interaction) {
             createdBy: interaction.user.id
         });
 
-        // Send welcome message with user mention
+        // Find staff roles for mentions
+        const staffRoles = interaction.guild.roles.cache.filter(role => 
+            ['staff', 'mod', 'moderator', 'admin', 'administrator', 'support'].some(name => 
+                role.name.toLowerCase().includes(name)
+            )
+        );
+        
+        let staffMentions = '';
+        if (staffRoles.size > 0) {
+            staffMentions = staffRoles.map(role => role.toString()).join(' ');
+        }
+
+        // Send welcome message with user mention and staff ping
         const welcomeEmbed = new EmbedBuilder()
             .setTitle('🎫 Support Ticket Created')
             .setDescription(`Hello ${user}, your ticket has been created by staff!`)
@@ -396,7 +408,33 @@ async function handleCreateTicketSubmit(interaction) {
             .setColor(0x00ff00)
             .setTimestamp();
 
-        await channel.send({ content: `${user}`, embeds: [welcomeEmbed] });
+        // Create ticket control buttons
+        const controlRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`close_ticket_${ticketID}`)
+                    .setLabel('🔒 Close Ticket')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId(`transcript_ticket_${ticketID}`)
+                    .setLabel('📄 Transcript')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(`reopen_ticket_${ticketID}`)
+                    .setLabel('🔓 Reopen')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`delete_ticket_${ticketID}`)
+                    .setLabel('🗑️ Delete')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        const mentionText = staffMentions ? `${user} ${staffMentions}` : `${user}`;
+        await channel.send({ 
+            content: mentionText, 
+            embeds: [welcomeEmbed], 
+            components: [controlRow] 
+        });
 
         await interaction.reply({
             content: `✅ Ticket created successfully! ${channel}`,
@@ -579,6 +617,24 @@ async function handleTicketButtonInteraction(interaction) {
                 if (customId.startsWith('close_ticket_')) {
                     const ticketId = customId.replace('close_ticket_', '');
                     await handleTicketClose(interaction, ticketId);
+                } else if (customId.startsWith('transcript_ticket_')) {
+                    const ticketId = customId.replace('transcript_ticket_', '');
+                    await handleTicketTranscript(interaction, ticketId);
+                } else if (customId.startsWith('reopen_ticket_')) {
+                    const ticketId = customId.replace('reopen_ticket_', '');
+                    await handleTicketReopen(interaction, ticketId);
+                } else if (customId.startsWith('delete_ticket_')) {
+                    const ticketId = customId.replace('delete_ticket_', '');
+                    await handleTicketDelete(interaction, ticketId);
+                } else if (customId.startsWith('confirm_delete_')) {
+                    const ticketId = customId.replace('confirm_delete_', '');
+                    await handleDeleteConfirmation(interaction, ticketId);
+                } else if (customId === 'cancel_delete') {
+                    await interaction.update({
+                        content: '❌ Delete cancelled.',
+                        embeds: [],
+                        components: []
+                    });
                 } else if (customId.startsWith('ticket_transcript_')) {
                     const caseId = customId.split('_')[2];
                     await handleTicketTranscript(interaction, caseId);
@@ -737,9 +793,132 @@ async function handleTicketTranscript(interaction, caseId) {
     }
 }
 
+// Handle ticket reopen button
+async function handleTicketReopen(interaction, ticketId) {
+    try {
+        const ticket = await getTicketByChannel(interaction.channel.id);
+        
+        if (!ticket) {
+            return interaction.reply({
+                content: '❌ This channel is not a ticket.',
+                ephemeral: true
+            });
+        }
+
+        // Update ticket status
+        await updateTicketStatus(ticket.ticketID, 'open');
+
+        const embed = new EmbedBuilder()
+            .setTitle('🔓 Ticket Reopened')
+            .setColor(0x00ff00)
+            .addFields(
+                { name: 'Ticket ID', value: ticket.ticketID, inline: true },
+                { name: 'Reopened by', value: interaction.user.tag, inline: true },
+                { name: 'Status', value: '🟢 Open', inline: true }
+            )
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+
+    } catch (error) {
+        console.error('Error reopening ticket:', error);
+        await interaction.reply({
+            content: '❌ Failed to reopen ticket.',
+            ephemeral: true
+        });
+    }
+}
+
+// Handle ticket delete button
+async function handleTicketDelete(interaction, ticketId) {
+    try {
+        const ticket = await getTicketByChannel(interaction.channel.id);
+        
+        if (!ticket) {
+            return interaction.reply({
+                content: '❌ This channel is not a ticket.',
+                ephemeral: true
+            });
+        }
+
+        // Show confirmation
+        const embed = new EmbedBuilder()
+            .setTitle('⚠️ Delete Ticket Confirmation')
+            .setColor(0xff0000)
+            .setDescription('**WARNING:** This will permanently delete the ticket channel and all messages!')
+            .addFields(
+                { name: 'Ticket ID', value: ticket.ticketID, inline: true },
+                { name: 'User', value: `<@${ticket.userID}>`, inline: true },
+                { name: 'Created', value: `<t:${Math.floor(new Date(ticket.createdAt).getTime() / 1000)}:R>`, inline: true }
+            );
+
+        const confirmRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`confirm_delete_${ticketId}`)
+                    .setLabel('🗑️ DELETE FOREVER')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('cancel_delete')
+                    .setLabel('❌ Cancel')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
+        await interaction.reply({ 
+            embeds: [embed], 
+            components: [confirmRow], 
+            ephemeral: true 
+        });
+
+    } catch (error) {
+        console.error('Error showing delete confirmation:', error);
+        await interaction.reply({
+            content: '❌ Failed to show delete confirmation.',
+            ephemeral: true
+        });
+    }
+}
+
+// Handle delete confirmation
+async function handleDeleteConfirmation(interaction, ticketId) {
+    try {
+        const ticket = await getTicketByChannel(interaction.channel.id);
+        
+        if (ticket) {
+            // Update ticket status before deletion
+            await updateTicketStatus(ticket.ticketID, 'deleted');
+        }
+
+        await interaction.update({
+            content: '🗑️ Deleting ticket in 5 seconds...',
+            embeds: [],
+            components: []
+        });
+        
+        setTimeout(async () => {
+            try {
+                await interaction.channel.delete('Ticket deleted by staff');
+            } catch (error) {
+                console.error('Error deleting ticket channel:', error);
+            }
+        }, 5000);
+        
+    } catch (error) {
+        console.error('Error confirming delete:', error);
+        await interaction.update({
+            content: '❌ Failed to delete ticket.',
+            embeds: [],
+            components: []
+        });
+    }
+}
+
 module.exports = {
     handleTicketMenu,
     handleTicketMenuInteraction,
     handleModalSubmit,
-    handleTicketButtonInteraction
+    handleTicketButtonInteraction,
+    handleTicketReopen,
+    handleTicketDelete,
+    handleDeleteConfirmation
 };

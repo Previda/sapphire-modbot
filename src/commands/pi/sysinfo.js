@@ -46,7 +46,7 @@ module.exports = {
         } catch (error) {
             console.error('Sysinfo command error:', error);
             await interaction.editReply({
-                content: '❌ Failed to retrieve system information. This command works best on Linux/Raspberry Pi.',
+                content: '❌ Failed to retrieve system information. This command works best on Linux/Skyfall',
                 ephemeral: true
             });
         }
@@ -57,7 +57,7 @@ async function getSystemInfo() {
     const info = {};
 
     try {
-        // CPU Temperature (works on Raspberry Pi)
+        // CPU Temperature (works on Skyfall)
         try {
             const { stdout: tempOutput } = await execAsync('cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo "N/A"');
             const tempRaw = parseInt(tempOutput.trim());

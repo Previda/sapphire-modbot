@@ -98,7 +98,7 @@ function loadCommands(dir) {
 async function deployCommands() {
     try {
         console.log('🔄 Loading commands with validation and auto-fix...');
-        console.log('🎯 Targeting Raspberry Pi optimization\n');
+        console.log('🎯 Targeting Skyfall optimization\n');
         
         // Load all commands from src/commands directory
         const commandsPath = path.join(__dirname, 'src', 'commands');
@@ -194,7 +194,7 @@ async function deployCommands() {
 // Run the deployment
 if (require.main === module) {
     deployCommands().then(() => {
-        console.log('🎯 Ready for Raspberry Pi deployment!');
+        console.log('🎯 Ready for Skyfall deployment!');
         process.exit(0);
     }).catch((error) => {
         console.error('Registration failed:', error);

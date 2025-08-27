@@ -70,7 +70,7 @@ module.exports = {
                 },
                 {
                     name: '⚡ System Info',
-                    value: `**Memory:** ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB\n**Platform:** Raspberry Pi\n**Node.js:** ${process.version}\n**Status:** 🟢 Optimal`,
+                    value: `**Memory:** ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB\n**Platform:** Skyfall\n**Node.js:** ${process.version}\n**Status:** 🟢 Optimal`,
                     inline: true
                 }
             )

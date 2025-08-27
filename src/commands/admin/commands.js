@@ -33,7 +33,7 @@ module.exports = {
                 },
                 {
                     name: '🛠️ Utilities',
-                    value: '`/userinfo` - Comprehensive user information\n`/tempsys` - Raspberry Pi system stats\n**Interactive:** `!ticket` menu in channels',
+                    value: '`/userinfo` - Comprehensive user information\n`/tempsys` - Skyfall system stats\n**Interactive:** `!ticket` menu in channels',
                     inline: false
                 },
                 {

@@ -5,7 +5,7 @@ const axios = require('axios');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('tempsys')
-        .setDescription('Get Raspberry Pi system stats')
+        .setDescription('Get Skyfall system stats')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
@@ -16,7 +16,7 @@ module.exports = {
             const stats = await getSystemStats();
             
             const embed = {
-                title: '🖥️ Raspberry Pi System Stats',
+                title: '🖥️ Skyfall System Stats',
                 color: 0x00ff00,
                 fields: [
                     { name: '🌡️ CPU Temperature', value: `${stats.temp}°C`, inline: true },
@@ -27,7 +27,7 @@ module.exports = {
                     { name: '⏱️ Uptime', value: stats.uptime, inline: true }
                 ],
                 timestamp: new Date(),
-                footer: { text: 'Raspberry Pi Monitor' }
+                footer: { text: 'Skyfall Monitor' }
             };
 
             // Send to Discord channel
@@ -47,7 +47,7 @@ module.exports = {
         } catch (error) {
             console.error('Tempsys command error:', error);
             await interaction.editReply({
-                content: '❌ Failed to get system stats. Make sure this is running on a Raspberry Pi.',
+                content: '❌ Failed to get system stats. Make sure this is running on Skyfall.',
                 ephemeral: true
             });
         }

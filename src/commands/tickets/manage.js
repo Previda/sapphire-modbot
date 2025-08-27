@@ -211,7 +211,19 @@ async function createTicketForUser(interaction) {
             createdBy: interaction.user.id
         });
 
-        // Send welcome message with user mention
+        // Find staff role (common names)
+        const staffRoles = interaction.guild.roles.cache.filter(role => 
+            ['staff', 'mod', 'moderator', 'admin', 'administrator', 'support'].some(name => 
+                role.name.toLowerCase().includes(name)
+            )
+        );
+        
+        let staffMentions = '';
+        if (staffRoles.size > 0) {
+            staffMentions = staffRoles.map(role => role.toString()).join(' ');
+        }
+
+        // Send welcome message with user mention and staff ping
         const welcomeEmbed = new EmbedBuilder()
             .setTitle('🎫 Support Ticket Created')
             .setDescription(`Hello ${user}, your ticket has been created by staff!`)
@@ -224,7 +236,33 @@ async function createTicketForUser(interaction) {
             .setColor(0x00ff00)
             .setTimestamp();
 
-        await channel.send({ content: `${user}`, embeds: [welcomeEmbed] });
+        // Create ticket control buttons
+        const controlRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`close_ticket_${ticketID}`)
+                    .setLabel('🔒 Close Ticket')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId(`transcript_ticket_${ticketID}`)
+                    .setLabel('📄 Transcript')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(`reopen_ticket_${ticketID}`)
+                    .setLabel('🔓 Reopen')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`delete_ticket_${ticketID}`)
+                    .setLabel('🗑️ Delete')
+                    .setStyle(ButtonStyle.Danger)
+            );
+
+        const mentionText = staffMentions ? `${user} ${staffMentions}` : `${user}`;
+        await channel.send({ 
+            content: mentionText, 
+            embeds: [welcomeEmbed], 
+            components: [controlRow] 
+        });
 
         await interaction.reply({
             content: `✅ Ticket created successfully for ${user.tag}!\n🎫 Channel: ${channel}\n🆔 ID: ${ticketID}`,
