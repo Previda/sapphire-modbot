@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, StringSelectMenuBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
 const { isConnected } = require('../models/database');
 const { loadTicketsData, saveTicketsData, saveTicket, getGuildTickets, getUserTickets, getTicketByChannel, updateTicketStatus, closeTicket } = require('./ticketUtils');
 
@@ -354,21 +354,49 @@ async function handleCreateTicketSubmit(interaction) {
             name: `${category}-${user.username}`,
             type: 0, // Text channel
             topic: `Ticket by ${user.tag} | Reason: ${reason}`,
-            permissionOverwrites: [
-                {
-                    id: interaction.guild.roles.everyone,
-                    deny: ['ViewChannel']
-                },
-                {
-                    id: user.id,
-                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
-                },
-                {
-                    id: interaction.user.id,
-                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'ManageMessages']
-                }
-            ]
         });
+
+        // Set comprehensive permissions for the ticket channel
+        const permissionOverwrites = [
+            {
+                id: interaction.guild.roles.everyone.id,
+                deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+            },
+            {
+                id: user.id,
+                allow: [
+                    PermissionFlagsBits.ViewChannel, 
+                    PermissionFlagsBits.SendMessages, 
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.EmbedLinks
+                ]
+            }
+        ];
+
+        // Add staff roles to permissions
+        const staffRoles = interaction.guild.roles.cache.filter(role => {
+            const roleName = role.name.toLowerCase();
+            return ['staff', 'mod', 'moderator', 'admin', 'administrator', 'support', 'helper', 'team'].some(name => 
+                roleName.includes(name)
+            ) && !role.managed && role.id !== interaction.guild.id; // Exclude @everyone and bot roles
+        });
+
+        staffRoles.forEach(role => {
+            permissionOverwrites.push({
+                id: role.id,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.EmbedLinks,
+                    PermissionFlagsBits.ManageMessages
+                ]
+            });
+        });
+
+        await channel.permissionOverwrites.set(permissionOverwrites);
 
         // Store ticket using utility function
         await saveTicket({
@@ -383,16 +411,12 @@ async function handleCreateTicketSubmit(interaction) {
             createdBy: interaction.user.id
         });
 
-        // Find staff roles for mentions
-        const staffRoles = interaction.guild.roles.cache.filter(role => 
-            ['staff', 'mod', 'moderator', 'admin', 'administrator', 'support'].some(name => 
-                role.name.toLowerCase().includes(name)
-            )
-        );
-        
+        // Find staff role (common names) - improved detection
         let staffMentions = '';
         if (staffRoles.size > 0) {
-            staffMentions = staffRoles.map(role => role.toString()).join(' ');
+            // Only mention up to 3 staff roles to avoid spam
+            const rolesToMention = staffRoles.first(3);
+            staffMentions = rolesToMention.map(role => role.toString()).join(' ');
         }
 
         // Send welcome message with user mention and staff ping
@@ -781,8 +805,56 @@ async function handleTicketTranscript(interaction, caseId) {
             }
         }
         
+        // Create transcript embed for sharing
+        const transcriptEmbed = new EmbedBuilder()
+            .setTitle('📄 Ticket Transcript')
+            .setColor(0x00ff00)
+            .addFields(
+                { name: '🎫 Ticket ID', value: ticket.ticketID, inline: true },
+                { name: '👤 User', value: `<@${ticket.userID}>`, inline: true },
+                { name: '📊 Messages', value: `${allMessages.length}`, inline: true },
+                { name: '📅 Created', value: `<t:${Math.floor(new Date(ticket.createdAt).getTime() / 1000)}:F>`, inline: false },
+                { name: '💬 Reason', value: ticket.reason || 'No reason provided', inline: false }
+            )
+            .setTimestamp()
+            .setFooter({ text: `Generated by ${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
+
+        // Try to DM transcript to ticket creator
+        try {
+            const ticketUser = await interaction.client.users.fetch(ticket.userID);
+            await ticketUser.send({
+                content: `📄 **Your ticket transcript is ready!**\n\n🎫 **Ticket:** ${ticket.ticketID}\n📅 **Created:** ${ticket.createdAt}\n💬 **Reason:** ${ticket.reason || 'No reason provided'}\n📊 **Messages:** ${allMessages.length}`,
+                embeds: [transcriptEmbed],
+                files: [{ attachment: transcriptPath, name: `ticket-${ticket.ticketID}-transcript.txt` }]
+            });
+        } catch (dmError) {
+            console.log('Could not DM transcript to user:', dmError.message);
+        }
+
+        // Send transcript to logs channel if configured
+        try {
+            const guild = interaction.guild;
+            let logsChannel = guild.channels.cache.find(ch => 
+                ch.name.toLowerCase().includes('ticket') && ch.name.toLowerCase().includes('log')
+            ) || guild.channels.cache.find(ch => 
+                ch.name.toLowerCase().includes('transcript')
+            ) || guild.channels.cache.find(ch => 
+                ch.name.toLowerCase().includes('log')
+            );
+            
+            if (logsChannel && logsChannel.isTextBased()) {
+                await logsChannel.send({
+                    content: `📄 **Ticket Transcript Generated**`,
+                    embeds: [transcriptEmbed],
+                    files: [{ attachment: transcriptPath, name: `ticket-${ticket.ticketID}-transcript.txt` }]
+                });
+            }
+        } catch (channelError) {
+            console.log('Could not send transcript to logs channel:', channelError.message);
+        }
+
         await interaction.editReply({
-            content: `✅ **Transcript Generated Successfully**\n📄 File: \`${transcriptId}.txt\`\n📊 Messages captured: ${allMessages.length}\n💾 Saved to: \`/data/transcripts/\``,
+            content: `✅ **Transcript Generated Successfully**\n📄 File: \`${transcriptId}.txt\`\n📊 Messages captured: ${allMessages.length}\n💾 Saved to: \`/data/transcripts/\`\n📤 **Sent to:**\n• 💌 DMed to ticket creator\n• 📋 Posted to logs channel (if available)`,
         });
         
     } catch (error) {

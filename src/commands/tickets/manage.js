@@ -1,6 +1,84 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { pool } = require('../../models/database');
 
+// Settings handlers
+async function handleCategoriesSettings(interaction) {
+    const embed = new EmbedBuilder()
+        .setTitle('🏷️ Ticket Categories Management')
+        .setColor(0x0099ff)
+        .setDescription('Configure available ticket categories')
+        .addFields(
+            { name: '📋 Current Categories', value: '• **General** - General support tickets\n• **Appeal** - Ban/mute appeals\n• **Report** - User/rule violations\n• **Bug** - Technical issues\n• **Staff** - Staff applications', inline: false },
+            { name: '🔧 Category Features', value: '• Auto-role assignment\n• Custom permissions per category\n• Dedicated channels\n• Priority levels', inline: false }
+        )
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handlePermissionsSettings(interaction) {
+    const embed = new EmbedBuilder()
+        .setTitle('🔐 Permission Settings')
+        .setColor(0xff9900)
+        .setDescription('Current permission configuration')
+        .addFields(
+            { name: '👥 Staff Roles Detected', value: 'Auto-detecting: `staff`, `mod`, `moderator`, `admin`, `administrator`, `support`', inline: false },
+            { name: '🎫 Ticket Permissions', value: '• Staff can view all tickets\n• Users can only view their tickets\n• Admins can delete tickets\n• Mods can close/reopen tickets', inline: false },
+            { name: '📍 Channel Permissions', value: '• Private channels for ticket creators\n• Staff get automatic access\n• Read/Send message permissions managed', inline: false }
+        )
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handleChannelsSettings(interaction) {
+    const guild = interaction.guild;
+    const ticketCategory = guild.channels.cache.find(ch => ch.type === 4 && ch.name.toLowerCase().includes('ticket'));
+    const logsChannel = guild.channels.cache.find(ch => 
+        ch.name.toLowerCase().includes('ticket') && ch.name.toLowerCase().includes('log')
+    ) || guild.channels.cache.find(ch => ch.name.toLowerCase().includes('transcript'));
+    
+    const embed = new EmbedBuilder()
+        .setTitle('📍 Channel Setup')
+        .setColor(0x00ff00)
+        .setDescription('Configure ticket system channels')
+        .addFields(
+            { 
+                name: '🏷️ Ticket Category', 
+                value: ticketCategory ? `✅ Found: ${ticketCategory.name}` : '❌ **Create a category named "Tickets" or "Support"**',
+                inline: false 
+            },
+            { 
+                name: '📋 Logs Channel', 
+                value: logsChannel ? `✅ Found: ${logsChannel.name}` : '❌ **Create a channel named "ticket-logs" or "transcripts"**',
+                inline: false 
+            },
+            { 
+                name: '📝 Setup Instructions', 
+                value: '1. Create category: **"🎫 Tickets"**\n2. Create channel: **"ticket-logs"**\n3. Set permissions for staff roles\n4. Run `/manage menu` to test',
+                inline: false 
+            }
+        )
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handleFeaturesSettings(interaction) {
+    const embed = new EmbedBuilder()
+        .setTitle('⚡ Feature Settings')
+        .setColor(0x9900ff)
+        .setDescription('Ticket system features and capabilities')
+        .addFields(
+            { name: '✅ Active Features', value: '• **Auto Transcripts** - Generated on ticket close\n• **DM Transcripts** - Sent to ticket creator\n• **Staff Mentions** - Auto-ping relevant staff\n• **Control Buttons** - Close, reopen, delete, transcript\n• **Permission Management** - Auto-setup channel permissions\n• **Logs Channel** - Save transcripts to designated channel', inline: false },
+            { name: '🔄 Workflow', value: '1. User creates ticket\n2. Staff gets mentioned\n3. Support conversation\n4. Generate transcript\n5. Close ticket\n6. Auto-cleanup', inline: false },
+            { name: '📊 Statistics', value: 'Use `/manage list` to see active tickets and usage stats', inline: false }
+        )
+        .setTimestamp();
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('manage')
@@ -282,13 +360,39 @@ async function showTicketSettings(interaction) {
     const embed = new EmbedBuilder()
         .setTitle('⚙️ Ticket System Settings')
         .setColor(0x0099ff)
-        .setDescription('Configure your ticket system settings')
+        .setDescription('Configure your ticket system settings and features')
         .addFields(
-            { name: '🎫 Categories Available', value: 'General, Appeal, Report, Bug, Staff', inline: false },
-            { name: '📋 Features Enabled', value: '• Auto transcripts\n• User mentions\n• Permission management\n• Slowmode control', inline: false },
-            { name: '🔧 Management Options', value: 'Use `/manage menu` for interactive controls', inline: false }
+            { name: '🎫 Available Categories', value: '• **General** - General support\n• **Appeal** - Ban appeals\n• **Report** - User reports\n• **Bug** - Bug reports\n• **Staff** - Staff applications', inline: false },
+            { name: '📋 Current Features', value: '✅ Auto transcripts\n✅ Staff mentions\n✅ Permission management\n✅ Control buttons\n✅ DM transcripts\n✅ Logs channel save', inline: false },
+            { name: '🔧 Channel Setup', value: '• Create channels named `ticket-logs` or `transcripts` for auto-logging\n• Staff roles: `staff`, `mod`, `admin`, `support` are auto-detected', inline: false },
+            { name: '🎛️ Quick Actions', value: 'Use the buttons below to manage settings', inline: false }
         )
-        .setTimestamp();
+        .setTimestamp()
+        .setFooter({ text: 'Powered by Skyfall', iconURL: interaction.client.user.displayAvatarURL() });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    const settingsRow = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('settings_categories')
+                .setLabel('🏷️ Manage Categories')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId('settings_permissions')
+                .setLabel('🔐 Permissions')
+                .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId('settings_channels')
+                .setLabel('📍 Setup Channels')
+                .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId('settings_features')
+                .setLabel('⚡ Features')
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+    await interaction.reply({ 
+        embeds: [embed], 
+        components: [settingsRow], 
+        ephemeral: true 
+    });
 }
