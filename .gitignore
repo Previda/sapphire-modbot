@@ -87,3 +87,6 @@ backup_*.sql
 # Temporary files
 temp/
 tmp/
+
+# Deployment directory
+sapphire-bot/
