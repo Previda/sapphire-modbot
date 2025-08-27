@@ -189,7 +189,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 });
 
 // Database connection and initialization
-connectDatabase()
+initializeDatabase()
     .then(() => {
         console.log('📊 Database connected successfully');
         // Initialize services after database is ready
