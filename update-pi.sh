@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Complete Pi Bot Update & Fix Script
+# Complete Skyfall Bot Update & Fix Script
 set -e
 
-echo "🚀 Updating Sapphire Bot on Raspberry Pi..."
+echo "🚀 Updating Sapphire Bot on Skyfall..."
 
 # Navigate to bot directory
 cd /home/admin/sapphire-bot

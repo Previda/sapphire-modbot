@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Sapphire Bot - Raspberry Pi Auto Update System
+# Sapphire Bot - Skyfall Auto Update System
 # Automated GitHub clone, update, test, and deploy system
 
 # Colors for output
@@ -54,7 +54,7 @@ create_directories() {
 optimize_for_pi() {
     log "Applying Raspberry Pi optimizations..."
     
-    # Increase swap if needed (512MB Pi)
+    # Increase swap if needed (512MB Skyfall)
     if [ $(free -m | awk 'NR==2{printf "%.0f", $2}') -lt 1024 ]; then
         if [ $(free -m | awk 'NR==3{printf "%.0f", $2}') -lt 512 ]; then
             log "Increasing swap space for low memory Pi..."
@@ -65,13 +65,13 @@ optimize_for_pi() {
         fi
     fi
     
-    # Set memory limits for Node.js
+    # Set memory limits for Node.js on Skyfall
     export NODE_OPTIONS="--max-old-space-size=256"
     
-    # GPU memory split for headless Pi
+    # GPU memory split for headless Skyfall
     if ! grep -q "gpu_mem=16" /boot/config.txt; then
         echo "gpu_mem=16" | sudo tee -a /boot/config.txt
-        log "Set GPU memory to 16MB for more RAM"
+        log "Set GPU memory to 16MB for more RAM on Skyfall"
     fi
 }
 
@@ -248,9 +248,9 @@ auto_fix() {
     chmod +x scripts/*.sh 2>/dev/null || true
     chmod 600 .env 2>/dev/null || true
     
-    # Fix 2: Node modules rebuild for Pi architecture
+    # Fix 2: Node modules rebuild for Skyfall architecture
     if [ -d "node_modules" ]; then
-        log "Rebuilding native modules for Pi architecture..."
+        log "Rebuilding native modules for Skyfall architecture..."
         NODE_OPTIONS="--max-old-space-size=256" npm rebuild --silent 2>/dev/null || true
     fi
     
@@ -281,7 +281,7 @@ manage_service() {
     pm2 stop $SERVICE_NAME 2>/dev/null || true
     pm2 delete $SERVICE_NAME 2>/dev/null || true
     
-    # Start with Pi optimizations
+    # Start with Skyfall optimizations
     PM2_HOME=/home/$CURRENT_USER/.pm2 NODE_OPTIONS="--max-old-space-size=256" pm2 start index.js \
         --name $SERVICE_NAME \
         --max-memory-restart 200M \
@@ -363,7 +363,7 @@ rollback() {
 
 # Main execution
 main() {
-    echo -e "${BLUE}🤖 Sapphire Bot - Pi Auto Update System${NC}"
+    echo -e "${BLUE}🤖 Sapphire Bot - Skyfall Auto Update System${NC}"
     echo -e "${BLUE}======================================${NC}"
     
     case "${1:-update}" in
