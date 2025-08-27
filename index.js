@@ -226,11 +226,6 @@ client.on('interactionCreate', async interaction => {
         }
 
         try {
-            // Auto-defer for slow commands to prevent timeout
-            if (!interaction.deferred && !interaction.replied) {
-                await interaction.deferReply({ ephemeral: false });
-            }
-            
             await command.execute(interaction);
         } catch (error) {
             console.error('❌ Command execution error:', error);
