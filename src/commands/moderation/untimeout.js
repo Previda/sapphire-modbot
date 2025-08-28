@@ -1,8 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { createCase } = require('../../utils/caseManager');
-const { WebhookLogger } = require('../../utils/webhookLogger');
-
-const webhookLogger = new WebhookLogger();
+const webhookLogger = require('../../utils/webhookLogger');
 
 module.exports = {
     data: new SlashCommandBuilder()
