@@ -22,13 +22,14 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
     async execute(interaction) {
+        await interaction.deferReply({ ephemeral: true });
+        
         try {
             // Check permissions
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && 
                 !isSuperuser(interaction.user.id)) {
-                return await interaction.reply({
-                    content: '❌ You need **Manage Server** permissions to create ticket panels.',
-                    flags: 64
+                return await interaction.editReply({
+                    content: '❌ You need **Manage Server** permissions to create ticket panels.'
                 });
             }
 
@@ -111,17 +112,15 @@ module.exports = {
                 )
                 .setFooter({ text: 'Ticket panel is now active and ready to use!' });
 
-            await interaction.reply({
-                embeds: [successEmbed],
-                flags: 64
+            await interaction.editReply({
+                embeds: [successEmbed]
             });
 
         } catch (error) {
             console.error('Error creating ticket panel:', error);
             
-            await interaction.reply({
-                content: '❌ **Error:** Failed to create ticket panel. Please try again.',
-                flags: 64
+            await interaction.editReply({
+                content: '❌ **Error:** Failed to create ticket panel. Please try again.'
             }).catch(() => {});
         }
     }

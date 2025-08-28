@@ -32,6 +32,9 @@ module.exports = {
                         .setRequired(false))),
 
     async execute(interaction) {
+        // Defer reply for database operations
+        await interaction.deferReply({ ephemeral: true });
+        
         let subcommand;
         try {
             subcommand = interaction.options.getSubcommand();
@@ -48,7 +51,7 @@ module.exports = {
                 )
                 .setTimestamp();
             
-            return interaction.reply({ embeds: [embed], flags: 64 }); // 64 = ephemeral
+            return interaction.editReply({ embeds: [embed] });
         }
 
         switch (subcommand) {
@@ -72,30 +75,26 @@ async function handleAppealSubmit(interaction) {
         const caseData = await getCaseById(caseID, interaction.guild.id);
         
         if (!caseData) {
-            return interaction.reply({
-                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`,
-                flags: 64
+            return interaction.editReply({
+                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`
             });
         }
 
         if (caseData.userId !== interaction.user.id) {
-            return interaction.reply({
-                content: '❌ You can only appeal your own cases.',
-                flags: 64
+            return interaction.editReply({
+                content: '❌ You can only appeal your own cases.'
             });
         }
 
         if (!caseData.appealable) {
-            return interaction.reply({
-                content: '❌ This case is not appealable.',
-                flags: 64
+            return interaction.editReply({
+                content: '❌ This case is not appealable.'
             });
         }
 
         if (caseData.appealed) {
-            return interaction.reply({
-                content: `❌ This case has already been appealed. Status: ${caseData.status}`,
-                flags: 64
+            return interaction.editReply({
+                content: `❌ This case has already been appealed. Status: ${caseData.status}`
             });
         }
 
@@ -138,9 +137,8 @@ async function handleAppealSubmit(interaction) {
 
     } catch (error) {
         console.error('Error handling appeal submit:', error);
-        await interaction.reply({
-            content: '❌ An error occurred while processing your appeal.',
-            flags: 64
+        await interaction.editReply({
+            content: '❌ An error occurred while processing your appeal.'
         });
     }
 }
@@ -152,16 +150,14 @@ async function handleAppealStatus(interaction) {
         const caseData = await getCaseById(caseID, interaction.guild.id);
         
         if (!caseData) {
-            return interaction.reply({
-                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`,
-                flags: 64
+            return interaction.editReply({
+                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`
             });
         }
 
         if (caseData.userId !== interaction.user.id) {
-            return interaction.reply({
-                content: '❌ You can only check the status of your own appeals.',
-                flags: 64
+            return interaction.editReply({
+                content: '❌ You can only check the status of your own appeals.'
             });
         }
 
@@ -193,13 +189,12 @@ async function handleAppealStatus(interaction) {
             );
         }
 
-        await interaction.reply({ embeds: [embed], flags: 64 });
+        await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
         console.error('Error checking appeal status:', error);
-        await interaction.reply({
-            content: '❌ An error occurred while checking appeal status.',
-            flags: 64
+        await interaction.editReply({
+            content: '❌ An error occurred while checking appeal status.'
         });
     }
 }
@@ -207,9 +202,8 @@ async function handleAppealStatus(interaction) {
 async function handleAppealReview(interaction) {
     // Check if user has permission to review appeals
     if (!interaction.member.permissions.has('ModerateMembers')) {
-        return interaction.reply({
-            content: '❌ You need Moderate Members permission to review appeals.',
-            flags: 64
+        return interaction.editReply({
+            content: '❌ You need Moderate Members permission to review appeals.'
         });
     }
 
@@ -229,16 +223,14 @@ async function reviewSpecificAppeal(interaction, caseID) {
         const punishment = await getPunishmentByCase(caseID);
         
         if (!punishment) {
-            return interaction.reply({
-                content: '❌ Case not found.',
-                flags: 64
+            return interaction.editReply({
+                content: '❌ Case not found.'
             });
         }
 
         if (!punishment.appealStatus || punishment.appealStatus === 'none') {
-            return interaction.reply({
-                content: '❌ This case has no pending appeal.',
-                flags: 64
+            return interaction.editReply({
+                content: '❌ This case has no pending appeal.'
             });
         }
 
@@ -269,13 +261,12 @@ async function reviewSpecificAppeal(interaction, caseID) {
             }
         }
 
-        await interaction.reply({ embeds: [embed], flags: 64 });
+        await interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
         console.error('Error reviewing appeal:', error);
-        await interaction.reply({
-            content: '❌ An error occurred while reviewing appeal.',
-            flags: 64
+        await interaction.editReply({
+            content: '❌ An error occurred while reviewing appeal.'
         });
     }
 }
@@ -292,7 +283,7 @@ async function listPendingAppeals(interaction) {
         )
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed], flags: 64 });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 function getStatusColor(status) {

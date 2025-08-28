@@ -24,6 +24,8 @@ module.exports = {
                 .setDescription('View current automod config')),
 
     async execute(interaction) {
+        await interaction.deferReply({ ephemeral: true });
+        
         const guildID = interaction.guild.id;
 
         try {
@@ -65,7 +67,7 @@ module.exports = {
                     )
                     .setTimestamp();
 
-                return interaction.reply({ embeds: [embed] });
+                return interaction.editReply({ embeds: [embed] });
             }
 
             if (interaction.options.getSubcommand() === 'view') {
@@ -87,14 +89,13 @@ module.exports = {
                     )
                     .setTimestamp();
 
-                return interaction.reply({ embeds: [embed] });
+                return interaction.editReply({ embeds: [embed] });
             }
 
         } catch (error) {
             console.error('Automod command error:', error);
-            await interaction.reply({
-                content: '❌ Failed to configure automod settings.',
-                ephemeral: true
+            await interaction.editReply({
+                content: '❌ Failed to configure automod settings.'
             });
         }
     }

@@ -6,6 +6,8 @@ module.exports = {
         .setDescription('📊 Display detailed server information and bot statistics'),
     
     async execute(interaction) {
+        await interaction.deferReply();
+        
         const guild = interaction.guild;
         const botMember = guild.members.cache.get(interaction.client.user.id);
         
@@ -90,6 +92,6 @@ module.exports = {
             });
         }
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
     },
 };

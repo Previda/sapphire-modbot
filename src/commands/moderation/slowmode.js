@@ -17,6 +17,8 @@ module.exports = {
                 .setRequired(false)),
 
     async execute(interaction) {
+        await interaction.deferReply();
+        
         const duration = interaction.options.getInteger('duration');
         const channel = interaction.options.getChannel('channel') || interaction.channel;
 
@@ -33,13 +35,12 @@ module.exports = {
                 )
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
             console.error('Slowmode command error:', error);
-            await interaction.reply({
-                content: '❌ Failed to set slowmode. Check permissions and try again.',
-                ephemeral: true
+            await interaction.editReply({
+                content: '❌ Failed to set slowmode. Check permissions and try again.'
             });
         }
     }
