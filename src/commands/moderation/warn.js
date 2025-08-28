@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const { createCase } = require('../../utils/caseUtils');
+const { createCase } = require('../../utils/caseManager');
 const { WebhookLogger } = require('../../utils/webhookLogger');
 
 const webhookLogger = new WebhookLogger();
