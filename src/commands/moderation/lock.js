@@ -46,12 +46,14 @@ module.exports = {
 
     async execute(interaction) {
         try {
+            // Defer reply for channel operations
+            await interaction.deferReply();
+
             // Check permissions
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels) && 
-                !isSuperuser(interaction.user.id)) {
-                return await interaction.reply({
-                    content: '❌ You need **Manage Channels** permissions to use this command.',
-                    flags: 64
+                interaction.guild.ownerId !== interaction.user.id) {
+                return interaction.editReply({
+                    content: '❌ You need the **Manage Channels** permission to use this command.'
                 });
             }
 

@@ -32,6 +32,9 @@ module.exports = {
         const deletedays = interaction.options.getInteger('deletedays') || 0;
         const silent = interaction.options.getBoolean('silent') || false;
 
+        // Defer reply for moderation actions
+        await interaction.deferReply({ ephemeral: silent });
+
         try {
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             

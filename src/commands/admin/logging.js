@@ -74,6 +74,9 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand();
         const guildId = interaction.guild.id;
 
+        // Defer reply for database operations
+        await interaction.deferReply();
+
         switch (subcommand) {
             case 'setup':
                 const type = interaction.options.getString('type');

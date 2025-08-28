@@ -27,12 +27,14 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
+        // Defer reply for moderation actions
+        await interaction.deferReply();
+
         // Check if user is server owner or has required permissions
         if (interaction.guild.ownerId !== interaction.user.id && 
             !interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-            return interaction.reply({
-                content: '❌ You need the "Moderate Members" permission or be the server owner to use this command.',
-                ephemeral: true
+            return interaction.editReply({
+                content: '❌ You need the **Moderate Members** permission to use this command.'
             });
         }
 

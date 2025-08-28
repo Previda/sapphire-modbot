@@ -37,6 +37,9 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand();
         const guildId = interaction.guild.id;
 
+        // Defer the reply for database operations
+        await interaction.deferReply();
+
         // Get current settings
         let settings = await getDocument('antiraid', guildId) || {
             enabled: false,

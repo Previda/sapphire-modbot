@@ -19,6 +19,9 @@ module.exports = {
         const targetUser = interaction.options.getUser('user');
         const reason = interaction.options.getString('reason') || 'No reason provided';
 
+        // Defer reply for moderation actions
+        await interaction.deferReply();
+
         try {
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             

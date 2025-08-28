@@ -101,6 +101,9 @@ module.exports = {
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
 
+        // Defer reply for database operations
+        await interaction.deferReply();
+
         switch (subcommand) {
             case 'ban':
                 await this.undoBan(interaction);

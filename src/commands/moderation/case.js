@@ -49,11 +49,13 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
+        // Defer reply for database operations
+        await interaction.deferReply();
+
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers) && 
             interaction.guild.ownerId !== interaction.user.id) {
-            return interaction.reply({
-                content: '❌ You need Moderate Members permission to use this command.',
-                ephemeral: true
+            return interaction.editReply({
+                content: '❌ You need the **Moderate Members** permission to use this command.'
             });
         }
 
