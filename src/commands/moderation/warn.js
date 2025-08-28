@@ -34,7 +34,7 @@ module.exports = {
             if (member) {
                 // Permission checks for in-server warnings
                 if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                    return interaction.reply({ content: '❌ You cannot warn this member due to role hierarchy.', ephemeral: true });
+                    return interaction.editReply({ content: '❌ You cannot warn this member due to role hierarchy.' });
                 }
             }
 
@@ -92,7 +92,7 @@ module.exports = {
                 inline: false
             });
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
 
             // Log to mod channel if configured
             const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
@@ -105,9 +105,8 @@ module.exports = {
 
         } catch (error) {
             console.error('Warn command error:', error);
-            await interaction.reply({
-                content: '❌ Failed to warn the user. Please check my permissions.',
-                ephemeral: true
+            await interaction.editReply({
+                content: '❌ Failed to warn the user. Please check my permissions.'
             });
         }
     }
