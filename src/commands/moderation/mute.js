@@ -1,5 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const moderationManager = require('../../utils/moderationUtils');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { createCase } = require('../../utils/caseUtils');
+const { WebhookLogger } = require('../../utils/webhookLogger');
+
+const webhookLogger = new WebhookLogger();
 const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
@@ -69,7 +72,7 @@ module.exports = {
             const durationText = `${durationMinutes}m`;
 
             // Create moderation case with proper case ID
-            const muteCase = await createCase({
+            const newCase = await createCase({
                 type: 'mute',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
@@ -80,7 +83,7 @@ module.exports = {
             });
 
             // Apply timeout
-            await member.timeout(timeoutDuration, `${reason} | Moderator: ${interaction.user.tag} | Case #${muteCase.caseId}`);
+            await member.timeout(timeoutDuration, `${reason} | Moderator: ${interaction.user.tag} | Case #${newCase.caseId}`);
 
             // Send DM to user (unless silent)
             let dmSent = false;
@@ -93,7 +96,7 @@ module.exports = {
                             { name: '🏢 Server', value: interaction.guild.name, inline: true },
                             { name: '⏱️ Duration', value: durationText, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
-                            { name: '🆔 Case ID', value: muteCase.caseId, inline: true },
+                            { name: '🆔 Case ID', value: newCase.caseId, inline: true },
                             { name: '📋 Appeal', value: 'Use `/appeal submit` with your case ID if you believe this is unfair', inline: false }
                         )
                         .setTimestamp();
@@ -114,7 +117,7 @@ module.exports = {
                 .addFields(
                     { name: '👤 User', value: `${targetUser.tag} (${targetUser.id})`, inline: true },
                     { name: '👮 Moderator', value: interaction.user.tag, inline: true },
-                    { name: '🆔 Case ID', value: muteCase.caseId, inline: true },
+                    { name: '🆔 Case ID', value: newCase.caseId, inline: true },
                     { name: '⏱️ Duration', value: durationText, inline: true },
                     { name: '🕐 Expires', value: `<t:${Math.floor(expiresAt / 1000)}:R>`, inline: true },
                     { name: '💬 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true },
@@ -123,7 +126,18 @@ module.exports = {
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
+
+            // Log to webhook if configured
+            await webhookLogger.logModAction(interaction.guild.id, 'mute', {
+                targetTag: targetUser.tag,
+                targetId: targetUser.id,
+                moderatorTag: interaction.user.tag,
+                moderatorId: interaction.user.id,
+                caseId: newCase.caseId,
+                reason: reason,
+                duration: `${durationMinutes} minutes`
+            });
 
             // Log to mod channel if configured
             const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;

@@ -1,5 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { createCase } = require('../../utils/caseManager');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { createCase } = require('../../utils/caseUtils');
+const { WebhookLogger } = require('../../utils/webhookLogger');
+
+const webhookLogger = new WebhookLogger();
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -93,6 +96,16 @@ module.exports = {
             });
 
             await interaction.editReply({ embeds: [embed] });
+
+            // Log to webhook if configured
+            await webhookLogger.logModAction(interaction.guild.id, 'warn', {
+                targetTag: targetUser.tag,
+                targetId: targetUser.id,
+                moderatorTag: interaction.user.tag,
+                moderatorId: interaction.user.id,
+                caseId: newCase.caseId,
+                reason: reason
+            });
 
             // Log to mod channel if configured
             const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;

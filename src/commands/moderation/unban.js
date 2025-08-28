@@ -1,5 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { createCase, getCaseById, updateCase } = require('../../utils/caseManager');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { createCase } = require('../../utils/caseUtils');
+const { WebhookLogger } = require('../../utils/webhookLogger');
+
+const webhookLogger = new WebhookLogger();
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -92,7 +95,17 @@ module.exports = {
                 .setThumbnail(targetUser ? targetUser.displayAvatarURL() : null)
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
+
+            // Log to webhook if configured
+            await webhookLogger.logModAction(interaction.guild.id, 'unban', {
+                targetTag: targetUser ? targetUser.tag : 'Unknown User',
+                targetId: userId,
+                moderatorTag: interaction.user.tag,
+                moderatorId: interaction.user.id,
+                caseId: newCase.caseId,
+                reason: reason
+            });
 
             // Send DM to unbanned user if possible
             if (targetUser) {
