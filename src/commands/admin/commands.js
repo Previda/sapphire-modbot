@@ -23,7 +23,7 @@ module.exports = {
                 },
                 {
                     name: '📝 Appeals System',
-                    value: '`/appeal submit` - Submit punishment appeal\n`/appeal status` - Check appeal status\n`/appeal review` - Review appeals (Staff)\n**DM Commands:** `!case <ID>`, `!appeal <ID>`',
+                    value: '`/appeal submit case_id:ABC123` - Submit punishment appeal\n`/appeal status case_id:ABC123` - Check appeal status\n`/appeal review case_id:ABC123` - Review appeals (Staff)\n`/appeal settings` - Configure appeal system (Admin)\n**DM Support:** Add `server_id:123456789` parameter\n**Auto-Invites:** Rejoin buttons for kicks/unbans',
                     inline: false
                 },
                 {

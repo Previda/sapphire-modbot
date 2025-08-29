@@ -2,7 +2,20 @@ const { EmbedBuilder } = require('discord.js');
 
 async function handleAppealModal(interaction) {
     const customId = interaction.customId;
-    const caseID = customId.replace('appeal_modal_', '');
+    
+    // Extract case ID and guild ID from custom ID format: appeal_modal_CASEID_GUILDID
+    let caseID, guildId;
+    if (customId.includes('_')) {
+        const parts = customId.replace('appeal_modal_', '').split('_');
+        if (parts.length >= 2) {
+            caseID = parts[0];
+            guildId = parts[1];
+        } else {
+            caseID = parts[0];
+        }
+    } else {
+        caseID = customId.replace('appeal_modal_', '');
+    }
     
     const reason = interaction.fields.getTextInputValue('appeal_reason');
     const evidence = interaction.fields.getTextInputValue('appeal_evidence') || 'None provided';
@@ -12,14 +25,30 @@ async function handleAppealModal(interaction) {
         const { getCaseById, appealCase } = require('./caseManager');
         
         // Determine guild ID (for DM support)
-        let guildId;
+        let guild;
+        
         if (interaction.guild) {
             guildId = interaction.guild.id;
+            guild = interaction.guild;
+        } else if (guildId) {
+            // For DMs, use the guild ID from modal custom ID
+            try {
+                guild = await interaction.client.guilds.fetch(guildId);
+                if (!guild) {
+                    return interaction.reply({
+                        content: '❌ Could not find the server for this appeal.',
+                        flags: 64
+                    });
+                }
+            } catch (error) {
+                return interaction.reply({
+                    content: '❌ Could not access the server for this appeal.',
+                    flags: 64
+                });
+            }
         } else {
-            // Extract guild ID from case ID or use a fallback method
-            // For now, we'll need to get this from the user's input
             return interaction.reply({
-                content: '❌ Appeal submissions from DMs are not yet supported. Please use the command in the server.',
+                content: '❌ Could not determine which server this case belongs to. Please submit the appeal in the server.',
                 flags: 64
             });
         }

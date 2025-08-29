@@ -185,9 +185,9 @@ async function handleAppealSubmit(interaction) {
             });
         }
 
-        // Create appeal modal
+        // Create appeal modal (embed guild ID for DM support)
         const modal = new ModalBuilder()
-            .setCustomId(`appeal_modal_${caseID}`)
+            .setCustomId(`appeal_modal_${caseID}_${guildId}`)
             .setTitle(`Appeal Case ${caseID}`);
 
         const reasonInput = new TextInputBuilder()
