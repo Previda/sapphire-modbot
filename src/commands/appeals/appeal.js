@@ -32,9 +32,6 @@ module.exports = {
                         .setRequired(false))),
 
     async execute(interaction) {
-        // Defer reply for database operations
-        await interaction.deferReply({ ephemeral: true });
-        
         let subcommand;
         try {
             subcommand = interaction.options.getSubcommand();
@@ -51,7 +48,12 @@ module.exports = {
                 )
                 .setTimestamp();
             
-            return interaction.editReply({ embeds: [embed] });
+            return interaction.reply({ embeds: [embed], ephemeral: true });
+        }
+
+        // Only defer for status and review commands, not submit (which shows modal)
+        if (subcommand !== 'submit') {
+            await interaction.deferReply({ ephemeral: true });
         }
 
         switch (subcommand) {
