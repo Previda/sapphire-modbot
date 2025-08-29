@@ -88,7 +88,7 @@ async function handleAppealSubmit(interaction) {
             });
         }
 
-        if (caseData.userId !== interaction.user.id) {
+        if (!caseData.userId || caseData.userId !== interaction.user.id) {
             return interaction.editReply({
                 content: '❌ You can only appeal your own cases.'
             });
@@ -152,7 +152,15 @@ async function handleAppealSubmit(interaction) {
 }
 
 async function handleAppealStatus(interaction) {
-    const caseID = interaction.options.getString('case_id').toUpperCase();
+    const caseIDRaw = interaction.options.getString('case_id');
+    
+    if (!caseIDRaw) {
+        return interaction.editReply({
+            content: '❌ Please provide a case ID to check status.'
+        });
+    }
+    
+    const caseID = caseIDRaw.toUpperCase();
 
     try {
         const caseData = await getCaseById(caseID, interaction.guild.id);
@@ -163,7 +171,7 @@ async function handleAppealStatus(interaction) {
             });
         }
 
-        if (caseData.userId !== interaction.user.id) {
+        if (!caseData.userId || caseData.userId !== interaction.user.id) {
             return interaction.editReply({
                 content: '❌ You can only check the status of your own appeals.'
             });

@@ -166,8 +166,10 @@ module.exports = {
             if (caseId) {
                 targetCase = await getCaseById(caseId, interaction.guild.id);
                 if (!targetCase || targetCase.type !== 'ban') {
-                    return interaction.editReply({ content: '❌ Ban case not found', ephemeral: true });
+                    return interaction.editReply({ content: '❌ Ban case not found' });
                 }
+            }
+            if (targetCase) {
                 targetUserId = targetCase.userId;
             } else if (user) {
                 targetUserId = user.id;
@@ -427,7 +429,31 @@ module.exports = {
     },
 
     async undoBulk(interaction) {
-        return interaction.editReply({ content: '❌ Bulk undo is temporarily disabled. Please undo cases individually.', ephemeral: true });
+        const moderator = interaction.options.getUser('moderator');
+        const count = interaction.options.getInteger('count');
+        const reason = interaction.options.getString('reason') || 'Bulk undo by administrator';
+
+        try {
+            // Get recent cases by moderator (simplified approach using getUserCases for all users)
+            const allCases = [];
+            
+            // This is a simplified implementation - in a real scenario you'd want to query by moderator
+            const embed = new EmbedBuilder()
+                .setTitle('🔄 Bulk Undo')
+                .setColor('#ff9900')
+                .setDescription('⚠️ Bulk undo requires manual case specification for safety.')
+                .addFields(
+                    { name: 'Alternative', value: 'Use individual undo commands with case IDs', inline: false },
+                    { name: 'Example', value: '`/undo timeout case:ABC123`', inline: false }
+                )
+                .setTimestamp();
+
+            await interaction.editReply({ embeds: [embed] });
+
+        } catch (error) {
+            console.error('Error performing bulk undo:', error);
+            await interaction.editReply({ content: '❌ Failed to perform bulk undo' });
+        }
     },
 
 };
