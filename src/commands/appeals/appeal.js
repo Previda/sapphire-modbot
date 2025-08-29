@@ -29,10 +29,41 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('review')
-                .setDescription('Review pending appeals (Staff only)')
+                .setDescription('Review and manage appeals (Staff only)')
                 .addStringOption(option =>
                     option.setName('case_id')
                         .setDescription('Case ID to review')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('action')
+                        .setDescription('Action to take on the appeal')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Approve', value: 'approve' },
+                            { name: 'Deny', value: 'deny' },
+                            { name: 'View Details', value: 'view' }
+                        ))
+                .addStringOption(option =>
+                    option.setName('response')
+                        .setDescription('Response message to the user')
+                        .setRequired(false)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('settings')
+                .setDescription('Configure appeal system settings (Admin only)')
+                .addStringOption(option =>
+                    option.setName('action')
+                        .setDescription('Settings action')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Enable', value: 'enable' },
+                            { name: 'Disable', value: 'disable' },
+                            { name: 'Set Category', value: 'category' },
+                            { name: 'View Settings', value: 'view' }
+                        ))
+                .addChannelOption(option =>
+                    option.setName('category')
+                        .setDescription('Appeal category channel')
                         .setRequired(false))),
 
     async execute(interaction) {
@@ -69,6 +100,9 @@ module.exports = {
                 break;
             case 'review':
                 await handleAppealReview(interaction);
+                break;
+            case 'settings':
+                await handleAppealSettings(interaction);
                 break;
         }
     }
@@ -262,73 +296,64 @@ async function handleAppealStatus(interaction) {
 }
 
 async function handleAppealReview(interaction) {
-    // Check if user has permission to review appeals
+    // Staff only command
     if (!interaction.member.permissions.has('ModerateMembers')) {
-        return interaction.editReply({
-            content: '❌ You need Moderate Members permission to review appeals.'
+        return interaction.reply({
+            content: '❌ You need the **Moderate Members** permission to review appeals.',
+            flags: 64
         });
     }
 
     const caseID = interaction.options.getString('case_id');
-
-    if (caseID) {
-        // Review specific case
-        await reviewSpecificAppeal(interaction, caseID.toUpperCase());
-    } else {
-        // List all pending appeals
-        await listPendingAppeals(interaction);
+    const action = interaction.options.getString('action');
+    const response = interaction.options.getString('response');
+    
+    if (!caseID) {
+        return interaction.reply({
+            content: '❌ Please provide a case ID to review.',
+            flags: 64
+        });
     }
-}
 
-async function reviewSpecificAppeal(interaction, caseID) {
     try {
-        const punishment = await getPunishmentByCase(caseID);
+        const { getCaseById } = require('../../utils/caseManager');
+        const caseData = await getCaseById(caseID.toUpperCase(), interaction.guild.id);
         
-        if (!punishment) {
-            return interaction.editReply({
-                content: '❌ Case not found.'
+        if (!caseData) {
+            return interaction.reply({
+                content: `❌ Case \`${caseID}\` not found.`,
+                flags: 64
             });
         }
 
-        if (!punishment.appealStatus || punishment.appealStatus === 'none') {
-            return interaction.editReply({
-                content: '❌ This case has no pending appeal.'
+        if (!caseData.appealed) {
+            return interaction.reply({
+                content: `❌ Case \`${caseID}\` has not been appealed.`,
+                flags: 64
             });
         }
 
-        const user = await interaction.client.users.fetch(punishment.userID).catch(() => null);
-        
-        const embed = new EmbedBuilder()
-            .setTitle(`📋 Appeal Review: ${caseID}`)
+        const reviewEmbed = new EmbedBuilder()
+            .setTitle(`📋 Appeal Review - Case ${caseID}`)
             .setColor(0xffa500)
             .addFields(
-                { name: '👤 User', value: user ? user.tag : 'Unknown', inline: true },
-                { name: '⚖️ Punishment', value: punishment.type.toUpperCase(), inline: true },
-                { name: '📅 Date', value: new Date(punishment.timestamp).toLocaleString(), inline: true },
-                { name: '📝 Original Reason', value: punishment.reason || 'No reason provided', inline: false }
-            );
+                { name: '👤 User', value: `<@${caseData.userId}> (${caseData.userId})`, inline: true },
+                { name: '⚖️ Punishment', value: caseData.type.toUpperCase(), inline: true },
+                { name: '📅 Appeal Date', value: new Date(caseData.appealData.submittedAt).toLocaleString(), inline: true },
+                { name: '📝 Appeal Reason', value: caseData.appealData.reason, inline: false },
+                { name: '🔍 Evidence', value: caseData.appealData.evidence, inline: false },
+                { name: '📞 Contact', value: caseData.appealData.contact, inline: true },
+                { name: '📊 Status', value: caseData.status, inline: true }
+            )
+            .setTimestamp();
 
-        if (punishment.appealReason) {
-            try {
-                const appealData = JSON.parse(punishment.appealReason);
-                embed.addFields(
-                    { name: '📝 Appeal Reason', value: appealData.reason || 'No reason provided', inline: false },
-                    { name: '🔍 Evidence', value: appealData.evidence || 'None provided', inline: false },
-                    { name: '📞 Contact', value: appealData.contact || 'None provided', inline: true }
-                );
-            } catch (e) {
-                embed.addFields(
-                    { name: '📝 Appeal', value: punishment.appealReason, inline: false }
-                );
-            }
-        }
-
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.reply({ embeds: [reviewEmbed], flags: 64 });
 
     } catch (error) {
         console.error('Error reviewing appeal:', error);
-        await interaction.editReply({
-            content: '❌ An error occurred while reviewing appeal.'
+        await interaction.reply({
+            content: '❌ An error occurred while reviewing the appeal.',
+            flags: 64
         });
     }
 }

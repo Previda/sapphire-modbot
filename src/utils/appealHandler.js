@@ -11,8 +11,21 @@ async function handleAppealModal(interaction) {
     try {
         const { getCaseById, appealCase } = require('./caseManager');
         
+        // Determine guild ID (for DM support)
+        let guildId;
+        if (interaction.guild) {
+            guildId = interaction.guild.id;
+        } else {
+            // Extract guild ID from case ID or use a fallback method
+            // For now, we'll need to get this from the user's input
+            return interaction.reply({
+                content: '❌ Appeal submissions from DMs are not yet supported. Please use the command in the server.',
+                flags: 64
+            });
+        }
+        
         // Get case data
-        const caseData = await getCaseById(caseID, interaction.guild.id);
+        const caseData = await getCaseById(caseID, guildId);
         
         if (!caseData) {
             return interaction.reply({
