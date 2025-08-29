@@ -158,19 +158,11 @@ async function handleAppealSubmit(interaction) {
 
         await interaction.showModal(modal);
 
-        // Log appeal attempt
-        await webhookLogger.logModeration(interaction.guild, {
-            type: 'appeal_started',
-            user: interaction.user,
-            moderator: { tag: 'System', id: 'system' },
-            reason: `Appeal process initiated for case ${caseID}`,
-            caseId: caseID
-        });
-
     } catch (error) {
         console.error('Error handling appeal submit:', error);
-        await interaction.editReply({
-            content: '❌ An error occurred while processing your appeal.'
+        await interaction.reply({
+            content: '❌ An error occurred while processing your appeal.',
+            flags: 64
         });
     }
 }
