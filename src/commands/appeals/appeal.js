@@ -9,11 +9,15 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('submit')
-                .setDescription('Submit an appeal for a punishment')
+                .setDescription('Submit an appeal for a case')
                 .addStringOption(option =>
                     option.setName('case_id')
-                        .setDescription('Case ID to appeal (e.g., A2B3K1J2X4Y5)')
-                        .setRequired(true)))
+                        .setDescription('Case ID to appeal')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('server_id')
+                        .setDescription('Server ID (required for DMs)')
+                        .setRequired(false)))
         .addSubcommand(subcommand =>
             subcommand
                 .setName('status')
@@ -71,15 +75,8 @@ module.exports = {
 };
 
 async function handleAppealSubmit(interaction) {
-    // Check if command is used in a server
-    if (!interaction.guild) {
-        return interaction.reply({
-            content: '❌ Appeals can only be submitted in a server, not in DMs.',
-            flags: 64
-        });
-    }
-
     const caseIDRaw = interaction.options.getString('case_id');
+    const serverIdRaw = interaction.options.getString('server_id');
     
     if (!caseIDRaw) {
         return interaction.reply({
@@ -88,10 +85,43 @@ async function handleAppealSubmit(interaction) {
         });
     }
     
+    // Determine guild ID (from current guild or provided server_id for DMs)
+    let guildId;
+    let guild;
+    
+    if (interaction.guild) {
+        // Command used in server
+        guildId = interaction.guild.id;
+        guild = interaction.guild;
+    } else if (serverIdRaw) {
+        // Command used in DM with server_id provided
+        guildId = serverIdRaw;
+        try {
+            guild = await interaction.client.guilds.fetch(guildId);
+            if (!guild) {
+                return interaction.reply({
+                    content: '❌ Server not found or bot is not in that server.',
+                    flags: 64
+                });
+            }
+        } catch (error) {
+            return interaction.reply({
+                content: '❌ Invalid server ID or bot is not in that server.',
+                flags: 64
+            });
+        }
+    } else {
+        // Command used in DM without server_id
+        return interaction.reply({
+            content: '❌ When using appeals in DMs, please provide the server_id parameter.\nExample: `/appeal submit case_id:ABC123 server_id:123456789`',
+            flags: 64
+        });
+    }
+    
     const caseID = caseIDRaw.toUpperCase();
 
     try {
-        const caseData = await getCaseById(caseID, interaction.guild.id);
+        const caseData = await getCaseById(caseID, guildId);
         
         if (!caseData) {
             return interaction.reply({

@@ -18,18 +18,50 @@ module.exports = {
             option.setName('silent')
                 .setDescription('Don\'t send DM to user')
                 .setRequired(false))
+        .addStringOption(option =>
+            option.setName('server_id')
+                .setDescription('Server ID (required for DMs)')
+                .setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
     async execute(interaction) {
         const targetUser = interaction.options.getUser('user');
         const reason = interaction.options.getString('reason') || 'No reason provided';
         const silent = interaction.options.getBoolean('silent') || false;
+        const serverIdRaw = interaction.options.getString('server_id');
+
+        // Determine guild (from current guild or provided server_id for DMs)
+        let guild;
+        
+        if (interaction.guild) {
+            guild = interaction.guild;
+        } else if (serverIdRaw) {
+            try {
+                guild = await interaction.client.guilds.fetch(serverIdRaw);
+                if (!guild) {
+                    return interaction.reply({
+                        content: '❌ Server not found or bot is not in that server.',
+                        flags: 64
+                    });
+                }
+            } catch (error) {
+                return interaction.reply({
+                    content: '❌ Invalid server ID or bot is not in that server.',
+                    flags: 64
+                });
+            }
+        } else {
+            return interaction.reply({
+                content: '❌ When using moderation commands in DMs, please provide the server_id parameter.\nExample: `/kick user:@user server_id:123456789`',
+                flags: 64
+            });
+        }
 
         // Defer reply for moderation actions
-        await interaction.deferReply({ ephemeral: silent });
+        await interaction.deferReply({ flags: silent ? 64 : 0 });
 
         try {
-            const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+            const member = await guild.members.fetch(targetUser.id).catch(() => null);
             
             if (!member) {
                 return interaction.reply({ 
@@ -38,12 +70,14 @@ module.exports = {
                 });
             }
 
-            // Permission checks
-            if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                return interaction.reply({ content: '❌ You cannot kick this member due to role hierarchy.', ephemeral: true });
-            }
-            if (!member.kickable) {
-                return interaction.reply({ content: '❌ I cannot kick this member.', ephemeral: true });
+            // Permission checks (skip hierarchy check in DMs)
+            if (member && interaction.guild) {
+                if (member.roles.highest.position >= interaction.member.roles.highest.position) {
+                    return interaction.editReply({ content: '❌ You cannot kick this member due to role hierarchy.' });
+                }
+                if (!member.kickable) {
+                    return interaction.editReply({ content: '❌ I cannot kick this member.' });
+                }
             }
 
             // Create case
@@ -51,7 +85,7 @@ module.exports = {
                 type: 'kick',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
-                guildId: interaction.guild.id,
+                guildId: guild.id,
                 reason: reason,
                 status: 'active',
                 appealable: true
@@ -99,7 +133,7 @@ module.exports = {
             await interaction.reply({ embeds: [embed] });
 
             // Log via webhook system
-            await webhookLogger.logModAction(interaction.guild.id, 'kick', {
+            await webhookLogger.logModeration(guild, { id: guild.id, type: 'kick', 
                 targetTag: targetUser.tag,
                 targetId: targetUser.id,
                 moderatorTag: interaction.user.tag,

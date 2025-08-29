@@ -24,27 +24,59 @@ module.exports = {
             option.setName('silent')
                 .setDescription('Don\'t send DM to user')
                 .setRequired(false))
+        .addStringOption(option =>
+            option.setName('server_id')
+                .setDescription('Server ID (required for DMs)')
+                .setRequired(false))
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
     async execute(interaction) {
-        // Defer reply for moderation actions
-        await interaction.deferReply();
+        const targetUser = interaction.options.getUser('user');
+        const reason = interaction.options.getString('reason') || 'No reason provided';
+        const duration = interaction.options.getString('duration') || '1h';
+        const silent = interaction.options.getBoolean('silent') || false;
+        const serverIdRaw = interaction.options.getString('server_id');
 
-        // Check if user is server owner or has required permissions
-        if (interaction.guild.ownerId !== interaction.user.id && 
+        // Determine guild (from current guild or provided server_id for DMs)
+        let guild;
+        
+        if (interaction.guild) {
+            guild = interaction.guild;
+        } else if (serverIdRaw) {
+            try {
+                guild = await interaction.client.guilds.fetch(serverIdRaw);
+                if (!guild) {
+                    return interaction.reply({
+                        content: '❌ Server not found or bot is not in that server.',
+                        flags: 64
+                    });
+                }
+            } catch (error) {
+                return interaction.reply({
+                    content: '❌ Invalid server ID or bot is not in that server.',
+                    flags: 64
+                });
+            }
+        } else {
+            return interaction.reply({
+                content: '❌ When using moderation commands in DMs, please provide the server_id parameter.\nExample: `/mute user:@user server_id:123456789`',
+                flags: 64
+            });
+        }
+
+        // Defer reply for moderation actions
+        await interaction.deferReply({ flags: silent ? 64 : 0 });
+
+        // Check if user is server owner or has required permissions (skip for DMs)
+        if (interaction.guild && guild.ownerId !== interaction.user.id && 
             !interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
             return interaction.editReply({
                 content: '❌ You need the **Moderate Members** permission to use this command.'
             });
         }
 
-        const targetUser = interaction.options.getUser('user');
-        const durationMinutes = interaction.options.getInteger('duration') || 60; // Default 1 hour
-        const reason = interaction.options.getString('reason') || 'No reason provided';
-        const silent = interaction.options.getBoolean('silent') || false;
-
         try {
-            const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+            const member = await guild.members.fetch(targetUser.id).catch(() => null);
 
             if (!member) {
                 return interaction.reply({
@@ -54,7 +86,7 @@ module.exports = {
             }
 
             // Permission checks (skip for server owner)
-            if (interaction.guild.ownerId !== interaction.user.id) {
+            if (guild.ownerId !== interaction.user.id) {
                 if (member.roles.highest.position >= interaction.member.roles.highest.position) {
                     return interaction.reply({ content: '❌ You cannot mute this member due to role hierarchy.', ephemeral: true });
                 }
@@ -62,6 +94,15 @@ module.exports = {
             
             if (!member.moderatable) {
                 return interaction.reply({ content: '❌ I cannot mute this member.', ephemeral: true });
+            }
+
+            // Parse duration
+            const durationMinutes = parseDuration(duration);
+            if (!durationMinutes) {
+                return interaction.reply({
+                    content: '❌ Invalid duration format. Please use a format like 1h, 30m, or 1d.',
+                    ephemeral: true
+                });
             }
 
             // Calculate timeout duration in milliseconds
@@ -73,7 +114,7 @@ module.exports = {
                 type: 'mute',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
-                guildId: interaction.guild.id,
+                guildId: guild.id,
                 reason: reason,
                 expires: new Date(Date.now() + timeoutDuration).toISOString(),
                 appealable: true
@@ -90,7 +131,7 @@ module.exports = {
                         .setTitle('🔇 You have been muted')
                         .setColor(0xff9900)
                         .addFields(
-                            { name: '🏢 Server', value: interaction.guild.name, inline: true },
+                            { name: '🏢 Server', value: guild.name, inline: true },
                             { name: '⏱️ Duration', value: durationText, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
                             { name: '🆔 Case ID', value: newCase.caseId, inline: true },
@@ -126,7 +167,8 @@ module.exports = {
             await interaction.editReply({ embeds: [embed] });
 
             // Log to webhook if configured
-            await webhookLogger.logModAction(interaction.guild.id, 'mute', {
+            await webhookLogger.logModeration(guild, {
+                type: 'mute',
                 targetTag: targetUser.tag,
                 targetId: targetUser.id,
                 moderatorTag: interaction.user.tag,
