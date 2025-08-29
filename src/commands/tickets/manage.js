@@ -1,5 +1,30 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { pool } = require('../../models/database');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ChannelType } = require('discord.js');
+const { getGuildConfig } = require('../admin/setup');
+const webhookLogger = require('../../utils/webhookLogger');
+const fs = require('fs').promises;
+const path = require('path');
+
+// Ticket storage
+const TICKETS_FILE = path.join(process.cwd(), 'data', 'tickets.json');
+
+async function loadTickets() {
+    try {
+        const data = await fs.readFile(TICKETS_FILE, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        return {};
+    }
+}
+
+async function saveTickets(tickets) {
+    try {
+        const dataDir = path.dirname(TICKETS_FILE);
+        await fs.mkdir(dataDir, { recursive: true });
+        await fs.writeFile(TICKETS_FILE, JSON.stringify(tickets, null, 2));
+    } catch (error) {
+        console.error('Failed to save tickets:', error);
+    }
+}
 
 // Settings handlers
 async function handleCategoriesSettings(interaction) {
@@ -82,16 +107,23 @@ async function handleFeaturesSettings(interaction) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('manage')
-        .setDescription('Advanced ticket management menu')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+        .setDescription('🎫 Manage tickets and server settings')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('menu')
-                .setDescription('Show interactive ticket management menu'))
+                .setDescription('Show interactive ticket creation menu'))
         .addSubcommand(subcommand =>
             subcommand
                 .setName('list')
-                .setDescription('List all open tickets'))
+                .setDescription('List all active tickets')
+                .addStringOption(option =>
+                    option.setName('status')
+                        .setDescription('Filter by ticket status')
+                        .addChoices(
+                            { name: 'Open', value: 'open' },
+                            { name: 'Closed', value: 'closed' },
+                            { name: 'All', value: 'all' }
+                        )))
         .addSubcommand(subcommand =>
             subcommand
                 .setName('create')
@@ -101,24 +133,46 @@ module.exports = {
                         .setDescription('User to create ticket for')
                         .setRequired(true))
                 .addStringOption(option =>
-                    option.setName('reason')
-                        .setDescription('Reason for ticket')
-                        .setRequired(true))
-                .addStringOption(option =>
                     option.setName('category')
                         .setDescription('Ticket category')
-                        .setRequired(false)
                         .addChoices(
-                            { name: 'General Support', value: 'general' },
-                            { name: 'Ban Appeal', value: 'appeal' },
-                            { name: 'Report User', value: 'report' },
-                            { name: 'Bug Report', value: 'bug' },
-                            { name: 'Staff Created', value: 'staff' }
-                        )))
+                            { name: '💬 General Support', value: 'general' },
+                            { name: '📋 Appeal', value: 'appeal' },
+                            { name: '🚨 Report', value: 'report' },
+                            { name: '🐛 Bug Report', value: 'bug' },
+                            { name: '👥 Staff Application', value: 'staff' }
+                        ))
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('Reason for ticket creation')
+                        .setRequired(false)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('close')
+                .setDescription('Close a ticket')
+                .addChannelOption(option =>
+                    option.setName('ticket')
+                        .setDescription('Ticket channel to close')
+                        .addChannelTypes(ChannelType.GuildText)
+                        .setRequired(false))
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('Reason for closing')
+                        .setRequired(false)))
         .addSubcommand(subcommand =>
             subcommand
                 .setName('settings')
-                .setDescription('Configure ticket system settings')),
+                .setDescription('Configure ticket system settings')
+                .addStringOption(option =>
+                    option.setName('category')
+                        .setDescription('Settings category')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Categories', value: 'categories' },
+                            { name: 'Permissions', value: 'permissions' },
+                            { name: 'Channels', value: 'channels' }
+                        )))
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
