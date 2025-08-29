@@ -69,7 +69,15 @@ module.exports = {
 };
 
 async function handleAppealSubmit(interaction) {
-    const caseID = interaction.options.getString('case_id').toUpperCase();
+    const caseIDRaw = interaction.options.getString('case_id');
+    
+    if (!caseIDRaw) {
+        return interaction.editReply({
+            content: '❌ Please provide a case ID to appeal.'
+        });
+    }
+    
+    const caseID = caseIDRaw.toUpperCase();
 
     try {
         const caseData = await getCaseById(caseID, interaction.guild.id);

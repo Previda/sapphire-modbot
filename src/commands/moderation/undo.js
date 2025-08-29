@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { pool } = require('../../models/database');
-const Punishment = require('../../schemas/Punishment');
+const { getCaseById, getUserCases, updateCaseStatus } = require('../../utils/caseManager');
+const webhookLogger = require('../../utils/webhookLogger');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -13,7 +13,15 @@ module.exports = {
                 .addStringOption(option =>
                     option.setName('case')
                         .setDescription('Case ID to undo')
-                        .setRequired(true))
+                        .setRequired(false))
+                .addUserOption(option =>
+                    option.setName('user')
+                        .setDescription('User to unban')
+                        .setRequired(false))
+                .addStringOption(option =>
+                    option.setName('username')
+                        .setDescription('Username or User ID to unban')
+                        .setRequired(false))
                 .addStringOption(option =>
                     option.setName('reason')
                         .setDescription('Reason for undoing the ban')
@@ -25,7 +33,15 @@ module.exports = {
                 .addStringOption(option =>
                     option.setName('case')
                         .setDescription('Case ID to undo')
-                        .setRequired(true))
+                        .setRequired(false))
+                .addUserOption(option =>
+                    option.setName('user')
+                        .setDescription('User to unmute')
+                        .setRequired(false))
+                .addStringOption(option =>
+                    option.setName('username')
+                        .setDescription('Username or User ID to unmute')
+                        .setRequired(false))
                 .addStringOption(option =>
                     option.setName('reason')
                         .setDescription('Reason for undoing the mute')
@@ -61,7 +77,15 @@ module.exports = {
                 .addStringOption(option =>
                     option.setName('case')
                         .setDescription('Case ID to undo')
-                        .setRequired(true))
+                        .setRequired(false))
+                .addUserOption(option =>
+                    option.setName('user')
+                        .setDescription('User to remove timeout from')
+                        .setRequired(false))
+                .addStringOption(option =>
+                    option.setName('username')
+                        .setDescription('Username or User ID to remove timeout from')
+                        .setRequired(false))
                 .addStringOption(option =>
                     option.setName('reason')
                         .setDescription('Reason for removing timeout')
@@ -131,84 +155,134 @@ module.exports = {
 
     async undoBan(interaction) {
         const caseId = interaction.options.getString('case');
+        const user = interaction.options.getUser('user');
+        const username = interaction.options.getString('username');
         const reason = interaction.options.getString('reason') || 'Ban reversed by moderator';
 
         try {
-            const punishment = await Punishment.findByCaseId(caseId, interaction.guild.id);
-            
-            if (!punishment || punishment.type !== 'ban') {
-                return interaction.reply({ content: '❌ Ban case not found', ephemeral: true });
+            let targetCase = null;
+            let targetUserId = null;
+
+            if (caseId) {
+                targetCase = await getCaseById(caseId, interaction.guild.id);
+                if (!targetCase || targetCase.type !== 'ban') {
+                    return interaction.editReply({ content: '❌ Ban case not found', ephemeral: true });
+                }
+                targetUserId = targetCase.userId;
+            } else if (user) {
+                targetUserId = user.id;
+            } else if (username) {
+                // Try to parse as user ID or find by username
+                if (/^\d{17,19}$/.test(username)) {
+                    targetUserId = username;
+                } else {
+                    return interaction.editReply({ content: '❌ Please provide a valid User ID or use the user option', ephemeral: true });
+                }
+            } else {
+                return interaction.editReply({ content: '❌ Please provide a case ID, user, or username', ephemeral: true });
             }
 
-            if (!punishment.active) {
-                return interaction.reply({ content: '❌ This ban is already inactive', ephemeral: true });
+            if (!targetUserId) {
+                return interaction.editReply({ content: '❌ Unable to determine target user', ephemeral: true });
             }
 
             // Unban the user
-            await interaction.guild.members.unban(punishment.userID, `${reason} (Case: ${caseId})`);
+            await interaction.guild.members.unban(targetUserId, `${reason} ${caseId ? `(Case: ${caseId})` : ''}`);
             
-            // Deactivate punishment
-            await Punishment.deactivate(punishment.id);
+            // Update case if we have one
+            if (targetCase) {
+                await updateCaseStatus(caseId, 'reversed', interaction.user.id);
+            }
 
             const embed = new EmbedBuilder()
                 .setTitle('🔄 Ban Reversed')
                 .setColor('#00ff00')
                 .addFields(
-                    { name: 'User', value: `<@${punishment.userID}>`, inline: true },
-                    { name: 'Original Case', value: caseId, inline: true },
+                    { name: 'User', value: `<@${targetUserId}>`, inline: true },
+                    { name: 'Original Case', value: caseId || 'N/A', inline: true },
                     { name: 'Reversed By', value: `<@${interaction.user.id}>`, inline: true },
                     { name: 'Reason', value: reason, inline: false }
                 )
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
+
+            // Log to webhook
+            await webhookLogger.logModeration(interaction.guild, {
+                type: 'unban',
+                user: { id: targetUserId },
+                moderator: interaction.user,
+                reason: reason,
+                caseId: caseId
+            });
 
         } catch (error) {
             console.error('Error undoing ban:', error);
-            await interaction.reply({ content: '❌ Failed to undo ban', ephemeral: true });
+            await interaction.editReply({ content: '❌ Failed to undo ban', ephemeral: true });
         }
     },
 
     async undoMute(interaction) {
         const caseId = interaction.options.getString('case');
+        const user = interaction.options.getUser('user');
+        const username = interaction.options.getString('username');
         const reason = interaction.options.getString('reason') || 'Mute reversed by moderator';
 
         try {
-            const punishment = await Punishment.findByCaseId(caseId, interaction.guild.id);
-            
-            if (!punishment || punishment.type !== 'mute') {
-                return interaction.reply({ content: '❌ Mute case not found', ephemeral: true });
+            let targetCase = null;
+            let targetUserId = null;
+
+            if (caseId) {
+                targetCase = await getCaseById(caseId, interaction.guild.id);
+                if (!targetCase || !['mute', 'timeout'].includes(targetCase.type)) {
+                    return interaction.editReply({ content: '❌ Mute/timeout case not found', ephemeral: true });
+                }
+                targetUserId = targetCase.userId;
+            } else if (user) {
+                targetUserId = user.id;
+            } else if (username) {
+                if (/^\d{17,19}$/.test(username)) {
+                    targetUserId = username;
+                } else {
+                    return interaction.editReply({ content: '❌ Please provide a valid User ID or use the user option', ephemeral: true });
+                }
+            } else {
+                return interaction.editReply({ content: '❌ Please provide a case ID, user, or username', ephemeral: true });
             }
 
-            if (!punishment.active) {
-                return interaction.reply({ content: '❌ This mute is already inactive', ephemeral: true });
-            }
-
-            const member = await interaction.guild.members.fetch(punishment.userID).catch(() => null);
+            const member = await interaction.guild.members.fetch(targetUserId).catch(() => null);
             if (member) {
-                // Remove timeout
-                await member.timeout(null, `${reason} (Case: ${caseId})`);
+                await member.timeout(null, `${reason} ${caseId ? `(Case: ${caseId})` : ''}`);
             }
             
-            // Deactivate punishment
-            await Punishment.deactivate(punishment.id);
+            if (targetCase) {
+                await updateCaseStatus(caseId, 'reversed', interaction.user.id);
+            }
 
             const embed = new EmbedBuilder()
-                .setTitle('🔄 Mute Reversed')
+                .setTitle('🔄 Mute/Timeout Reversed')
                 .setColor('#00ff00')
                 .addFields(
-                    { name: 'User', value: `<@${punishment.userID}>`, inline: true },
-                    { name: 'Original Case', value: caseId, inline: true },
+                    { name: 'User', value: `<@${targetUserId}>`, inline: true },
+                    { name: 'Original Case', value: caseId || 'N/A', inline: true },
                     { name: 'Reversed By', value: `<@${interaction.user.id}>`, inline: true },
                     { name: 'Reason', value: reason, inline: false }
                 )
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
+
+            await webhookLogger.logModeration(interaction.guild, {
+                type: 'unmute',
+                user: { id: targetUserId },
+                moderator: interaction.user,
+                reason: reason,
+                caseId: caseId
+            });
 
         } catch (error) {
             console.error('Error undoing mute:', error);
-            await interaction.reply({ content: '❌ Failed to undo mute', ephemeral: true });
+            await interaction.editReply({ content: '❌ Failed to undo mute', ephemeral: true });
         }
     },
 
@@ -217,35 +291,38 @@ module.exports = {
         const reason = interaction.options.getString('reason') || 'Warning removed by moderator';
 
         try {
-            const punishment = await Punishment.findByCaseId(caseId, interaction.guild.id);
-            
-            if (!punishment || punishment.type !== 'warn') {
-                return interaction.reply({ content: '❌ Warning case not found', ephemeral: true });
+            if (!caseId) {
+                return interaction.editReply({ content: '❌ Case ID is required for warnings', ephemeral: true });
             }
 
-            if (!punishment.active) {
-                return interaction.reply({ content: '❌ This warning is already inactive', ephemeral: true });
+            const targetCase = await getCaseById(caseId, interaction.guild.id);
+            
+            if (!targetCase || targetCase.type !== 'warn') {
+                return interaction.editReply({ content: '❌ Warning case not found', ephemeral: true });
+            }
+
+            if (targetCase.status === 'reversed') {
+                return interaction.editReply({ content: '❌ This warning is already removed', ephemeral: true });
             }
             
-            // Deactivate punishment
-            await Punishment.deactivate(punishment.id);
+            await updateCaseStatus(caseId, 'reversed', interaction.user.id);
 
             const embed = new EmbedBuilder()
                 .setTitle('🔄 Warning Removed')
                 .setColor('#00ff00')
                 .addFields(
-                    { name: 'User', value: `<@${punishment.userID}>`, inline: true },
+                    { name: 'User', value: `<@${targetCase.userId}>`, inline: true },
                     { name: 'Original Case', value: caseId, inline: true },
                     { name: 'Removed By', value: `<@${interaction.user.id}>`, inline: true },
                     { name: 'Reason', value: reason, inline: false }
                 )
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
             console.error('Error removing warning:', error);
-            await interaction.reply({ content: '❌ Failed to remove warning', ephemeral: true });
+            await interaction.editReply({ content: '❌ Failed to remove warning', ephemeral: true });
         }
     },
 
@@ -254,76 +331,44 @@ module.exports = {
         const reason = interaction.options.getString('reason') || 'Strike removed by moderator';
 
         try {
-            // This would use the Strike schema
-            const Strike = require('../../schemas/Strike');
-            const strike = await Strike.findByCaseId(caseId, interaction.guild.id);
-            
-            if (!strike) {
-                return interaction.reply({ content: '❌ Strike case not found', ephemeral: true });
+            if (!caseId) {
+                return interaction.editReply({ content: '❌ Case ID is required for strikes', ephemeral: true });
             }
 
-            if (!strike.active) {
-                return interaction.reply({ content: '❌ This strike is already inactive', ephemeral: true });
+            const targetCase = await getCaseById(caseId, interaction.guild.id);
+            
+            if (!targetCase || targetCase.type !== 'strike') {
+                return interaction.editReply({ content: '❌ Strike case not found', ephemeral: true });
+            }
+
+            if (targetCase.status === 'reversed') {
+                return interaction.editReply({ content: '❌ This strike is already removed', ephemeral: true });
             }
             
-            // Deactivate strike
-            await Strike.deactivate(strike.id);
+            await updateCaseStatus(caseId, 'reversed', interaction.user.id);
 
             const embed = new EmbedBuilder()
                 .setTitle('🔄 Strike Removed')
                 .setColor('#00ff00')
                 .addFields(
-                    { name: 'User', value: `<@${strike.userID}>`, inline: true },
+                    { name: 'User', value: `<@${targetCase.userId}>`, inline: true },
                     { name: 'Original Case', value: caseId, inline: true },
                     { name: 'Removed By', value: `<@${interaction.user.id}>`, inline: true },
                     { name: 'Reason', value: reason, inline: false }
                 )
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
             console.error('Error removing strike:', error);
-            await interaction.reply({ content: '❌ Failed to remove strike', ephemeral: true });
+            await interaction.editReply({ content: '❌ Failed to remove strike', ephemeral: true });
         }
     },
 
     async undoTimeout(interaction) {
-        const caseId = interaction.options.getString('case');
-        const reason = interaction.options.getString('reason') || 'Timeout removed by moderator';
-
-        try {
-            const punishment = await Punishment.findByCaseId(caseId, interaction.guild.id);
-            
-            if (!punishment || punishment.type !== 'timeout') {
-                return interaction.reply({ content: '❌ Timeout case not found', ephemeral: true });
-            }
-
-            const member = await interaction.guild.members.fetch(punishment.userID).catch(() => null);
-            if (member && member.isCommunicationDisabled()) {
-                await member.timeout(null, `${reason} (Case: ${caseId})`);
-            }
-            
-            // Deactivate punishment
-            await Punishment.deactivate(punishment.id);
-
-            const embed = new EmbedBuilder()
-                .setTitle('🔄 Timeout Removed')
-                .setColor('#00ff00')
-                .addFields(
-                    { name: 'User', value: `<@${punishment.userID}>`, inline: true },
-                    { name: 'Original Case', value: caseId, inline: true },
-                    { name: 'Removed By', value: `<@${interaction.user.id}>`, inline: true },
-                    { name: 'Reason', value: reason, inline: false }
-                )
-                .setTimestamp();
-
-            await interaction.reply({ embeds: [embed] });
-
-        } catch (error) {
-            console.error('Error removing timeout:', error);
-            await interaction.reply({ content: '❌ Failed to remove timeout', ephemeral: true });
-        }
+        // This is the same as undoMute since timeout and mute are the same Discord feature
+        await this.undoMute(interaction);
     },
 
     async undoLast(interaction) {
@@ -332,115 +377,57 @@ module.exports = {
         const reason = interaction.options.getString('reason') || 'Last action reversed by moderator';
 
         try {
-            let lastPunishment;
+            let userCases = [];
             
             if (targetUserId) {
-                // Get last punishment for specific user
-                const punishments = await Punishment.findByUserId(targetUserId, interaction.guild.id, 1);
-                lastPunishment = punishments[0];
+                userCases = await getUserCases(targetUserId, interaction.guild.id);
             } else {
-                // Get last punishment by this moderator
-                const punishments = await Punishment.findByModId(interaction.user.id, interaction.guild.id, 1);
-                lastPunishment = punishments[0];
+                // Get recent cases by this moderator (simplified approach)
+                return interaction.editReply({ content: '❌ Please specify a user for last action undo', ephemeral: true });
             }
 
-            if (!lastPunishment) {
-                return interaction.reply({ content: '❌ No recent punishment found to undo', ephemeral: true });
+            // Filter active cases and get the most recent
+            const activeCases = userCases.filter(c => c.status === 'active').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            if (activeCases.length === 0) {
+                return interaction.editReply({ content: '❌ No recent active cases found to undo', ephemeral: true });
             }
 
-            if (!lastPunishment.active) {
-                return interaction.reply({ content: '❌ The last punishment is already inactive', ephemeral: true });
-            }
+            const lastCase = activeCases[0];
 
-            // Undo based on punishment type
-            await this.undoPunishmentByType(interaction, lastPunishment, reason);
+            // Use the appropriate undo method based on case type
+            const tempOptions = {
+                getString: (name) => name === 'case' ? lastCase.caseId : (name === 'reason' ? reason : null),
+                getUser: () => null,
+            };
+            const tempInteraction = { ...interaction, options: tempOptions };
+
+            switch (lastCase.type) {
+                case 'ban':
+                    await this.undoBan(tempInteraction);
+                    break;
+                case 'mute':
+                case 'timeout':
+                    await this.undoMute(tempInteraction);
+                    break;
+                case 'warn':
+                    await this.undoWarn(tempInteraction);
+                    break;
+                case 'strike':
+                    await this.undoStrike(tempInteraction);
+                    break;
+                default:
+                    return interaction.editReply({ content: '❌ Unsupported case type for undo', ephemeral: true });
+            }
 
         } catch (error) {
             console.error('Error undoing last action:', error);
-            await interaction.reply({ content: '❌ Failed to undo last action', ephemeral: true });
+            await interaction.editReply({ content: '❌ Failed to undo last action', ephemeral: true });
         }
     },
 
     async undoBulk(interaction) {
-        const moderator = interaction.options.getUser('moderator');
-        const count = interaction.options.getInteger('count');
-        const reason = interaction.options.getString('reason') || 'Bulk undo by administrator';
-
-        try {
-            const punishments = await Punishment.findByModId(moderator.id, interaction.guild.id, count);
-            
-            if (punishments.length === 0) {
-                return interaction.reply({ content: '❌ No recent punishments found for this moderator', ephemeral: true });
-            }
-
-            const activePunishments = punishments.filter(p => p.active);
-            
-            if (activePunishments.length === 0) {
-                return interaction.reply({ content: '❌ No active punishments found to undo', ephemeral: true });
-            }
-
-            await interaction.deferReply();
-
-            let undoCount = 0;
-            for (const punishment of activePunishments) {
-                try {
-                    await this.undoPunishmentByType(interaction, punishment, reason, true);
-                    undoCount++;
-                } catch (error) {
-                    console.error(`Failed to undo punishment ${punishment.caseID}:`, error);
-                }
-            }
-
-            const embed = new EmbedBuilder()
-                .setTitle('🔄 Bulk Undo Complete')
-                .setColor('#00ff00')
-                .addFields(
-                    { name: 'Moderator', value: `<@${moderator.id}>`, inline: true },
-                    { name: 'Actions Undone', value: `${undoCount}/${activePunishments.length}`, inline: true },
-                    { name: 'Performed By', value: `<@${interaction.user.id}>`, inline: true },
-                    { name: 'Reason', value: reason, inline: false }
-                )
-                .setTimestamp();
-
-            await interaction.editReply({ embeds: [embed] });
-
-        } catch (error) {
-            console.error('Error performing bulk undo:', error);
-            await interaction.editReply({ content: '❌ Failed to perform bulk undo' });
-        }
+        return interaction.editReply({ content: '❌ Bulk undo is temporarily disabled. Please undo cases individually.', ephemeral: true });
     },
 
-    async undoPunishmentByType(interaction, punishment, reason, isBulk = false) {
-        const member = await interaction.guild.members.fetch(punishment.userID).catch(() => null);
-
-        switch (punishment.type) {
-            case 'ban':
-                await interaction.guild.members.unban(punishment.userID, `${reason} (Case: ${punishment.caseID})`);
-                break;
-            case 'mute':
-            case 'timeout':
-                if (member) {
-                    await member.timeout(null, `${reason} (Case: ${punishment.caseID})`);
-                }
-                break;
-            // warn and other types just need to be deactivated
-        }
-
-        await Punishment.deactivate(punishment.id);
-
-        if (!isBulk) {
-            const embed = new EmbedBuilder()
-                .setTitle(`🔄 ${punishment.type.charAt(0).toUpperCase() + punishment.type.slice(1)} Reversed`)
-                .setColor('#00ff00')
-                .addFields(
-                    { name: 'User', value: `<@${punishment.userID}>`, inline: true },
-                    { name: 'Original Case', value: punishment.caseID, inline: true },
-                    { name: 'Reversed By', value: `<@${interaction.user.id}>`, inline: true },
-                    { name: 'Reason', value: reason, inline: false }
-                )
-                .setTimestamp();
-
-            await interaction.reply({ embeds: [embed] });
-        }
-    }
 };
