@@ -71,11 +71,20 @@ module.exports = {
 };
 
 async function handleAppealSubmit(interaction) {
+    // Check if command is used in a server
+    if (!interaction.guild) {
+        return interaction.reply({
+            content: '❌ Appeals can only be submitted in a server, not in DMs.',
+            flags: 64
+        });
+    }
+
     const caseIDRaw = interaction.options.getString('case_id');
     
     if (!caseIDRaw) {
-        return interaction.editReply({
-            content: '❌ Please provide a case ID to appeal.'
+        return interaction.reply({
+            content: '❌ Please provide a case ID to appeal.',
+            flags: 64
         });
     }
     
@@ -85,26 +94,30 @@ async function handleAppealSubmit(interaction) {
         const caseData = await getCaseById(caseID, interaction.guild.id);
         
         if (!caseData) {
-            return interaction.editReply({
-                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`
+            return interaction.reply({
+                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`,
+                flags: 64
             });
         }
 
         if (!caseData.userId || caseData.userId !== interaction.user.id) {
-            return interaction.editReply({
-                content: '❌ You can only appeal your own cases.'
+            return interaction.reply({
+                content: '❌ You can only appeal your own cases.',
+                flags: 64
             });
         }
 
         if (!caseData.appealable) {
-            return interaction.editReply({
-                content: '❌ This case is not appealable.'
+            return interaction.reply({
+                content: '❌ This case is not appealable.',
+                flags: 64
             });
         }
 
         if (caseData.appealed) {
-            return interaction.editReply({
-                content: `❌ This case has already been appealed. Status: ${caseData.status}`
+            return interaction.reply({
+                content: `❌ This case has already been appealed. Status: ${caseData.status}`,
+                flags: 64
             });
         }
 
