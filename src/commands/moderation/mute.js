@@ -132,10 +132,11 @@ module.exports = {
                         .setColor(0xff9900)
                         .addFields(
                             { name: '🏢 Server', value: guild.name, inline: true },
+                            { name: '🆔 Server ID', value: guild.id, inline: true },
                             { name: '⏱️ Duration', value: durationText, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
                             { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                            { name: '📋 Appeal', value: 'Use `/appeal submit` with your case ID if you believe this is unfair', inline: false }
+                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
                         )
                         .setTimestamp();
                     

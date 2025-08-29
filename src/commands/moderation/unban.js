@@ -80,6 +80,70 @@ module.exports = {
             // Execute the unban
             await interaction.guild.bans.remove(userId, `${reason} | Moderator: ${interaction.user.tag} | Case: ${newCase.caseId}`);
 
+            // Send DM to user if possible
+            let dmSent = false;
+            let inviteLink = null;
+            if (targetUser) {
+                try {
+                    // Generate server invite
+                    try {
+                        const textChannels = interaction.guild.channels.cache.filter(c => c.type === 0);
+                        const generalChannel = textChannels.find(c => 
+                            c.name.includes('general') || 
+                            c.name.includes('welcome') || 
+                            c.name.includes('lobby')
+                        ) || textChannels.first();
+                        
+                        if (generalChannel) {
+                            const invite = await generalChannel.createInvite({
+                                maxAge: 604800, // 7 days
+                                maxUses: 1, // Single use
+                                unique: true,
+                                reason: `Unban invite for ${targetUser.tag}`
+                            });
+                            inviteLink = invite.url;
+                        }
+                    } catch (inviteError) {
+                        console.log(`Could not create invite: ${inviteError.message}`);
+                    }
+
+                    const dmEmbed = new EmbedBuilder()
+                        .setTitle('🔓 You have been unbanned')
+                        .setColor(0x00ff00)
+                        .addFields(
+                            { name: '🏢 Server', value: interaction.guild.name, inline: true },
+                            { name: '🆔 Server ID', value: interaction.guild.id, inline: true },
+                            { name: '🆔 Case ID', value: newCase.caseId, inline: true },
+                            { name: '📝 Reason', value: reason, inline: false }
+                        )
+                        .setTimestamp();
+
+                    const components = [];
+                    if (inviteLink) {
+                        dmEmbed.addFields({ name: '🔗 Rejoin Server', value: 'Click the button below to rejoin the server', inline: false });
+                        
+                        const inviteButton = {
+                            type: 1,
+                            components: [{
+                                type: 2,
+                                style: 5, // Link style
+                                label: '🔗 Rejoin Server',
+                                url: inviteLink
+                            }]
+                        };
+                        components.push(inviteButton);
+                    }
+
+                    await targetUser.send({ 
+                        embeds: [dmEmbed],
+                        components: components
+                    });
+                    dmSent = true;
+                } catch (error) {
+                    console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
+                }
+            }
+
             // Create response embed
             const embed = new EmbedBuilder()
                 .setTitle('🔓 Member Unbanned')
@@ -88,7 +152,9 @@ module.exports = {
                     { name: '👤 User', value: targetUser ? `${targetUser.tag}\n\`${targetUser.id}\`` : `\`${userId}\``, inline: true },
                     { name: '👮 Moderator', value: interaction.user.tag, inline: true },
                     { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                    { name: '📝 Reason', value: reason, inline: false }
+                    { name: '📝 Reason', value: reason, inline: false },
+                    { name: '💬 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true },
+                    { name: '🔗 Invite Created', value: inviteLink ? '✅ Yes' : '❌ No', inline: true }
                 )
                 .setThumbnail(targetUser ? targetUser.displayAvatarURL() : null)
                 .setTimestamp();

@@ -95,18 +95,61 @@ module.exports = {
             let dmSent = false;
             if (!silent) {
                 try {
+                    // Generate server invite
+                    let inviteLink = null;
+                    try {
+                        const textChannels = guild.channels.cache.filter(c => c.type === 0);
+                        const generalChannel = textChannels.find(c => 
+                            c.name.includes('general') || 
+                            c.name.includes('welcome') || 
+                            c.name.includes('lobby')
+                        ) || textChannels.first();
+                        
+                        if (generalChannel) {
+                            const invite = await generalChannel.createInvite({
+                                maxAge: 0, // Never expires
+                                maxUses: 1, // Single use
+                                unique: true,
+                                reason: `Rejoin invite for kicked user ${targetUser.tag}`
+                            });
+                            inviteLink = invite.url;
+                        }
+                    } catch (inviteError) {
+                        console.log(`Could not create invite: ${inviteError.message}`);
+                    }
+
                     const dmEmbed = new EmbedBuilder()
                         .setTitle('🦵 You have been kicked')
                         .setColor(0xff9900)
                         .addFields(
-                            { name: '🏢 Server', value: interaction.guild.name, inline: true },
+                            { name: '🏢 Server', value: guild.name, inline: true },
+                            { name: '🆔 Server ID', value: guild.id, inline: true },
                             { name: '🆔 Case ID', value: newCase.caseId, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
-                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId}\` if you believe this is unfair`, inline: false }
+                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
                         )
                         .setTimestamp();
 
-                    await targetUser.send({ embeds: [dmEmbed] });
+                    const components = [];
+                    if (inviteLink) {
+                        dmEmbed.addFields({ name: '🔗 Rejoin Server', value: 'Click the button below to rejoin the server', inline: false });
+                        
+                        const inviteButton = {
+                            type: 1,
+                            components: [{
+                                type: 2,
+                                style: 5, // Link style
+                                label: '🔗 Rejoin Server',
+                                url: inviteLink
+                            }]
+                        };
+                        components.push(inviteButton);
+                    }
+
+                    await targetUser.send({ 
+                        embeds: [dmEmbed],
+                        components: components
+                    });
                     dmSent = true;
                 } catch (error) {
                     console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);

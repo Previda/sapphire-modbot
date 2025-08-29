@@ -98,13 +98,13 @@ module.exports = {
                 try {
                     const dmEmbed = new EmbedBuilder()
                         .setTitle('🔨 You have been banned')
-                        .setColor(0xff0000)
+                        .setColor(0xFF0000)
                         .addFields(
-                            { name: '🏢 Server', value: interaction.guild.name, inline: true },
+                            { name: '🏢 Server', value: guild.name, inline: true },
+                            { name: '🆔 Server ID', value: guild.id, inline: true },
                             { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                            { name: '⏱️ Duration', value: 'Permanent', inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
-                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId}\` if you believe this is unfair`, inline: false }
+                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
                         )
                         .setTimestamp();
 
