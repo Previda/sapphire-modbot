@@ -267,8 +267,13 @@ client.on('interactionCreate', async interaction => {
         try {
             const modalId = interaction.customId;
             
+            // Appeal modals
+            if (modalId.startsWith('appeal_modal_')) {
+                const { handleAppealModal } = require('./src/utils/appealHandler');
+                await handleAppealModal(interaction);
+            }
             // Ticket-related modals
-            if (modalId.includes('ticket') || modalId.includes('user') || modalId.includes('slowmode')) {
+            else if (modalId.includes('ticket') || modalId.includes('user') || modalId.includes('slowmode')) {
                 const { handleModalSubmit } = require('./src/utils/ticketMenu');
                 await handleModalSubmit(interaction);
             }
@@ -277,7 +282,7 @@ client.on('interactionCreate', async interaction => {
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: '❌ An error occurred processing your submission.',
-                    ephemeral: true
+                    flags: 64
                 });
             }
         }
