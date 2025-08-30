@@ -246,7 +246,13 @@ client.on('interactionCreate', async interaction => {
         try {
             const customId = interaction.customId;
             
-            // Ticket management buttons
+            // Handle appeal buttons
+            if (customId.startsWith('appeal_')) {
+                const { handleAppealButtons } = require('./src/utils/appealButtonHandler');
+                const handled = await handleAppealButtons(interaction);
+                if (handled) return;
+            }
+            
             if (customId.startsWith('ticket_') || customId === 'confirm_close' || customId === 'cancel_close') {
                 const { handleTicketButtonInteraction } = require('./src/utils/ticketMenu');
                 await handleTicketButtonInteraction(interaction);
@@ -265,17 +271,16 @@ client.on('interactionCreate', async interaction => {
     // Handle modal submissions with error handling
     if (interaction.isModalSubmit()) {
         try {
-            const modalId = interaction.customId;
-            
-            // Appeal modals
-            if (modalId.startsWith('appeal_modal_')) {
+            // Handle appeal modal submissions
+            if (interaction.customId?.startsWith('appeal_modal_')) {
                 const { handleAppealModal } = require('./src/utils/appealHandler');
                 await handleAppealModal(interaction);
             }
-            // Ticket-related modals
-            else if (modalId.includes('ticket') || modalId.includes('user') || modalId.includes('slowmode')) {
-                const { handleModalSubmit } = require('./src/utils/ticketMenu');
-                await handleModalSubmit(interaction);
+
+            // Handle appeal review modals
+            if (interaction.customId?.includes('appeal_approve_modal_') || interaction.customId?.includes('appeal_reject_modal_')) {
+                const { handleAppealReviewModal } = require('./src/utils/appealButtonHandler');
+                await handleAppealReviewModal(interaction);
             }
         } catch (error) {
             console.error('❌ Modal submission error:', error);
@@ -377,5 +382,12 @@ function isRateLimited(userId, commandName) {
     return false;
 }
 
+// Start the dashboard API
+const DashboardAPI = require('./src/api/dashboardAPI');
+const dashboard = new DashboardAPI(client);
+
 // Start the bot
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN).then(() => {
+    // Start dashboard after bot is ready
+    dashboard.start();
+});

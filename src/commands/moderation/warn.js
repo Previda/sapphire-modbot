@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
+const appealLibrary = require('../../utils/appealLibrary');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -40,15 +41,23 @@ module.exports = {
             }
 
             // Create case
-            const newCase = await createCase({
+            const newCase = await createCase(interaction.guild.id, {
                 type: 'warn',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
-                guildId: interaction.guild.id,
                 reason: reason,
                 status: 'active',
                 appealable: true
             });
+
+            // Auto-generate appeal code
+            const appealCode = await appealLibrary.autoGenerateAppeal(
+                interaction.guild.id,
+                targetUser.id,
+                'warn',
+                interaction.user.id,
+                reason
+            );
 
             // Send DM to user (unless silent)
             let dmSent = false;
@@ -59,9 +68,9 @@ module.exports = {
                         .setColor(0xffff00)
                         .addFields(
                             { name: '🏢 Server', value: interaction.guild.name, inline: true },
-                            { name: '🆔 Case ID', value: newCase.caseId, inline: true },
+                            { name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
-                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId}\` if you believe this is unfair`, inline: false }
+                            { name: '📋 Appeal', value: `Use \`/appeal submit appeal_code:${appealCode} server_id:${interaction.guild.id}\` if you believe this is unfair`, inline: false }
                         )
                         .setTimestamp();
 

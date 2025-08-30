@@ -22,7 +22,10 @@ class DashboardAPI {
         }));
         this.app.use(express.json());
         
-        // Authentication middleware
+        // Serve static files from public directory
+        this.app.use(express.static(path.join(__dirname, '../../public')));
+        
+        // Authentication middleware for API routes only
         this.app.use('/api', (req, res, next) => {
             const auth = req.headers.authorization;
             if (!auth || !auth.startsWith('Bearer ')) {

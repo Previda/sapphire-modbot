@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const appealLibrary = require('../../utils/appealLibrary');
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
 
@@ -80,21 +81,28 @@ module.exports = {
                 }
             }
 
-            // Create case
-            const newCase = await createCase({
+            // Create case record
+            const newCase = await createCase(guild.id, {
                 type: 'ban',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
-                guildId: guild.id,
                 reason: reason,
-                status: 'active',
-                appealable: true,
-                duration: null
+                timestamp: new Date().toISOString(),
+                appealable: true
             });
 
-            // Send DM to user (unless silent)
+            // Auto-generate appeal code
+            const appealCode = await appealLibrary.autoGenerateAppeal(
+                guild.id,
+                targetUser.id,
+                'ban',
+                interaction.user.id,
+                reason
+            );
+
+            // Try to DM user before banning
             let dmSent = false;
-            if (!silent) {
+            if (targetUser && !targetUser.bot) {
                 try {
                     const dmEmbed = new EmbedBuilder()
                         .setTitle('🔨 You have been banned')
@@ -102,9 +110,9 @@ module.exports = {
                         .addFields(
                             { name: '🏢 Server', value: guild.name, inline: true },
                             { name: '🆔 Server ID', value: guild.id, inline: true },
-                            { name: '🆔 Case ID', value: newCase.caseId, inline: true },
+                            { name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
-                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
+                            { name: '📋 Appeal', value: `Use \`/appeal submit appeal_code:${appealCode} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
                         )
                         .setTimestamp();
 

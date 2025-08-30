@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const appealLibrary = require('../../utils/appealLibrary');
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
 
@@ -110,15 +111,23 @@ module.exports = {
             const durationText = `${durationMinutes}m`;
 
             // Create moderation case with proper case ID
-            const newCase = await createCase({
+            const newCase = await createCase(guild.id, {
                 type: 'mute',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
-                guildId: guild.id,
                 reason: reason,
                 expires: new Date(Date.now() + timeoutDuration).toISOString(),
                 appealable: true
             });
+
+            // Auto-generate appeal code
+            const appealCode = await appealLibrary.autoGenerateAppeal(
+                guild.id,
+                targetUser.id,
+                'mute',
+                interaction.user.id,
+                reason
+            );
 
             // Apply timeout
             await member.timeout(timeoutDuration, `${reason} | Moderator: ${interaction.user.tag} | Case #${newCase.caseId}`);
@@ -135,8 +144,8 @@ module.exports = {
                             { name: '🆔 Server ID', value: guild.id, inline: true },
                             { name: '⏱️ Duration', value: durationText, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
-                            { name: '🆔 Case ID', value: newCase.caseId, inline: true },
-                            { name: '📋 Appeal', value: `Use \`/appeal submit case_id:${newCase.caseId} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
+                            { name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true },
+                            { name: '📋 Appeal', value: `Use \`/appeal submit appeal_code:${appealCode} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
                         )
                         .setTimestamp();
                     
