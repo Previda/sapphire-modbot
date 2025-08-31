@@ -1,4 +1,6 @@
 const { Client, Collection, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const { initializeDatabase } = require('./src/models/database');
 const { handleDMCommand } = require('./src/utils/dmHandler');
 const { handleTicketMenu } = require('./src/utils/ticketMenu');
