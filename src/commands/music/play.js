@@ -166,13 +166,20 @@ module.exports = {
 
             // Try multiple extraction methods for better reliability
             let stream;
+            let resource;
+            let player;
+            
             try {
                 // First attempt with basic options
                 stream = ytdl(songUrl, { 
                     filter: 'audioonly',
-                    quality: 'lowestaudio', // Use lowest quality for better reliability
+                    quality: 'lowestaudio',
                     highWaterMark: 1 << 25
                 });
+                
+                resource = createAudioResource(stream);
+                player = createAudioPlayer();
+                
             } catch (error1) {
                 console.log('First stream attempt failed, trying alternative...');
                 try {
@@ -186,15 +193,29 @@ module.exports = {
                             }
                         }
                     });
+                    
+                    resource = createAudioResource(stream);
+                    player = createAudioPlayer();
+                    
                 } catch (error2) {
-                    console.log('Second stream attempt failed, using basic stream...');
-                    // Final fallback
-                    stream = ytdl(songUrl);
+                    console.log('All stream attempts failed, cleaning up connection...');
+                    
+                    // Clean up voice connection before showing error
+                    try {
+                        connection.destroy();
+                    } catch (cleanupError) {
+                        console.log('Connection cleanup error:', cleanupError.message);
+                    }
+                    
+                    return interaction.editReply({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle('❌ Playback Error')
+                            .setDescription('YouTube playback failed. Try:\n• A different song\n• Using `/play <song name>` instead of URLs\n• Songs that aren\'t age-restricted or region-locked')
+                        ]
+                    });
                 }
             }
-            
-            const resource = createAudioResource(stream);
-            const player = createAudioPlayer();
 
             // Play audio
             player.play(resource);
