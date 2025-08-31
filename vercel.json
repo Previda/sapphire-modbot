@@ -4,15 +4,11 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/public/clean-dashboard.html"
+      "destination": "/clean-dashboard.html"
     },
     {
       "source": "/dashboard",
-      "destination": "/public/clean-dashboard.html"
-    },
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/public/$1"
+      "destination": "/clean-dashboard.html"
     }
   ],
   "cleanUrls": true,
