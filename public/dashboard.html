@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sapphire ModBot • Modern Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="modern-styles.css">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235865f2'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+</head>
+<body>
+    <div class="app" id="app">
+        <!-- Splash Screen -->
+        <div class="splash-screen" id="splashScreen">
+            <div class="splash-content">
+                <div class="logo-container">
+                    <div class="logo-ring"></div>
+                    <div class="logo-icon">
+                        <i class="fas fa-gem"></i>
+                    </div>
+                </div>
+                <h1 class="splash-title">Sapphire ModBot</h1>
+                <p class="splash-subtitle">Modern Discord Moderation</p>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Sidebar -->
+        <nav class="nav-sidebar" id="sidebar">
+            <div class="nav-header">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i class="fas fa-gem"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>Sapphire</h2>
+                        <span>ModBot v2.0</span>
+                    </div>
+                </div>
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <div class="nav-content">
+                <!-- Bot Status -->
+                <div class="bot-status">
+                    <div class="status-avatar">
+                        <img src="https://cdn.discordapp.com/embed/avatars/5.png" alt="Bot Avatar">
+                        <div class="status-dot online"></div>
+                    </div>
+                    <div class="status-info">
+                        <span class="status-name">Sapphire Bot</span>
+                        <span class="status-text">Online • Ready</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <div class="nav-menu">
+                    <div class="menu-group">
+                        <span class="group-title">Dashboard</span>
+                        <a href="#overview" class="nav-link active" data-page="overview">
+                            <div class="nav-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <span class="nav-text">Overview</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                        <a href="#analytics" class="nav-link" data-page="analytics">
+                            <div class="nav-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <span class="nav-text">Analytics</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                    </div>
+
+                    <div class="menu-group">
+                        <span class="group-title">Moderation</span>
+                        <a href="#appeals" class="nav-link" data-page="appeals">
+                            <div class="nav-icon">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <span class="nav-text">Appeals</span>
+                            <div class="nav-badge">3</div>
+                            <div class="nav-ripple"></div>
+                        </a>
+                        <a href="#moderation" class="nav-link" data-page="moderation">
+                            <div class="nav-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <span class="nav-text">Mod Actions</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                        <a href="#automod" class="nav-link" data-page="automod">
+                            <div class="nav-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <span class="nav-text">Auto Mod</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                    </div>
+
+                    <div class="menu-group">
+                        <span class="group-title">Management</span>
+                        <a href="#commands" class="nav-link" data-page="commands">
+                            <div class="nav-icon">
+                                <i class="fas fa-terminal"></i>
+                            </div>
+                            <span class="nav-text">Commands</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                        <a href="#roles" class="nav-link" data-page="roles">
+                            <div class="nav-icon">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                            <span class="nav-text">Roles</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                        <a href="#security" class="nav-link" data-page="security">
+                            <div class="nav-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <span class="nav-text">Security</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                    </div>
+
+                    <div class="menu-group">
+                        <span class="group-title">System</span>
+                        <a href="#logs" class="nav-link" data-page="logs">
+                            <div class="nav-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <span class="nav-text">Logs</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                        <a href="#settings" class="nav-link" data-page="settings">
+                            <div class="nav-icon">
+                                <i class="fas fa-cog"></i>
+                            </div>
+                            <span class="nav-text">Settings</span>
+                            <div class="nav-ripple"></div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="nav-footer">
+                <div class="quick-actions">
+                    <button class="action-btn" id="refreshBtn" title="Refresh Data">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="action-btn" id="deployBtn" title="Deploy Commands">
+                        <i class="fas fa-rocket"></i>
+                    </button>
+                    <button class="action-btn emergency" id="stopBtn" title="Emergency Stop">
+                        <i class="fas fa-power-off"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Dashboard -->
+        <main class="main-dashboard">
+            <!-- Top Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="mobile-nav-toggle" id="mobileToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-info">
+                        <h1 class="page-title" id="pageTitle">Dashboard Overview</h1>
+                        <nav class="breadcrumb" id="breadcrumb">
+                            <span>Dashboard</span>
+                            <i class="fas fa-chevron-right"></i>
+                            <span>Overview</span>
+                        </nav>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search anything..." id="searchInput">
+                    </div>
+
+                    <button class="header-btn notifications" id="notificationsBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-count">4</span>
+                    </button>
+
+                    <div class="user-profile" id="userProfile">
+                        <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="User" class="profile-avatar">
+                        <div class="profile-info">
+                            <span class="profile-name">Administrator</span>
+                            <span class="profile-role">Super Admin</span>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Container -->
+            <div class="content-container">
+                <!-- Overview Page -->
+                <section class="page active" id="overview-page">
+                    <!-- Welcome Banner -->
+                    <div class="welcome-banner">
+                        <div class="banner-content">
+                            <h2>Welcome back, Administrator!</h2>
+                            <p>Your bot is running smoothly across all servers. Here's what's happening today.</p>
+                        </div>
+                        <div class="banner-actions">
+                            <button class="btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Add Server
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card primary">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-server"></i>
+                                </div>
+                                <div class="stat-trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +12%
+                                </div>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" data-count="15">0</div>
+                                <div class="stat-label">Active Servers</div>
+                                <div class="stat-sublabel">+2 this week</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card success">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +8%
+                                </div>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" data-count="24567">0</div>
+                                <div class="stat-label">Total Users</div>
+                                <div class="stat-sublabel">+1.2k today</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card warning">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-gavel"></i>
+                                </div>
+                                <div class="stat-trend neutral">
+                                    <i class="fas fa-minus"></i>
+                                    0%
+                                </div>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" data-count="3">0</div>
+                                <div class="stat-label">Pending Appeals</div>
+                                <div class="stat-sublabel">Needs attention</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card info">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-terminal"></i>
+                                </div>
+                                <div class="stat-trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +24%
+                                </div>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" data-count="1847">0</div>
+                                <div class="stat-label">Commands Used</div>
+                                <div class="stat-sublabel">Last 24 hours</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Grid -->
+                    <div class="dashboard-grid">
+                        <!-- Activity Timeline -->
+                        <div class="card activity-card">
+                            <div class="card-header">
+                                <h3>Recent Activity</h3>
+                                <div class="header-actions">
+                                    <button class="btn-ghost btn-sm">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                    <button class="btn-ghost btn-sm">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="activity-timeline">
+                                    <div class="activity-item">
+                                        <div class="activity-icon success">
+                                            <i class="fas fa-user-plus"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-text">User <strong>@johndoe</strong> joined Discord Server #1</div>
+                                            <div class="activity-time">2 minutes ago</div>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-text">Appeal #A8X9Z2 submitted by <strong>@user123</strong></div>
+                                            <div class="activity-time">5 minutes ago</div>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon info">
+                                            <i class="fas fa-cog"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-text">Commands refreshed successfully</div>
+                                            <div class="activity-time">12 minutes ago</div>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon danger">
+                                            <i class="fas fa-ban"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-text">User <strong>@spammer</strong> was banned from Server #2</div>
+                                            <div class="activity-time">18 minutes ago</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Health -->
+                        <div class="card health-card">
+                            <div class="card-header">
+                                <h3>System Health</h3>
+                                <div class="health-status online">
+                                    <i class="fas fa-circle"></i>
+                                    All Systems Operational
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="health-metrics">
+                                    <div class="metric">
+                                        <div class="metric-header">
+                                            <span class="metric-name">Memory Usage</span>
+                                            <span class="metric-value">342MB / 512MB</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 67%" data-value="67"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="metric">
+                                        <div class="metric-header">
+                                            <span class="metric-name">CPU Usage</span>
+                                            <span class="metric-value">23%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 23%" data-value="23"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="metric">
+                                        <div class="metric-header">
+                                            <span class="metric-name">API Latency</span>
+                                            <span class="metric-value">34ms</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill good" style="width: 15%" data-value="15"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="metric">
+                                        <div class="metric-header">
+                                            <span class="metric-name">Uptime</span>
+                                            <span class="metric-value">99.9%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill excellent" style="width: 99%" data-value="99"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="card actions-card">
+                            <div class="card-header">
+                                <h3>Quick Actions</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="actions-grid">
+                                    <button class="action-card">
+                                        <div class="action-icon">
+                                            <i class="fas fa-gavel"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <span class="action-title">Review Appeals</span>
+                                            <span class="action-desc">3 pending</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+
+                                    <button class="action-card">
+                                        <div class="action-icon">
+                                            <i class="fas fa-rocket"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <span class="action-title">Deploy Commands</span>
+                                            <span class="action-desc">Update all servers</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+
+                                    <button class="action-card">
+                                        <div class="action-icon">
+                                            <i class="fas fa-download"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <span class="action-title">Backup Data</span>
+                                            <span class="action-desc">Create backup</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+
+                                    <button class="action-card">
+                                        <div class="action-icon">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </div>
+                                        <div class="action-text">
+                                            <span class="action-title">View Analytics</span>
+                                            <span class="action-desc">Detailed reports</span>
+                                        </div>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Additional Pages (Placeholder) -->
+                <section class="page" id="appeals-page">
+                    <div class="page-header">
+                        <h2>Appeal Management</h2>
+                        <button class="btn-primary">
+                            <i class="fas fa-plus"></i>
+                            New Appeal
+                        </button>
+                    </div>
+                    <div class="appeals-content">
+                        <!-- Appeals content will be loaded here -->
+                        <div class="coming-soon">
+                            <i class="fas fa-balance-scale"></i>
+                            <h3>Appeals Management</h3>
+                            <p>Advanced appeal review interface coming soon...</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notifications"></div>
+
+    <!-- Scripts -->
+    <script src="modern-dashboard.js"></script>
+</body>
+</html>
