@@ -3,6 +3,9 @@ const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerSta
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
 const spotify = require('spotify-url-info');
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -208,19 +211,19 @@ module.exports = {
             });
 
             player.on(AudioPlayerStatus.Idle, () => {
-                console.log('🎵 Playbook finished');
-                safeDestroy();
+                console.log('🎵 Playback finished - staying connected for next song');
+                // Don't destroy connection, let it stay for next songs
             });
 
             player.on('error', (error) => {
                 console.error('❌ Audio player error:', error.message);
-                safeDestroy();
+                // Don't destroy connection on player errors, just notify user
                 
                 interaction.followUp({
                     embeds: [new EmbedBuilder()
                         .setColor(0xff0000)
                         .setTitle('❌ Playback Error')
-                        .setDescription('Audio playback failed during stream. Try a different song.')]
+                        .setDescription('Audio playback failed during stream. Bot will stay connected for next song.')]
                 }).catch(() => console.log('Could not send error follow-up'));
             });
 
@@ -246,45 +249,99 @@ module.exports = {
 
             await interaction.editReply({ embeds: [playEmbed] });
 
-            // Raspberry Pi optimized stream creation
-            console.log('🔄 Creating audio stream for Raspberry Pi...');
+            // Raspberry Pi multi-method audio extraction
+            console.log('🔄 Starting Pi-optimized audio extraction...');
+            
+            // Method 1: Try yt-dlp command line (more reliable on Pi)
+            let audioCreated = false;
             
             try {
-                // Use simple, Pi-friendly ytdl options
-                const stream = ytdl(songUrl, {
-                    filter: 'audioonly',
-                    quality: 'lowestaudio',
-                    highWaterMark: 1 << 20, // Smaller buffer for Pi
-                    dlChunkSize: 0, // Let ytdl handle chunk size
-                    requestOptions: {
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36'
-                        }
-                    }
-                });
+                console.log('🔄 Method 1: Trying yt-dlp extraction...');
                 
-                // Create resource with Pi-friendly options
-                resource = createAudioResource(stream, {
-                    inlineVolume: true,
-                    inputType: 'arbitrary'
-                });
+                const tempDir = path.join(__dirname, '../../../temp');
+                if (!fs.existsSync(tempDir)) {
+                    fs.mkdirSync(tempDir, { recursive: true });
+                }
                 
-                console.log('✅ Audio resource created for Pi');
+                const audioFile = path.join(tempDir, `audio_${Date.now()}.webm`);
                 
-                // Start playback
-                player.play(resource);
-                connection.subscribe(player);
-                
-                console.log('🎵 Playback started on Raspberry Pi');
-                
-            } catch (error) {
-                console.error('❌ Pi stream creation failed:', error);
-                
-                // Try alternative approach for Pi
-                try {
-                    console.log('🔄 Trying alternative Pi stream method...');
+                await new Promise((resolve, reject) => {
+                    const ytDlpCommand = `yt-dlp -f "bestaudio[ext=webm]" --no-playlist -o "${audioFile}" "${songUrl}"`;
                     
-                    // Very basic stream for Pi compatibility
+                    exec(ytDlpCommand, { timeout: 30000 }, (error, stdout, stderr) => {
+                        if (error) {
+                            console.log('yt-dlp failed:', error.message);
+                            reject(error);
+                        } else {
+                            console.log('✅ yt-dlp extraction successful');
+                            resolve();
+                        }
+                    });
+                });
+                
+                if (fs.existsSync(audioFile)) {
+                    resource = createAudioResource(audioFile, {
+                        inlineVolume: true
+                    });
+                    
+                    player.play(resource);
+                    connection.subscribe(player);
+                    
+                    console.log('🎵 yt-dlp playback started successfully');
+                    audioCreated = true;
+                    
+                    // Clean up file after playback
+                    player.once(AudioPlayerStatus.Idle, () => {
+                        try {
+                            fs.unlinkSync(audioFile);
+                            console.log('Temp audio file cleaned up');
+                        } catch (cleanupError) {
+                            console.log('Could not cleanup temp file:', cleanupError.message);
+                        }
+                    });
+                }
+                
+            } catch (ytDlpError) {
+                console.log('Method 1 (yt-dlp) failed:', ytDlpError.message);
+            }
+            
+            // Method 2: ytdl-core with Pi optimizations (if yt-dlp failed)
+            if (!audioCreated) {
+                try {
+                    console.log('🔄 Method 2: Trying optimized ytdl-core...');
+                    
+                    const stream = ytdl(songUrl, {
+                        filter: 'audioonly',
+                        quality: 'lowestaudio',
+                        highWaterMark: 1 << 18, // Even smaller for Pi
+                        requestOptions: {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36'
+                            }
+                        }
+                    });
+                    
+                    resource = createAudioResource(stream, {
+                        inlineVolume: true,
+                        inputType: 'arbitrary'
+                    });
+                    
+                    player.play(resource);
+                    connection.subscribe(player);
+                    
+                    console.log('🎵 ytdl-core playback started');
+                    audioCreated = true;
+                    
+                } catch (ytdlError) {
+                    console.log('Method 2 (ytdl-core) failed:', ytdlError.message);
+                }
+            }
+            
+            // Method 3: Ultra-basic fallback
+            if (!audioCreated) {
+                try {
+                    console.log('🔄 Method 3: Ultra-basic fallback...');
+                    
                     const stream = ytdl(songUrl, {
                         filter: 'audio',
                         quality: 'lowest'
@@ -294,20 +351,26 @@ module.exports = {
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('✅ Alternative Pi stream working');
+                    console.log('🎵 Basic fallback playback started');
+                    audioCreated = true;
                     
-                } catch (altError) {
-                    console.error('❌ All Pi stream methods failed:', altError);
-                    safeDestroy();
-                    
-                    await interaction.followUp({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle('❌ Raspberry Pi Stream Failed')
-                            .setDescription(`YouTube extraction failed on Pi.\n\n**Error:** ${altError.message}\n\n**Solutions:**\n• Try popular songs from major artists\n• Use song names instead of URLs\n• Avoid region-locked content\n• Try \`/play never gonna give you up\` as a test`)]
-                    });
-                    return;
+                } catch (basicError) {
+                    console.error('❌ All methods failed:', basicError.message);
                 }
+            }
+            
+            // If all methods failed
+            if (!audioCreated) {
+                console.error('❌ All audio extraction methods failed on Pi');
+                safeDestroy();
+                
+                await interaction.followUp({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle('❌ Pi Audio Extraction Failed')
+                        .setDescription(`All audio extraction methods failed on Raspberry Pi.\n\n**Solutions:**\n• Install yt-dlp: \`sudo apt install yt-dlp\`\n• Try very popular songs\n• Use official music videos\n• Avoid region-locked content\n\n**Test command:** \`/play rick roll\``)]
+                });
+                return;
             }
 
             // Timeout to prevent hanging connections (10 minutes)
