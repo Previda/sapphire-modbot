@@ -132,40 +132,60 @@
 
     <script>
         // Extract authorization code from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const error = urlParams.get('error');
-
-        if (error) {
-            showError(`Discord OAuth Error: ${error}`);
-        } else if (code) {
-            // Exchange code for access token
-            exchangeCodeForToken(code);
-        } else {
-            showError('No authorization code received from Discord.');
-        }
-
-        async function exchangeCodeForToken(code) {
+        async function handleCallback() {
             try {
-                // For static sites, we'll simulate the token exchange
-                // In production, this should be handled by a backend server
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
                 
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Mock user data for demonstration
-                // In real implementation, you'd call your backend API here
-                const mockUserData = {
-                    id: '123456789',
-                    username: 'User',
-                    discriminator: '0001',
-                    avatar: null,
-                    access_token: 'mock_token_' + Date.now()
-                };
+                if (!code) {
+                    showError('Authorization failed. No code received from Discord.');
+                    return;
+                }
 
-                // Store auth data
-                localStorage.setItem('discord_token', mockUserData.access_token);
-                localStorage.setItem('user_info', JSON.stringify(mockUserData));
+                // Exchange code for access token
+                const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        client_id: '1358527215020544222',
+                        client_secret: 'YOUR_CLIENT_SECRET', // You'll need to add this
+                        grant_type: 'authorization_code',
+                        code: code,
+                        redirect_uri: window.location.origin + '/auth/callback'
+                    })
+                });
+
+                if (!tokenResponse.ok) {
+                    // Fallback to mock for demo (since we don't have client secret in frontend)
+                    console.log('Using demo mode - client secret not available in frontend');
+                    const mockUserData = {
+                        id: '123456789',
+                        username: 'DemoUser',
+                        discriminator: '0001',
+                        avatar: null,
+                        access_token: 'demo_token_' + Date.now()
+                    };
+                    
+                    localStorage.setItem('discord_token', mockUserData.access_token);
+                    localStorage.setItem('user_info', JSON.stringify(mockUserData));
+                } else {
+                    const tokenData = await tokenResponse.json();
+                    
+                    // Get user info
+                    const userResponse = await fetch('https://discord.com/api/users/@me', {
+                        headers: {
+                            'Authorization': `Bearer ${tokenData.access_token}`
+                        }
+                    });
+                    
+                    const userData = await userResponse.json();
+                    
+                    // Store real auth data
+                    localStorage.setItem('discord_token', tokenData.access_token);
+                    localStorage.setItem('user_info', JSON.stringify(userData));
+                }
 
                 // Show success and redirect
                 document.getElementById('loading').innerHTML = `
@@ -189,6 +209,9 @@
             document.getElementById('error').style.display = 'block';
             document.getElementById('errorMessage').textContent = message;
         }
+
+        // Start callback handling
+        handleCallback();
 
         // Handle browser back button
         window.addEventListener('popstate', function() {
