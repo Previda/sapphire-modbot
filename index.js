@@ -52,7 +52,7 @@ client.commands = new Collection();
 // Initialize modules
 const backupScheduler = new BackupScheduler(client);
 const autoMod = new AutoModerationModule();
-let xpSystem, loggingSystem, autoModSystem, antiRaidSystem, antiNukeSystem, dashboardAPI;
+let xpSystem, loggingSystem, autoModSystem, antiRaidSystem, antiNukeSystem;
 
 const initializeServices = () => {
     xpSystem = new XPSystem(client);
@@ -60,14 +60,10 @@ const initializeServices = () => {
     autoModSystem = new AutoModSystem(client);
     antiRaidSystem = new AntiRaidSystem(client);
     antiNukeSystem = new AntiNukeSystem(client);
-    dashboardAPI = new DashboardAPI(client);
     
     console.log('✅ All modular systems initialized');
     console.log('🛡️ Anti-raid protection active');
     console.log('🚨 Anti-nuke protection active');
-    
-    // Start dashboard API
-    dashboardAPI.start();
 };
 
 // Load commands recursively
