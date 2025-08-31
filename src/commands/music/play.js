@@ -164,17 +164,34 @@ module.exports = {
                 adapterCreator: interaction.guild.voiceAdapterCreator,
             });
 
-            // Create audio resource with better options
-            const stream = ytdl(songUrl, { 
-                filter: 'audioonly',
-                quality: 'highestaudio',
-                highWaterMark: 1 << 25,
-                requestOptions: {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    }
+            // Try multiple extraction methods for better reliability
+            let stream;
+            try {
+                // First attempt with basic options
+                stream = ytdl(songUrl, { 
+                    filter: 'audioonly',
+                    quality: 'lowestaudio', // Use lowest quality for better reliability
+                    highWaterMark: 1 << 25
+                });
+            } catch (error1) {
+                console.log('First stream attempt failed, trying alternative...');
+                try {
+                    // Second attempt with different options
+                    stream = ytdl(songUrl, {
+                        filter: 'audio',
+                        quality: 'lowest',
+                        requestOptions: {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+                            }
+                        }
+                    });
+                } catch (error2) {
+                    console.log('Second stream attempt failed, using basic stream...');
+                    // Final fallback
+                    stream = ytdl(songUrl);
                 }
-            });
+            }
             
             const resource = createAudioResource(stream);
             const player = createAudioPlayer();
@@ -232,7 +249,7 @@ module.exports = {
                         embeds: [new EmbedBuilder()
                             .setColor(0xff0000)
                             .setTitle('❌ Playback Error')
-                            .setDescription('YouTube playback failed. This is often due to age-restricted or unavailable videos. Try a different song.')]
+                            .setDescription('YouTube playback failed. Try:\n• A different song\n• Using `/play <song name>` instead of URLs\n• Songs that aren\'t age-restricted or region-locked')]
                     }).catch(() => {
                         console.log('Could not send error follow-up - interaction expired');
                     });
