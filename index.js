@@ -6,6 +6,7 @@ const BackupScheduler = require('./src/services/backupScheduler');
 const XPSystem = require('./src/services/xpSystem');
 const LoggingSystem = require('./src/services/loggingSystem');
 const AutoModSystem = require('./src/services/autoModSystem');
+const { AutoModerationModule } = require('./src/modules/automod');
 const AntiRaidSystem = require('./src/utils/antiRaid');
 const AntiNukeSystem = require('./src/utils/antiNuke');
 
