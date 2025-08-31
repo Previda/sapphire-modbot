@@ -172,7 +172,9 @@ module.exports = {
                 }
             }
 
-            // Join voice channel with server mute (bot can't hear users but can play music)
+            console.log('🔄 Joining voice channel...');
+
+            // Join voice channel with server mute
             const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: interaction.guild.id,
@@ -181,64 +183,54 @@ module.exports = {
                 selfMute: false  // Bot can speak/play music
             });
 
-            // Try multiple extraction methods for better reliability
-            let stream;
-            let resource;
-            let player;
+            console.log('Voice channel joined successfully');
             
-            try {
-                // First attempt with basic options
-                stream = ytdl(songUrl, { 
-                    filter: 'audioonly',
-                    quality: 'lowestaudio',
-                    highWaterMark: 1 << 25
-                });
-                
-                resource = createAudioResource(stream);
-                player = createAudioPlayer();
-                
-            } catch (error1) {
-                console.log('First stream attempt failed, trying alternative...');
-                try {
-                    // Second attempt with different options
-                    stream = ytdl(songUrl, {
-                        filter: 'audio',
-                        quality: 'lowest',
-                        requestOptions: {
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-                            }
-                        }
-                    });
-                    
-                    resource = createAudioResource(stream);
-                    player = createAudioPlayer();
-                    
-                } catch (error2) {
-                    console.log('All stream attempts failed, cleaning up connection...');
-                    
-                    // Clean up voice connection before showing error
+            // Create player and audio resource
+            const player = createAudioPlayer();
+            
+            // Connection cleanup handler
+            let isDestroyed = false;
+            const safeDestroy = () => {
+                if (!isDestroyed) {
                     try {
+                        isDestroyed = true;
                         connection.destroy();
-                    } catch (cleanupError) {
-                        console.log('Connection cleanup error:', cleanupError.message);
+                        console.log('Connection safely destroyed');
+                    } catch (error) {
+                        console.log('Connection cleanup error:', error.message);
                     }
-                    
-                    return interaction.editReply({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle('❌ Playback Error')
-                            .setDescription('YouTube playback failed. Try:\n• A different song\n• Using `/play <song name>` instead of URLs\n• Songs that aren\'t age-restricted or region-locked')
-                        ]
-                    });
                 }
-            }
+            };
 
-            // Play audio
-            player.play(resource);
-            connection.subscribe(player);
+            // Set up player event handlers
+            player.on(AudioPlayerStatus.Playing, () => {
+                console.log(`🎵 Now playing: ${songInfo.title}`);
+            });
 
-            // Success embed
+            player.on(AudioPlayerStatus.Idle, () => {
+                console.log('🎵 Playbook finished');
+                safeDestroy();
+            });
+
+            player.on('error', (error) => {
+                console.error('❌ Audio player error:', error.message);
+                safeDestroy();
+                
+                interaction.followUp({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle('❌ Playback Error')
+                        .setDescription('Audio playback failed during stream. Try a different song.')]
+                }).catch(() => console.log('Could not send error follow-up'));
+            });
+
+            // Connection event handlers
+            connection.on(VoiceConnectionStatus.Disconnected, () => {
+                console.log('🎵 Voice connection disconnected');
+                safeDestroy();
+            });
+
+            // Show "Now Playing" embed immediately
             const playEmbed = new EmbedBuilder()
                 .setColor(0x00ff00)
                 .setTitle('🎵 Now Playing')
@@ -254,60 +246,47 @@ module.exports = {
 
             await interaction.editReply({ embeds: [playEmbed] });
 
-            // Handle player events with better error handling
-            let isDestroyed = false;
-            
-            const safeDestroy = () => {
-                if (!isDestroyed) {
-                    try {
-                        isDestroyed = true;
-                        connection.destroy();
-                    } catch (error) {
-                        console.error('Connection already destroyed:', error.message);
+            try {
+                console.log('Creating ytdl stream...');
+                const stream = ytdl(songUrl, {
+                    filter: 'audioonly',
+                    quality: 'lowestaudio',
+                    highWaterMark: 1 << 25,
+                    requestOptions: {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
                     }
-                }
-            };
-
-            player.on(AudioPlayerStatus.Playing, () => {
-                console.log(`🎵 Now playing: ${songInfo.title}`);
-            });
-
-            player.on(AudioPlayerStatus.Idle, () => {
-                console.log('🎵 Playback finished');
-                safeDestroy();
-            });
-
-            player.on('error', (error) => {
-                console.error('❌ Audio player error:', error.message);
+                });
+                
+                const resource = createAudioResource(stream);
+                
+                console.log('Starting playback...');
+                player.play(resource);
+                connection.subscribe(player);
+                
+                console.log('🎵 Playback started successfully');
+                
+            } catch (error) {
+                console.error('❌ Stream creation failed:', error);
                 safeDestroy();
                 
-                // Try to send follow-up if interaction still exists
-                try {
-                    interaction.followUp({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle('❌ Playback Error')
-                            .setDescription('YouTube playback failed. Try:\n• A different song\n• Using `/play <song name>` instead of URLs\n• Songs that aren\'t age-restricted or region-locked')]
-                    }).catch(() => {
-                        console.log('Could not send error follow-up - interaction expired');
-                    });
-                } catch (followUpError) {
-                    console.error('Follow-up error:', followUpError.message);
-                }
-            });
+                await interaction.followUp({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle('❌ Stream Failed')
+                        .setDescription(`Could not create audio stream.\n\n**Error:** ${error.message}\n\nTry a different song.`)]
+                });
+                return;
+            }
 
-            connection.on(VoiceConnectionStatus.Disconnected, () => {
-                console.log('🎵 Disconnected from voice channel');
-                safeDestroy();
-            });
-
-            // Timeout to prevent hanging connections
+            // Timeout to prevent hanging connections (10 minutes)
             setTimeout(() => {
                 if (!isDestroyed) {
-                    console.log('🎵 Connection timeout - cleaning up');
+                    console.log('🎵 Connection timeout - cleaning up after 10 minutes');
                     safeDestroy();
                 }
-            }, 600000); // 10 minutes timeout
+            }, 600000);
 
         } catch (error) {
             console.error('❌ Play command error:', error);
