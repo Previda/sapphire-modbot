@@ -14,6 +14,20 @@ module.exports = {
 
     async execute(interaction) {
         try {
+            // Check music permissions
+            const setupCommand = require('./setup-music.js');
+            const permissionCheck = await setupCommand.checkMusicPermission(interaction);
+            
+            if (!permissionCheck.allowed) {
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle('🚫 Access Denied')
+                        .setDescription(permissionCheck.reason)],
+                    ephemeral: true
+                });
+            }
+
             const voiceChannel = interaction.member.voice.channel;
             const volume = interaction.options.getInteger('level');
             

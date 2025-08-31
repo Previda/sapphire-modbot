@@ -10,6 +10,20 @@ module.exports = {
 
     async execute(interaction) {
         try {
+            // Check music permissions
+            const setupCommand = require('./setup-music.js');
+            const permissionCheck = await setupCommand.checkMusicPermission(interaction);
+            
+            if (!permissionCheck.allowed) {
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle('🚫 Access Denied')
+                        .setDescription(permissionCheck.reason)],
+                    ephemeral: true
+                });
+            }
+
             const guildQueue = musicQueues.get(interaction.guild.id);
             
             if (!guildQueue || guildQueue.length === 0) {
