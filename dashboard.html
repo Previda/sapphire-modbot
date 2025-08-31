@@ -519,15 +519,15 @@
             container.appendChild(serversGrid);
         }
 
-        function openServerDashboard(serverId, serverName) {
-            // Store selected server info
+        function manageServer(serverId, serverName) {
+            // Store selected server
             localStorage.setItem('selected_server', JSON.stringify({
                 id: serverId,
                 name: serverName
             }));
             
-            // Redirect to server-specific dashboard
-            window.location.href = `/server-dashboard.html?id=${serverId}`;
+            // Redirect to server settings page
+            window.location.href = `/server-settings.html?id=${serverId}`;
         }
 
         function inviteBot(serverId) {

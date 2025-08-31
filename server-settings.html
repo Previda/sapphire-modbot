@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Settings - Sapphire ModBot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .notch-nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 0.8rem 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .nav-logo i {
+            color: #5865f2;
+            font-size: 1.2rem;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(88, 101, 242, 0.2);
+            border-color: rgba(88, 101, 242, 0.5);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 120px 2rem 2rem;
+        }
+
+        .server-header {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .server-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #5865f2, #7289da);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .server-info h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .server-info p {
+            color: #b9bbbe;
+            font-size: 1.1rem;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        .settings-sidebar {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #b9bbbe;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(88, 101, 242, 0.1);
+            color: white;
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #5865f2, #7289da);
+            color: white;
+        }
+
+        .settings-content {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-desc {
+            color: #b9bbbe;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .setting-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .setting-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .setting-desc {
+            color: #b9bbbe;
+            font-size: 0.9rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #4f545c;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #57f287;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(24px);
+        }
+
+        .input-field, .channel-select, .role-select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 0.8rem;
+            color: white;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #57f287, #43b883);
+            border: none;
+            border-radius: 10px;
+            padding: 0.8rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(87, 242, 135, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <nav class="notch-nav">
+        <div class="nav-logo">
+            <i class="fas fa-gem"></i>
+            <span>Sapphire ModBot</span>
+        </div>
+        
+        <a href="/dashboard.html" class="nav-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </a>
+    </nav>
+
+    <div class="container">
+        <div class="server-header">
+            <div class="server-icon" id="serverIcon">S</div>
+            <div class="server-info">
+                <h1 id="serverName">Loading...</h1>
+                <p id="serverDesc">Configure server settings</p>
+            </div>
+        </div>
+
+        <div class="settings-grid">
+            <div class="settings-sidebar">
+                <div class="sidebar-item active" data-section="music">
+                    <i class="fas fa-music"></i>
+                    <span>Music Bot</span>
+                </div>
+                
+                <div class="sidebar-item" data-section="tickets">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Tickets</span>
+                </div>
+                
+                <div class="sidebar-item" data-section="moderation">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Moderation</span>
+                </div>
+            </div>
+
+            <div class="settings-content">
+                <!-- Music Settings -->
+                <div class="section active" id="music">
+                    <h2 class="section-title">
+                        <i class="fas fa-music"></i>
+                        Music Bot Settings
+                    </h2>
+                    <p class="section-desc">Configure music bot permissions and features.</p>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div>
+                                <div class="setting-title">Music Bot Enabled</div>
+                                <div class="setting-desc">Enable or disable music commands</div>
+                            </div>
+                            <div class="toggle-switch" id="musicToggle" onclick="toggleMusic()">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                        <div class="input-group" id="musicConfig" style="display: none;">
+                            <label>Required Role (Optional)</label>
+                            <select class="role-select" id="musicRole">
+                                <option value="">No role required</option>
+                            </select>
+                            <button class="save-btn" onclick="saveSettings()">
+                                <i class="fas fa-save"></i>
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticket Settings -->
+                <div class="section" id="tickets">
+                    <h2 class="section-title">
+                        <i class="fas fa-ticket-alt"></i>
+                        Support Tickets
+                    </h2>
+                    <p class="section-desc">Configure ticket system and categories.</p>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div>
+                                <div class="setting-title">Ticket System</div>
+                                <div class="setting-desc">Enable ticket creation and management</div>
+                            </div>
+                            <div class="toggle-switch" id="ticketToggle" onclick="toggleTickets()">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                        <div class="input-group" id="ticketConfig" style="display: none;">
+                            <label>Ticket Category</label>
+                            <select class="channel-select" id="ticketCategory">
+                                <option value="">Select Category...</option>
+                            </select>
+                            <label>Staff Role</label>
+                            <select class="role-select" id="ticketStaffRole">
+                                <option value="">Select Staff Role...</option>
+                            </select>
+                            <button class="save-btn" onclick="saveSettings()">
+                                <i class="fas fa-save"></i>
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Moderation Settings -->
+                <div class="section" id="moderation">
+                    <h2 class="section-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Moderation
+                    </h2>
+                    <p class="section-desc">Configure auto-moderation and security.</p>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div>
+                                <div class="setting-title">Auto-Moderation</div>
+                                <div class="setting-desc">Automatically detect harmful content</div>
+                            </div>
+                            <div class="toggle-switch active" id="autoModToggle" onclick="toggleAutoMod()">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                        <button class="save-btn" onclick="saveSettings()">
+                            <i class="fas fa-save"></i>
+                            Save All Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('discord_token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const serverId = urlParams.get('id');
+            
+            if (!serverId) {
+                window.location.href = '/dashboard.html';
+                return;
+            }
+
+            loadServerInfo(serverId);
+            loadSettings(serverId);
+        });
+
+        function loadServerInfo(serverId) {
+            const selectedServer = JSON.parse(localStorage.getItem('selected_server') || '{}');
+            document.getElementById('serverName').textContent = selectedServer.name || 'Unknown Server';
+            document.getElementById('serverIcon').textContent = (selectedServer.name || 'S').charAt(0).toUpperCase();
+        }
+
+        function loadSettings(serverId) {
+            const settings = JSON.parse(localStorage.getItem(`server_settings_${serverId}`) || '{}');
+            
+            if (settings.musicEnabled) {
+                document.getElementById('musicToggle').classList.add('active');
+                document.getElementById('musicConfig').style.display = 'block';
+            }
+            
+            if (settings.ticketsEnabled) {
+                document.getElementById('ticketToggle').classList.add('active');
+                document.getElementById('ticketConfig').style.display = 'block';
+            }
+        }
+
+        // Sidebar navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const section = this.getAttribute('data-section');
+                
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(section).classList.add('active');
+            });
+        });
+
+        function toggleMusic() {
+            const toggle = document.getElementById('musicToggle');
+            const config = document.getElementById('musicConfig');
+            
+            toggle.classList.toggle('active');
+            config.style.display = toggle.classList.contains('active') ? 'block' : 'none';
+        }
+
+        function toggleTickets() {
+            const toggle = document.getElementById('ticketToggle');
+            const config = document.getElementById('ticketConfig');
+            
+            toggle.classList.toggle('active');
+            config.style.display = toggle.classList.contains('active') ? 'block' : 'none';
+        }
+
+        function toggleAutoMod() {
+            const toggle = document.getElementById('autoModToggle');
+            toggle.classList.toggle('active');
+        }
+
+        function saveSettings() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const serverId = urlParams.get('id');
+            
+            const settings = {
+                musicEnabled: document.getElementById('musicToggle').classList.contains('active'),
+                ticketsEnabled: document.getElementById('ticketToggle').classList.contains('active'),
+                autoModEnabled: document.getElementById('autoModToggle').classList.contains('active'),
+                lastUpdated: Date.now()
+            };
+            
+            localStorage.setItem(`server_settings_${serverId}`, JSON.stringify(settings));
+            
+            // Show success notification
+            showNotification('Settings saved successfully!', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${type === 'success' ? '#57f287' : '#ed4245'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                font-weight: 600;
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

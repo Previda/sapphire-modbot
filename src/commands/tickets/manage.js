@@ -1,6 +1,4 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ChannelType } = require('discord.js');
-const { getGuildConfig } = require('../admin/setup');
-const webhookLogger = require('../../utils/webhookLogger');
 const fs = require('fs').promises;
 const path = require('path');
 
