@@ -3,16 +3,11 @@ const { initializeDatabase } = require('./src/models/database');
 const { handleDMCommand } = require('./src/utils/dmHandler');
 const { handleTicketMenu } = require('./src/utils/ticketMenu');
 const BackupScheduler = require('./src/services/backupScheduler');
-const { AutoModerationModule } = require('./src/modules/automod');
 const XPSystem = require('./src/services/xpSystem');
 const LoggingSystem = require('./src/services/loggingSystem');
 const AutoModSystem = require('./src/services/autoModSystem');
 const AntiRaidSystem = require('./src/utils/antiRaid');
 const AntiNukeSystem = require('./src/utils/antiNuke');
-const DashboardAPI = require('./src/api/dashboardAPI');
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
 
 // Security and error handling
 process.on('uncaughtException', (error) => {
@@ -109,8 +104,12 @@ if (fs.existsSync(commandsPath)) {
 client.on('ready', async () => {
     console.log(`✅ ${client.user.tag} is online!`);
     
-    // Initialize services after client is ready
+    // Initialize database and services after client is ready
     try {
+        const database = require('./src/database/connection');
+        await database.initializeTables();
+        console.log('✅ Database initialized successfully');
+        
         initializeServices();
     } catch (error) {
         console.error('❌ Error initializing services:', error);
