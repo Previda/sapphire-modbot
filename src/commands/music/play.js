@@ -157,11 +157,13 @@ module.exports = {
                 }
             }
 
-            // Join voice channel
+            // Join voice channel with proper configuration
             const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: interaction.guild.id,
                 adapterCreator: interaction.guild.voiceAdapterCreator,
+                selfDeaf: false,
+                selfMute: false
             });
 
             // Try multiple extraction methods for better reliability

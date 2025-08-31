@@ -106,9 +106,6 @@ module.exports = {
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
 
-        // Defer reply for database operations
-        await interaction.deferReply();
-
         switch (subcommand) {
             case 'create':
                 await this.createBackup(interaction);
