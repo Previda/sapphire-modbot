@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sapphire ModBot • Professional Dashboard v4.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <title>Sapphire ModBot • Professional Dashboard</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">  
     <meta http-equiv="Expires" content="0">
@@ -330,74 +328,17 @@
     </footer>
 
     <script>
-        // Animate counters with smooth easing
-        function animateCounter(id, target) {
-            const element = document.getElementById(id);
-            let current = 0;
-            const increment = target / 150;
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    element.textContent = target.toLocaleString();
-                    clearInterval(timer);
-                } else {
-                    element.textContent = Math.floor(current).toLocaleString();
-                }
-            }, 15);
-        }
-
-        // Professional notification system
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.innerHTML = `
-                <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                ${message}
-            `;
-            notification.style.cssText = `
-                position: fixed; top: 100px; right: 20px; z-index: 1001;
-                background: linear-gradient(135deg, #5865f2, #7289da);
-                color: white; padding: 1rem 1.5rem; border-radius: 12px;
-                font-weight: 500; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(88, 101, 242, 0.3);
-                animation: slideInRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                max-width: 300px; backdrop-filter: blur(10px);
-            `;
-            
-            // Add animation keyframes
-            if (!document.querySelector('#notification-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notification-styles';
-                style.textContent = `
-                    @keyframes slideInRight {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOutRight {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
+        // Redirect to login page
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('discord_token');
+            if (token) {
+                // User is logged in, redirect to dashboard
+                window.location.href = '/dashboard.html';
+            } else {
+                // User not logged in, redirect to login
+                window.location.href = '/login.html';
             }
-            
-            document.body.appendChild(notification);
-            
-            // Auto-remove after 4 seconds
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.3s ease-in';
-                setTimeout(() => notification.remove(), 300);
-            }, 4000);
-        }
-
-        // Initialize dashboard on load
-        document.addEventListener('DOMContentLoaded', () => {
-            // Stagger counter animations for better effect
-            setTimeout(() => animateCounter('guilds', 156), 200);
-            setTimeout(() => animateCounter('users', 24750), 400);
-            setTimeout(() => animateCounter('actions', 3847), 600);
         });
-
-        // Add smooth scroll behavior
-        document.documentElement.style.scrollBehavior = 'smooth';
     </script>
 </body>
 </html>
