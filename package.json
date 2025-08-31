@@ -1,6 +1,6 @@
 {
   "name": "sapphire-modbot",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Enterprise-grade Discord moderation bot with advanced backup & disaster recovery",
   "main": "index.js",
   "scripts": {
