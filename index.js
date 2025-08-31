@@ -110,7 +110,11 @@ client.on('ready', async () => {
     console.log(`✅ ${client.user.tag} is online!`);
     
     // Initialize services after client is ready
-    initializeServices();
+    try {
+        initializeServices();
+    } catch (error) {
+        console.error('❌ Error initializing services:', error);
+    }
 });
 
 // Webhook logging event listeners
@@ -382,12 +386,8 @@ function isRateLimited(userId, commandName) {
     return false;
 }
 
-// Start the dashboard API
-const DashboardAPI = require('./src/api/dashboardAPI');
-const dashboard = new DashboardAPI(client);
-
 // Start the bot
-client.login(process.env.DISCORD_TOKEN).then(() => {
-    // Start dashboard after bot is ready
-    dashboard.start();
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+    console.error('❌ Failed to login to Discord:', error);
+    process.exit(1);
 });
