@@ -525,41 +525,47 @@ async function handleTranscript(interaction) {
     const channel = interaction.channel;
 
     try {
-        // Find ticket case by channel ID
-        const allCases = moderationManager.getAllCases();
-        const ticketCase = allCases.find(c => c.channelId === channel.id && c.type === 'ticket');
+        await interaction.deferReply();
 
-        if (!ticketCase) {
-            return interaction.reply({
-                content: '❌ This is not a ticket channel.',
-                flags: 64
+        // Check if this is a ticket channel by name pattern
+        if (!channel.name.includes('ticket') && !channel.name.includes('appeal') && !channel.name.includes('support')) {
+            return interaction.editReply({
+                content: '❌ This command can only be used in ticket channels.'
             });
         }
 
-        await interaction.deferReply();
-
-        const transcript = await generateTranscript(channel, ticketCase);
+        // Generate basic transcript without requiring case data
+        const transcript = await generateBasicTranscript(channel);
         
         if (transcript) {
             await interaction.editReply({
                 content: '✅ Transcript generated successfully!',
-                files: [transcript.attachment]
+                files: [{ attachment: transcript.path, name: transcript.filename }]
             });
         } else {
             await interaction.editReply({
-                content: '❌ Failed to generate transcript.'
+                content: '❌ Failed to generate transcript. Please check permissions and try again.'
             });
         }
 
     } catch (error) {
         console.error('Error generating transcript:', error);
-        await interaction.editReply({
-            content: '❌ Failed to generate transcript. Please try again later.'
-        });
+        
+        // Ensure we respond if deferred
+        if (interaction.deferred) {
+            await interaction.editReply({
+                content: '❌ An error occurred while generating the transcript. Please try again later.'
+            });
+        } else {
+            await interaction.reply({
+                content: '❌ An error occurred while generating the transcript. Please try again later.',
+                ephemeral: true
+            });
+        }
     }
 }
 
-async function generateTranscript(channel, ticketCase) {
+async function generateBasicTranscript(channel) {
     try {
         // Fetch all messages
         const messages = [];
@@ -579,12 +585,12 @@ async function generateTranscript(channel, ticketCase) {
         // Sort messages by timestamp
         messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-        // Generate HTML transcript with improved styling
+        // Generate simple HTML transcript
         let html = `
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ticket Transcript - Case #${ticketCase.caseId}</title>
+    <title>Ticket Transcript - ${channel.name}</title>
     <meta charset="UTF-8">
     <style>
         body { 
@@ -601,159 +607,41 @@ async function generateTranscript(channel, ticketCase) {
             padding: 30px; 
             border-radius: 12px; 
             margin-bottom: 30px; 
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
         }
-        .header h1 { margin: 0 0 20px 0; font-size: 28px; }
-        .header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-        .header-item { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; }
-        .header-item strong { display: block; margin-bottom: 5px; }
         .message { 
             margin: 15px 0; 
             padding: 15px; 
             background: #40444b; 
             border-radius: 8px; 
             border-left: 4px solid #7289da;
-            transition: all 0.2s ease;
         }
-        .message:hover { background: #42464d; }
         .message-header { display: flex; align-items: center; margin-bottom: 8px; }
-        .author { 
-            font-weight: bold; 
-            color: #7289da; 
-            margin-right: 10px;
-            font-size: 16px;
-        }
-        .timestamp { 
-            color: #72767d; 
-            font-size: 12px; 
-            background: rgba(0,0,0,0.2);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        .content { 
-            margin-top: 8px; 
-            white-space: pre-wrap; 
-            word-wrap: break-word;
-        }
-        .embed { 
-            border-left: 4px solid #faa61a; 
-            background: rgba(250, 166, 26, 0.1);
-            padding: 15px; 
-            margin: 10px 0; 
-            border-radius: 0 8px 8px 0;
-        }
-        .embed-title { font-weight: bold; margin-bottom: 8px; color: #faa61a; }
-        .attachment { 
-            background: rgba(114, 137, 218, 0.1);
-            border: 1px solid #7289da;
-            padding: 10px; 
-            margin: 5px 0; 
-            border-radius: 6px;
-            display: inline-block;
-        }
-        .attachment a { color: #7289da; text-decoration: none; }
-        .attachment a:hover { text-decoration: underline; }
-        .stats { 
-            background: #2f3136; 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin-top: 30px;
-            text-align: center;
-        }
-        .bot-message { border-left-color: #5865f2; }
-        .system-message { border-left-color: #faa61a; background: #42424242; }
+        .author { font-weight: bold; color: #7289da; margin-right: 10px; }
+        .timestamp { color: #72767d; font-size: 12px; }
+        .content { margin-top: 8px; white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎫 Sapphire Ticket Transcript</h1>
-            <div class="header-grid">
-                <div class="header-item">
-                    <strong>🆔 Case ID</strong>
-                    #${ticketCase.caseId}
-                </div>
-                <div class="header-item">
-                    <strong>👤 User</strong>
-                    ${ticketCase.userTag} (${ticketCase.userId})
-                </div>
-                <div class="header-item">
-                    <strong>📂 Category</strong>
-                    ${ticketCase.category || 'General'}
-                </div>
-                <div class="header-item">
-                    <strong>📝 Reason</strong>
-                    ${ticketCase.reason}
-                </div>
-                <div class="header-item">
-                    <strong>⏰ Created</strong>
-                    ${new Date(ticketCase.timestamp).toLocaleString()}
-                </div>
-                <div class="header-item">
-                    <strong>📍 Channel</strong>
-                    #${channel.name}
-                </div>
-                <div class="header-item">
-                    <strong>📋 Status</strong>
-                    ${ticketCase.status === 'open' ? '🟢 Open' : '🔴 Closed'}
-                </div>
-                <div class="header-item">
-                    <strong>🏠 Server</strong>
-                    ${ticketCase.guildName}
-                </div>
-            </div>
+            <h1>🎫 Ticket Transcript</h1>
+            <p><strong>Channel:</strong> #${channel.name}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
         </div>
 `;
 
         for (const message of messages) {
-            const isBot = message.author.bot;
-            const isSystem = message.author.system;
-            const messageClass = isBot ? 'bot-message' : isSystem ? 'system-message' : '';
-            
             html += `
-        <div class="message ${messageClass}">
+        <div class="message">
             <div class="message-header">
                 <div class="author">${message.author.bot ? '🤖 ' : ''}${message.author.tag}</div>
                 <div class="timestamp">${message.createdAt.toLocaleString()}</div>
             </div>
             <div class="content">${message.content ? message.content.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '<em>No text content</em>'}</div>
-`;
-            
-            if (message.embeds.length > 0) {
-                for (const embed of message.embeds) {
-                    html += `
-            <div class="embed">
-                ${embed.title ? `<div class="embed-title">${embed.title}</div>` : ''}
-                ${embed.description ? `<div>${embed.description}</div>` : ''}
-                ${embed.fields && embed.fields.length > 0 ? 
-                    embed.fields.map(field => 
-                        `<div><strong>${field.name}:</strong> ${field.value}</div>`
-                    ).join('') : ''
-                }
-            </div>`;
-                }
-            }
-
-            if (message.attachments.size > 0) {
-                for (const attachment of message.attachments.values()) {
-                    html += `
-            <div class="attachment">
-                📎 <a href="${attachment.url}" target="_blank">${attachment.name}</a>
-                <small>(${(attachment.size / 1024).toFixed(1)} KB)</small>
-            </div>`;
-                }
-            }
-
-            html += `        </div>`;
+        </div>`;
         }
 
         html += `
-        <div class="stats">
-            <h3>📊 Transcript Statistics</h3>
-            <p><strong>Total Messages:</strong> ${messages.length}</p>
-            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
-            <p><strong>Transcript ID:</strong> transcript-${ticketCase.caseId}-${Date.now()}</p>
-        </div>
     </div>
 </body>
 </html>`;
@@ -764,18 +652,18 @@ async function generateTranscript(channel, ticketCase) {
             fs.mkdirSync(transcriptPath, { recursive: true });
         }
 
-        const filename = `transcript-case-${ticketCase.caseId}-${Date.now()}.html`;
+        const filename = `transcript-${channel.name}-${Date.now()}.html`;
         const filepath = path.join(transcriptPath, filename);
         
         fs.writeFileSync(filepath, html);
 
         return {
-            attachment: filepath,
-            name: filename
+            path: filepath,
+            filename: filename
         };
 
     } catch (error) {
-        console.error('Error generating transcript:', error);
+        console.error('Error generating basic transcript:', error);
         return null;
     }
 }

@@ -269,9 +269,11 @@ client.on('interactionCreate', async interaction => {
                 if (handled) return;
             }
             
-            if (customId.startsWith('ticket_') || customId === 'confirm_close' || customId === 'cancel_close') {
+            // Handle ticket button interactions
+            if (customId.startsWith('ticket_') || customId === 'confirm_close' || customId === 'cancel_close' || customId === 'close_ticket' || customId === 'generate_transcript') {
                 const { handleTicketButtonInteraction } = require('./src/utils/ticketMenu');
                 await handleTicketButtonInteraction(interaction);
+                return;
             }
         } catch (error) {
             console.error('❌ Button interaction error:', error);
@@ -287,6 +289,14 @@ client.on('interactionCreate', async interaction => {
     // Handle modal submissions with error handling
     if (interaction.isModalSubmit()) {
         try {
+            const customId = interaction.customId;
+            
+            // Handle ticket modal submissions
+            if (['create_ticket_modal', 'add_user_modal', 'remove_user_modal', 'slowmode_modal'].includes(customId)) {
+                const { handleModalSubmit } = require('./src/utils/ticketMenu');
+                await handleModalSubmit(interaction);
+                return;
+            }
             // Handle appeal modal submissions
             if (interaction.customId?.startsWith('appeal_modal_')) {
                 const { handleAppealModal } = require('./src/utils/appealHandler');
