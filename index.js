@@ -398,6 +398,17 @@ function isRateLimited(userId, commandName) {
     return false;
 }
 
+// Global error handlers
+process.on('uncaughtException', (error) => {
+    console.error('💥 Uncaught Exception:', error);
+    // Don't exit on uncaught exceptions to keep bot running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit on unhandled rejections
+});
+
 // Start the bot
 client.login(process.env.DISCORD_TOKEN).catch(error => {
     console.error('❌ Failed to login to Discord:', error);

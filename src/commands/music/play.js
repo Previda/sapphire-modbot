@@ -79,12 +79,28 @@ module.exports = {
                         source: 'Spotify → YouTube'
                     };
                 } catch (error) {
-                    return interaction.editReply({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle('❌ Spotify Error')
-                            .setDescription('Could not process Spotify link. Try a different song or YouTube link.')]
-                    });
+                    console.error('Spotify processing error:', error);
+                    
+                    // Fallback: extract track info from Spotify URL and search manually
+                    try {
+                        const urlParts = query.split('/');
+                        const trackId = urlParts[urlParts.length - 1].split('?')[0];
+                        
+                        // Try generic search as fallback
+                        return interaction.editReply({
+                            embeds: [new EmbedBuilder()
+                                .setColor(0xffa500)
+                                .setTitle('🔄 Spotify Processing Failed')
+                                .setDescription('Spotify link processing failed. Please copy the song name and use `/play <song name>` instead.\n\nOr try using a YouTube link directly.')]
+                        });
+                    } catch (fallbackError) {
+                        return interaction.editReply({
+                            embeds: [new EmbedBuilder()
+                                .setColor(0xff0000)
+                                .setTitle('❌ Spotify Error')
+                                .setDescription('Could not process Spotify link. Please use YouTube links or search by song name instead.')]
+                        });
+                    }
                 }
             } else if (ytdl.validateURL(query)) {
                 // Direct YouTube URL
@@ -148,10 +164,16 @@ module.exports = {
                 adapterCreator: interaction.guild.voiceAdapterCreator,
             });
 
-            // Create audio resource
+            // Create audio resource with better options
             const stream = ytdl(songUrl, { 
                 filter: 'audioonly',
-                highWaterMark: 1 << 25
+                quality: 'highestaudio',
+                highWaterMark: 1 << 25,
+                requestOptions: {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                }
             });
             
             const resource = createAudioResource(stream);
@@ -177,31 +199,60 @@ module.exports = {
 
             await interaction.editReply({ embeds: [playEmbed] });
 
-            // Handle player events
+            // Handle player events with better error handling
+            let isDestroyed = false;
+            
+            const safeDestroy = () => {
+                if (!isDestroyed) {
+                    try {
+                        isDestroyed = true;
+                        connection.destroy();
+                    } catch (error) {
+                        console.error('Connection already destroyed:', error.message);
+                    }
+                }
+            };
+
             player.on(AudioPlayerStatus.Playing, () => {
                 console.log(`🎵 Now playing: ${songInfo.title}`);
             });
 
             player.on(AudioPlayerStatus.Idle, () => {
                 console.log('🎵 Playback finished');
-                connection.destroy();
+                safeDestroy();
             });
 
             player.on('error', (error) => {
-                console.error('❌ Audio player error:', error);
-                connection.destroy();
-                interaction.followUp({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Playback Error')
-                        .setDescription('An error occurred during playback.')]
-                });
+                console.error('❌ Audio player error:', error.message);
+                safeDestroy();
+                
+                // Try to send follow-up if interaction still exists
+                try {
+                    interaction.followUp({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle('❌ Playback Error')
+                            .setDescription('YouTube playback failed. This is often due to age-restricted or unavailable videos. Try a different song.')]
+                    }).catch(() => {
+                        console.log('Could not send error follow-up - interaction expired');
+                    });
+                } catch (followUpError) {
+                    console.error('Follow-up error:', followUpError.message);
+                }
             });
 
             connection.on(VoiceConnectionStatus.Disconnected, () => {
                 console.log('🎵 Disconnected from voice channel');
-                connection.destroy();
+                safeDestroy();
             });
+
+            // Timeout to prevent hanging connections
+            setTimeout(() => {
+                if (!isDestroyed) {
+                    console.log('🎵 Connection timeout - cleaning up');
+                    safeDestroy();
+                }
+            }, 600000); // 10 minutes timeout
 
         } catch (error) {
             console.error('❌ Play command error:', error);
