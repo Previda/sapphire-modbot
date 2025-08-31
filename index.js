@@ -244,6 +244,19 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
+    // Handle autocomplete interactions
+    if (interaction.isAutocomplete()) {
+        try {
+            const command = client.commands.get(interaction.commandName);
+            if (!command || !command.autocomplete) return;
+            
+            await command.autocomplete(interaction);
+        } catch (error) {
+            console.error('❌ Autocomplete error:', error);
+        }
+        return;
+    }
+
     // Handle button interactions with error handling
     if (interaction.isButton()) {
         try {
