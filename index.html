@@ -4,132 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sapphire ModBot Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: #0f0f23;
-            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0c0c1d, #1a1a2e);
+            color: white;
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-        
-        .dashboard {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding: 3rem 2rem;
-            background: linear-gradient(135deg, #5865f2, #4f46e5);
-            border-radius: 24px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-        }
-        
-        .header-content {
-            position: relative;
-            z-index: 2;
-        }
-        
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 2rem;
+        }
+        
+        .dashboard {
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .header {
+            background: rgba(88, 101, 242, 0.1);
+            border: 2px solid #5865f2;
+            border-radius: 24px;
+            padding: 4rem 2rem;
+            margin-bottom: 3rem;
             backdrop-filter: blur(10px);
         }
         
-        h1 {
+        .logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #5865f2, #4f46e5);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
             font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(45deg, #fff, #e2e8f0);
+            box-shadow: 0 20px 40px rgba(88, 101, 242, 0.4);
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #fff, #a0a9c0);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
         .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            font-weight: 500;
+            font-size: 1.4rem;
+            color: #a0a9c0;
+            margin-bottom: 2rem;
         }
         
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 3rem;
         }
         
-        .stat-card {
-            background: #1a1a2e;
-            border: 1px solid #2d2d5f;
+        .stat {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            padding: 2rem 1rem;
+            transition: all 0.4s ease;
         }
         
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #5865f2, #4f46e5);
-        }
-        
-        .stat-card:hover {
+        .stat:hover {
             transform: translateY(-8px);
+            background: rgba(88, 101, 242, 0.1);
+            border-color: #5865f2;
             box-shadow: 0 20px 40px rgba(88, 101, 242, 0.3);
-        }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #5865f2, #4f46e5);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.5rem;
-            color: white;
         }
         
         .stat-number {
             font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 0.5rem;
-            background: linear-gradient(45deg, #fff, #e2e8f0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #5865f2;
         }
         
         .stat-label {
@@ -139,346 +95,110 @@
         }
         
         .actions {
+            margin-top: 3rem;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .action-section {
-            background: #1a1a2e;
-            border: 1px solid #2d2d5f;
-            border-radius: 20px;
-            padding: 2rem;
-        }
-        
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .action-btn {
-            display: flex;
-            align-items: center;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
-            width: 100%;
-            padding: 1.5rem;
-            background: rgba(88, 101, 242, 0.1);
-            border: 1px solid rgba(88, 101, 242, 0.3);
-            border-radius: 16px;
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
-            position: relative;
-            overflow: hidden;
         }
         
-        .action-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.6s ease;
-        }
-        
-        .action-btn:hover::before {
-            left: 100%;
-        }
-        
-        .action-btn:hover {
-            background: rgba(88, 101, 242, 0.2);
-            border-color: #5865f2;
-            transform: translateY(-4px);
-        }
-        
-        .action-icon {
-            width: 45px;
-            height: 45px;
+        .btn {
             background: linear-gradient(135deg, #5865f2, #4f46e5);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-        
-        .action-text {
-            flex: 1;
-        }
-        
-        .action-title {
+            border: none;
+            border-radius: 16px;
+            padding: 1.5rem;
+            color: white;
             font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-        
-        .action-desc {
-            font-size: 0.9rem;
-            color: #a0a9c0;
-        }
-        
-        .activity-feed {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .activity-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 0.75rem;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(88, 101, 242, 0.3);
         }
         
-        .activity-item:hover {
-            background: rgba(255,255,255,0.05);
-            transform: translateX(8px);
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(88, 101, 242, 0.5);
         }
         
-        .activity-icon {
-            width: 35px;
-            height: 35px;
-            border-radius: 10px;
+        .status {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(87, 242, 135, 0.2);
+            border: 1px solid #57f287;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            flex-shrink: 0;
+            gap: 0.5rem;
         }
         
-        .activity-icon.success { background: rgba(87, 242, 135, 0.2); color: #57f287; }
-        .activity-icon.warning { background: rgba(254, 231, 92, 0.2); color: #fee75c; }
-        .activity-icon.info { background: rgba(88, 101, 242, 0.2); color: #5865f2; }
-        
-        .activity-text {
-            font-size: 0.9rem;
-            margin-bottom: 0.25rem;
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: #57f287;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
         }
         
-        .activity-time {
-            font-size: 0.8rem;
-            color: #6b7280;
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         @media (max-width: 768px) {
-            .dashboard { padding: 1rem; }
-            h1 { font-size: 2rem; }
-            .stats { grid-template-columns: 1fr; }
-            .actions { grid-template-columns: 1fr; }
+            h1 { font-size: 2.5rem; }
+            .dashboard { width: 95%; }
+            .header { padding: 3rem 1.5rem; }
         }
     </style>
 </head>
 <body>
+    <div class="status">
+        <div class="pulse"></div>
+        Bot Online
+    </div>
+    
     <div class="dashboard">
-        <header class="header fade-in">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-gem"></i>
-                </div>
-                <h1>Sapphire ModBot</h1>
-                <p class="subtitle">Professional Discord Moderation Dashboard</p>
-            </div>
-        </header>
-
-        <div class="stats fade-in">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-server"></i>
-                </div>
-                <div class="stat-number" id="servers">15</div>
-                <div class="stat-label">Active Servers</div>
-            </div>
+        <div class="header">
+            <div class="logo">💎</div>
+            <h1>Sapphire ModBot</h1>
+            <p class="subtitle">Professional Discord Moderation</p>
             
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">15</div>
+                    <div class="stat-label">Servers</div>
                 </div>
-                <div class="stat-number" id="users">24,567</div>
-                <div class="stat-label">Total Users</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-gavel"></i>
+                <div class="stat">
+                    <div class="stat-number">24K</div>
+                    <div class="stat-label">Users</div>
                 </div>
-                <div class="stat-number" id="appeals">3</div>
-                <div class="stat-label">Pending Appeals</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-shield-alt"></i>
+                <div class="stat">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Appeals</div>
                 </div>
-                <div class="stat-number" id="actions">1,847</div>
-                <div class="stat-label">Mod Actions</div>
+                <div class="stat">
+                    <div class="stat-number">1.8K</div>
+                    <div class="stat-label">Commands</div>
+                </div>
             </div>
         </div>
-
-        <div class="actions fade-in">
-            <div class="action-section">
-                <h2 class="section-title">
-                    <i class="fas fa-bolt"></i>
-                    Quick Actions
-                </h2>
-                
-                <button class="action-btn" onclick="showNotification('Opening appeal reviews...')">
-                    <div class="action-icon">
-                        <i class="fas fa-balance-scale"></i>
-                    </div>
-                    <div class="action-text">
-                        <div class="action-title">Review Appeals</div>
-                        <div class="action-desc">3 pending appeals to review</div>
-                    </div>
-                </button>
-                
-                <button class="action-btn" onclick="showNotification('Deploying commands...')">
-                    <div class="action-icon">
-                        <i class="fas fa-rocket"></i>
-                    </div>
-                    <div class="action-text">
-                        <div class="action-title">Deploy Commands</div>
-                        <div class="action-desc">Update slash commands</div>
-                    </div>
-                </button>
-                
-                <button class="action-btn" onclick="showNotification('Opening moderation tools...')">
-                    <div class="action-icon">
-                        <i class="fas fa-hammer"></i>
-                    </div>
-                    <div class="action-text">
-                        <div class="action-title">Moderation Tools</div>
-                        <div class="action-desc">Ban, kick, mute users</div>
-                    </div>
-                </button>
-            </div>
-
-            <div class="action-section">
-                <h2 class="section-title">
-                    <i class="fas fa-clock"></i>
-                    Recent Activity
-                </h2>
-                
-                <div class="activity-feed">
-                    <div class="activity-item">
-                        <div class="activity-icon success">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div>
-                            <div class="activity-text">User <strong>@alex</strong> joined server</div>
-                            <div class="activity-time">2 minutes ago</div>
-                        </div>
-                    </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div>
-                            <div class="activity-text">Appeal <strong>#A8X9Z2</strong> submitted</div>
-                            <div class="activity-time">5 minutes ago</div>
-                        </div>
-                    </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon info">
-                            <i class="fas fa-cog"></i>
-                        </div>
-                        <div>
-                            <div class="activity-text">Commands refreshed</div>
-                            <div class="activity-time">12 minutes ago</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        
+        <div class="actions">
+            <button class="btn" onclick="alert('Appeals management coming soon!')">
+                📋 Review Appeals
+            </button>
+            <button class="btn" onclick="alert('Command deployment ready!')">
+                🚀 Deploy Commands
+            </button>
+            <button class="btn" onclick="alert('Moderation tools available!')">
+                🛡️ Mod Tools
+            </button>
+            <button class="btn" onclick="alert('Settings panel opening!')">
+                ⚙️ Settings
+            </button>
         </div>
     </div>
-
-    <script>
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 2rem;
-                right: 2rem;
-                background: #1a1a2e;
-                border: 1px solid #5865f2;
-                border-radius: 12px;
-                padding: 1rem 1.5rem;
-                color: white;
-                font-weight: 500;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-                z-index: 1000;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            `;
-            
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => notification.style.transform = 'translateX(0)', 10);
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        // Animate stats on load
-        document.addEventListener('DOMContentLoaded', function() {
-            const stats = document.querySelectorAll('.stat-number');
-            stats.forEach(stat => {
-                const value = parseInt(stat.textContent.replace(/,/g, ''));
-                let current = 0;
-                const increment = value / 100;
-                
-                const timer = setInterval(() => {
-                    current += increment;
-                    if (current >= value) {
-                        current = value;
-                        clearInterval(timer);
-                    }
-                    stat.textContent = Math.floor(current).toLocaleString();
-                }, 20);
-            });
-            
-            // Stagger fade-in animations
-            const elements = document.querySelectorAll('.fade-in');
-            elements.forEach((el, i) => {
-                setTimeout(() => {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(20px)';
-                    el.style.transition = 'all 0.6s ease';
-                    setTimeout(() => {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    }, 50);
-                }, i * 200);
-            });
-        });
-    </script>
 </body>
 </html>
