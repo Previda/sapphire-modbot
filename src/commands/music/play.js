@@ -246,38 +246,68 @@ module.exports = {
 
             await interaction.editReply({ embeds: [playEmbed] });
 
+            // Raspberry Pi optimized stream creation
+            console.log('🔄 Creating audio stream for Raspberry Pi...');
+            
             try {
-                console.log('Creating ytdl stream...');
+                // Use simple, Pi-friendly ytdl options
                 const stream = ytdl(songUrl, {
                     filter: 'audioonly',
                     quality: 'lowestaudio',
-                    highWaterMark: 1 << 25,
+                    highWaterMark: 1 << 20, // Smaller buffer for Pi
+                    dlChunkSize: 0, // Let ytdl handle chunk size
                     requestOptions: {
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36'
                         }
                     }
                 });
                 
-                const resource = createAudioResource(stream);
+                // Create resource with Pi-friendly options
+                resource = createAudioResource(stream, {
+                    inlineVolume: true,
+                    inputType: 'arbitrary'
+                });
                 
-                console.log('Starting playback...');
+                console.log('✅ Audio resource created for Pi');
+                
+                // Start playback
                 player.play(resource);
                 connection.subscribe(player);
                 
-                console.log('🎵 Playback started successfully');
+                console.log('🎵 Playback started on Raspberry Pi');
                 
             } catch (error) {
-                console.error('❌ Stream creation failed:', error);
-                safeDestroy();
+                console.error('❌ Pi stream creation failed:', error);
                 
-                await interaction.followUp({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Stream Failed')
-                        .setDescription(`Could not create audio stream.\n\n**Error:** ${error.message}\n\nTry a different song.`)]
-                });
-                return;
+                // Try alternative approach for Pi
+                try {
+                    console.log('🔄 Trying alternative Pi stream method...');
+                    
+                    // Very basic stream for Pi compatibility
+                    const stream = ytdl(songUrl, {
+                        filter: 'audio',
+                        quality: 'lowest'
+                    });
+                    
+                    resource = createAudioResource(stream);
+                    player.play(resource);
+                    connection.subscribe(player);
+                    
+                    console.log('✅ Alternative Pi stream working');
+                    
+                } catch (altError) {
+                    console.error('❌ All Pi stream methods failed:', altError);
+                    safeDestroy();
+                    
+                    await interaction.followUp({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle('❌ Raspberry Pi Stream Failed')
+                            .setDescription(`YouTube extraction failed on Pi.\n\n**Error:** ${altError.message}\n\n**Solutions:**\n• Try popular songs from major artists\n• Use song names instead of URLs\n• Avoid region-locked content\n• Try \`/play never gonna give you up\` as a test`)]
+                    });
+                    return;
+                }
             }
 
             // Timeout to prevent hanging connections (10 minutes)
