@@ -81,28 +81,42 @@ module.exports = {
                 } catch (error) {
                     console.error('Spotify processing error:', error);
                     
-                    // Fallback: extract track info from Spotify URL and search manually
+                    // Enhanced fallback: try to extract song info from URL patterns
                     try {
-                        const urlParts = query.split('/');
-                        const trackId = urlParts[urlParts.length - 1].split('?')[0];
+                        // Extract track info from Spotify URL structure
+                        let fallbackQuery = query;
+                        if (query.includes('track/')) {
+                            const trackPart = query.split('track/')[1];
+                            const trackId = trackPart.split('?')[0];
+                            fallbackQuery = `spotify ${trackId}`;  // Basic fallback search
+                        }
                         
-                        // Try generic search as fallback
-                        return interaction.editReply({
-                            embeds: [new EmbedBuilder()
-                                .setColor(0xffa500)
-                                .setTitle('🔄 Spotify Processing Failed')
-                                .setDescription('Spotify link processing failed. Please copy the song name and use `/play <song name>` instead.\n\nOr try using a YouTube link directly.')]
-                        });
+                        // Try searching with fallback query
+                        const fallbackResults = await ytSearch(fallbackQuery);
+                        if (fallbackResults.videos.length > 0) {
+                            const video = fallbackResults.videos[0];
+                            songUrl = video.url;
+                            songInfo = {
+                                title: video.title,
+                                artist: video.author.name,
+                                duration: video.duration.timestamp,
+                                thumbnail: video.thumbnail,
+                                url: songUrl,
+                                source: 'Spotify → YouTube (Fallback)'
+                            };
+                        } else {
+                            throw new Error('No fallback results found');
+                        }
                     } catch (fallbackError) {
                         return interaction.editReply({
                             embeds: [new EmbedBuilder()
-                                .setColor(0xff0000)
-                                .setTitle('❌ Spotify Error')
-                                .setDescription('Could not process Spotify link. Please use YouTube links or search by song name instead.')]
+                                .setColor(0xffa500)
+                                .setTitle('🔄 Spotify Link Processing')
+                                .setDescription('Spotify link processing failed. Please:\n• Copy the song name manually and search with `/play <song name>`\n• Use a YouTube link instead\n• Make sure the Spotify link is public and accessible')]
                         });
                     }
                 }
-            } else if (ytdl.validateURL(query)) {
+            } else if (ytdl.validateURL(query) || query.includes('youtube.com') || query.includes('youtu.be')) {
                 // Direct YouTube URL
                 try {
                     songUrl = query;
@@ -110,17 +124,18 @@ module.exports = {
                     songInfo = {
                         title: info.videoDetails.title,
                         artist: info.videoDetails.author.name,
-                        duration: this.formatDuration(info.videoDetails.lengthSeconds),
+                        duration: this.formatDuration(parseInt(info.videoDetails.lengthSeconds)),
                         thumbnail: info.videoDetails.thumbnails[0]?.url,
                         url: songUrl,
                         source: 'YouTube'
                     };
                 } catch (error) {
+                    console.error('YouTube URL processing error:', error);
                     return interaction.editReply({
                         embeds: [new EmbedBuilder()
                             .setColor(0xff0000)
-                            .setTitle('❌ Invalid URL')
-                            .setDescription('Could not process the YouTube URL. Please check the link.')]
+                            .setTitle('❌ YouTube URL Error')
+                            .setDescription('Could not process the YouTube URL. Please check if:\n• The video exists and is public\n• The video is not age-restricted\n• The video is available in your region')]
                     });
                 }
             } else {
@@ -157,13 +172,13 @@ module.exports = {
                 }
             }
 
-            // Join voice channel with proper configuration
+            // Join voice channel with server mute (bot can't hear users but can play music)
             const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: interaction.guild.id,
                 adapterCreator: interaction.guild.voiceAdapterCreator,
-                selfDeaf: false,
-                selfMute: false
+                selfDeaf: true,  // Server mute - bot can't hear users but can still play
+                selfMute: false  // Bot can speak/play music
             });
 
             // Try multiple extraction methods for better reliability
