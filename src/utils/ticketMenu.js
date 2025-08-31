@@ -636,6 +636,12 @@ async function handleTicketButtonInteraction(interaction) {
                     components: []
                 });
                 break;
+            case 'close_ticket':
+                await handleTicketClose(interaction, 'current');
+                break;
+            case 'generate_transcript':
+                await handleTicketTranscript(interaction, null);
+                break;
             default:
                 // Handle dynamic button IDs
                 if (customId.startsWith('close_ticket_')) {
