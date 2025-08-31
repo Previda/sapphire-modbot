@@ -177,13 +177,13 @@ module.exports = {
 
             console.log('🔄 Joining voice channel...');
 
-            // Join voice channel with server mute
+            // Join voice channel undeafened so bot can hear users
             const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: interaction.guild.id,
                 adapterCreator: interaction.guild.voiceAdapterCreator,
-                selfDeaf: true,  // Server mute - bot can't hear users but can still play
-                selfMute: false  // Bot can speak/play music
+                selfDeaf: false,  // Bot can hear users
+                selfMute: false   // Bot can speak/play music
             });
 
             console.log('Voice channel joined successfully');
