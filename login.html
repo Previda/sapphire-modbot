@@ -253,7 +253,7 @@
         // Discord OAuth2 Configuration
         const DISCORD_CLIENT_ID = '1358527215020544222';
         const REDIRECT_URI = encodeURIComponent(window.location.origin + '/auth/callback');
-        const DISCORD_OAUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify%20guilds`;
+        const DISCORD_OAUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&permissions=8&response_type=code&redirect_uri=${REDIRECT_URI}&integration_type=0&scope=guilds%20identify%20guilds.join%20bot`;
 
         document.getElementById('discordLogin').addEventListener('click', function(e) {
             e.preventDefault();
