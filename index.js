@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Client, Collection, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
