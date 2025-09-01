@@ -222,37 +222,37 @@ function DashboardMain({ user }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Set mock guilds data for testing
-    const mockGuilds = [
-      { 
-        id: '1234567890123456789', 
-        name: 'Skyfall Test Server', 
-        icon: null, 
-        owner: true, 
-        permissions: '8',
-        hasSkyfall: true 
-      },
-      { 
-        id: '9876543210987654321', 
-        name: 'Gaming Community', 
-        icon: null, 
-        owner: false, 
-        permissions: '8',
-        hasSkyfall: false 
-      },
-      { 
-        id: '1111222233334444555', 
-        name: 'Music Lovers', 
-        icon: null, 
-        owner: true, 
-        permissions: '8',
-        hasSkyfall: true 
+    const fetchGuilds = async () => {
+      try {
+        const token = localStorage.getItem('discord_token')
+        if (!token) {
+          setLoading(false)
+          return
+        }
+
+        const response = await fetch('/api/bot/servers', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setUserGuilds(data.guilds)
+          if (data.guilds.length > 0) {
+            setSelectedServer(data.guilds[0])
+          }
+        } else {
+          console.error('Failed to fetch guilds:', response.status)
+        }
+      } catch (error) {
+        console.error('Error fetching guilds:', error)
+      } finally {
+        setLoading(false)
       }
-    ]
-    
-    setUserGuilds(mockGuilds)
-    setSelectedServer(mockGuilds[0]) // Auto-select first server
-    setLoading(false)
+    }
+
+    fetchGuilds()
   }, [])
 
   return (
@@ -359,6 +359,25 @@ function DashboardMain({ user }) {
 
 // Tab Components
 function OverviewTab({ selectedServer }) {
+  const [serverStats, setServerStats] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (selectedServer && selectedServer.hasSkyfall) {
+      setLoading(true)
+      fetch(`/api/bot/stats?serverId=${selectedServer.id}`)
+        .then(res => res.json())
+        .then(data => {
+          setServerStats(data)
+          setLoading(false)
+        })
+        .catch(err => {
+          console.error('Failed to fetch server stats:', err)
+          setLoading(false)
+        })
+    }
+  }, [selectedServer])
+
   if (!selectedServer) {
     return (
       <div className="glass-card card-padding text-center">
@@ -374,47 +393,92 @@ function OverviewTab({ selectedServer }) {
       {/* Server Info */}
       <div className="glass-card card-padding">
         <div className="flex items-center space-x-4 mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-2xl text-white font-bold">
             {selectedServer.name.charAt(0)}
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">{selectedServer.name}</h2>
-            <p className="text-white/70">{selectedServer.hasSkyfall ? 'Skyfall Active' : 'Skyfall Not Added'}</p>
-          </div>
-          <div className="ml-auto">
-            {selectedServer.hasSkyfall ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-400 font-semibold">Online</span>
-              </div>
-            ) : (
-              <button 
-                onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands&guild_id=${selectedServer.id}`, '_blank')}
-                className="btn-primary text-white font-semibold"
-              >
-                Add Skyfall
-              </button>
-            )}
+            <h2 className="text-2xl font-bold heading-gradient">{selectedServer.name}</h2>
+            <p className="text-white/70 flex items-center space-x-2">
+              {selectedServer.hasSkyfall ? (
+                <>
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                  <span>✅ Skyfall Online</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  <span>❌ Skyfall Not Added</span>
+                </>
+              )}
+            </p>
           </div>
         </div>
         
         {selectedServer.hasSkyfall && (
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-blue-500/20 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-white">847</div>
-              <div className="text-white/70 text-sm">Members</div>
-            </div>
-            <div className="bg-green-500/20 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-white">23</div>
-              <div className="text-white/70 text-sm">Commands Used</div>
-            </div>
-            <div className="bg-purple-500/20 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-white">156</div>
-              <div className="text-white/70 text-sm">Songs Played</div>
-            </div>
+          <div className="grid grid-cols-3 gap-4">
+            {loading ? (
+              <>
+                <div className="bg-blue-500/20 rounded-lg p-4 text-center animate-pulse">
+                  <div className="text-2xl font-bold text-white">...</div>
+                  <div className="text-white/70 text-sm">Members</div>
+                </div>
+                <div className="bg-green-500/20 rounded-lg p-4 text-center animate-pulse">
+                  <div className="text-2xl font-bold text-white">...</div>
+                  <div className="text-white/70 text-sm">Commands Used</div>
+                </div>
+                <div className="bg-purple-500/20 rounded-lg p-4 text-center animate-pulse">
+                  <div className="text-2xl font-bold text-white">...</div>
+                  <div className="text-white/70 text-sm">Songs Played</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-blue-500/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-white">{serverStats?.memberCount || 0}</div>
+                  <div className="text-white/70 text-sm">Members</div>
+                </div>
+                <div className="bg-green-500/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-white">{serverStats?.commandsUsed || 0}</div>
+                  <div className="text-white/70 text-sm">Commands Used</div>
+                </div>
+                <div className="bg-purple-500/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-white">{serverStats?.songsPlayed || 0}</div>
+                  <div className="text-white/70 text-sm">Songs Played</div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
+
+      {/* Live Bot Status */}
+      {selectedServer.hasSkyfall && serverStats && (
+        <div className="glass-card card-padding">
+          <h3 className="text-lg font-bold text-white mb-4">🤖 Bot Status</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-black/20 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/70">Status</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  serverStats.botStatus === 'online' 
+                    ? 'bg-green-500/20 text-green-400' 
+                    : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {serverStats.botStatus?.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/70">Uptime</span>
+                <span className="text-white font-semibold">{serverStats.uptime}</span>
+              </div>
+            </div>
+            <div className="bg-black/20 rounded-lg p-4">
+              <div className="text-white/70 text-sm mb-1">Last Activity</div>
+              <div className="text-white font-semibold">{new Date(serverStats.lastActivity).toLocaleTimeString()}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -638,6 +702,25 @@ function CommandsTab({ selectedServer, serverCommands, setServerCommands }) {
 }
 
 function MusicTab({ selectedServer }) {
+  const [serverStats, setServerStats] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (selectedServer && selectedServer.hasSkyfall) {
+      setLoading(true)
+      fetch(`/api/bot/stats?serverId=${selectedServer.id}`)
+        .then(res => res.json())
+        .then(data => {
+          setServerStats(data)
+          setLoading(false)
+        })
+        .catch(err => {
+          console.error('Failed to fetch music stats:', err)
+          setLoading(false)
+        })
+    }
+  }, [selectedServer])
+
   if (!selectedServer || !selectedServer.hasSkyfall) {
     return (
       <div className="glass-card card-padding text-center">
@@ -652,6 +735,10 @@ function MusicTab({ selectedServer }) {
     )
   }
 
+  const currentSong = serverStats?.musicQueue?.currentSong
+  const isPlaying = serverStats?.musicQueue?.isPlaying || false
+  const queueLength = serverStats?.musicQueue?.queueLength || 0
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -664,17 +751,34 @@ function MusicTab({ selectedServer }) {
       <div className="glass-card card-padding">
         <h3 className="text-lg font-bold text-white mb-4">🎵 Now Playing</h3>
         <div className="bg-black/30 rounded-xl p-6 text-center">
-          <div className="text-white/60 mb-2">Currently Playing</div>
-          <div className="text-white font-semibold mb-4">No song active</div>
+          {loading ? (
+            <div className="animate-pulse">
+              <div className="text-white/60 mb-2">Loading...</div>
+              <div className="text-white font-semibold mb-4">Fetching current song</div>
+            </div>
+          ) : (
+            <>
+              <div className="text-white/60 mb-2">Currently Playing</div>
+              <div className="text-white font-semibold mb-4">
+                {currentSong ? `${currentSong.title} - ${currentSong.artist}` : 'No song active'}
+              </div>
+            </>
+          )}
           <div className="flex justify-center space-x-4 mb-4">
             <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">⏮️</button>
-            <button className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white hover:scale-110 transition-transform">▶️</button>
+            <button className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white hover:scale-110 transition-transform">
+              {isPlaying ? '⏸️' : '▶️'}
+            </button>
             <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">⏭️</button>
           </div>
-          <div className="bg-white/10 rounded-full h-1 mb-2">
-            <div className="bg-gradient-to-r from-purple-400 to-blue-400 h-1 rounded-full w-0"></div>
-          </div>
-          <div className="text-white/60 text-xs">0:00 / 0:00</div>
+          {currentSong && (
+            <>
+              <div className="bg-white/10 rounded-full h-1 mb-2">
+                <div className="bg-gradient-to-r from-purple-400 to-blue-400 h-1 rounded-full w-1/2"></div>
+              </div>
+              <div className="text-white/60 text-xs">{currentSong.position} / {currentSong.duration}</div>
+            </>
+          )}
         </div>
       </div>
 
@@ -683,26 +787,37 @@ function MusicTab({ selectedServer }) {
         <div className="glass-card card-padding">
           <h4 className="text-white font-semibold mb-3">🎮 Quick Controls</h4>
           <div className="space-y-2">
-            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors">🔀 Shuffle Queue</button>
-            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors">🔁 Loop Current</button>
-            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors">⏹️ Stop Playback</button>
+            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors flex items-center space-x-3">
+              <span>🔀</span>
+              <span>Shuffle Queue</span>
+            </button>
+            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors flex items-center space-x-3">
+              <span>🔁</span>
+              <span>Loop Mode</span>
+            </button>
+            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors flex items-center space-x-3">
+              <span>⏹️</span>
+              <span>Stop Playback</span>
+            </button>
           </div>
         </div>
         
         <div className="glass-card card-padding">
-          <h4 className="text-white font-semibold mb-3">📊 Music Stats</h4>
+          <h4 className="text-white font-semibold mb-3">📊 Live Music Stats</h4>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-white/70">Songs Played</span>
-              <span className="text-white font-semibold">156</span>
+              <span className="text-white/70">Songs in Queue</span>
+              <span className="text-white font-semibold">{queueLength}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/70">Queue Length</span>
-              <span className="text-white font-semibold">0</span>
+              <span className="text-white/70">Total Played</span>
+              <span className="text-white font-semibold">{serverStats?.songsPlayed || 0}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/70">Total Playtime</span>
-              <span className="text-white font-semibold">12h 34m</span>
+              <span className="text-white/70">Status</span>
+              <span className={`font-semibold ${isPlaying ? 'text-green-400' : 'text-white/60'}`}>
+                {isPlaying ? '🎵 Playing' : '⏸️ Paused'}
+              </span>
             </div>
           </div>
         </div>
