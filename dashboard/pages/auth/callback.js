@@ -27,6 +27,8 @@ export default function AuthCallback() {
         const data = await response.json()
         localStorage.setItem('discord_token', data.access_token)
         localStorage.setItem('user_data', JSON.stringify(data.user))
+        // Clear URL and redirect to dashboard
+        window.history.replaceState({}, document.title, '/')
         router.push('/?logged_in=true')
       } else {
         router.push('/?error=auth_failed')

@@ -6,6 +6,25 @@ export default function Home() {
   const [user, setUser] = useState(null)
   const [showDashboard, setShowDashboard] = useState(false)
 
+  useEffect(() => {
+    // Check if user is logged in from localStorage
+    const token = localStorage.getItem('discord_token')
+    const userData = localStorage.getItem('user_data')
+    
+    if (token && userData) {
+      setIsLoggedIn(true)
+      setUser(JSON.parse(userData))
+      setShowDashboard(true)
+    }
+
+    // Check URL for login success
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('logged_in') === 'true') {
+      setIsLoggedIn(true)
+      setShowDashboard(true)
+    }
+  }, [])
+
   const handleDiscordLogin = () => {
     // Discord OAuth URL - you need to set NEXT_PUBLIC_DISCORD_CLIENT_ID in Vercel
     const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222'
