@@ -32,10 +32,13 @@ export default function AuthCallback() {
         localStorage.setItem('auth_completed', 'true')
         
         console.log('Redirecting to dashboard...')
+        // Set a flag to force dashboard view
+        localStorage.setItem('force_dashboard', 'true')
+        
         // Use setTimeout to ensure localStorage is written
         setTimeout(() => {
           window.location.replace(window.location.origin + '/')
-        }, 100)
+        }, 200)
       } else {
         console.error('Auth failed:', response)
         window.location.href = window.location.origin + '/?error=auth_failed'

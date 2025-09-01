@@ -18,13 +18,36 @@ export default function Home() {
     
     if (token && userData) {
       console.log('Found auth data, setting logged in state')
+      const parsedUser = JSON.parse(userData)
       setIsLoggedIn(true)
-      setUser(JSON.parse(userData))
+      setUser(parsedUser)
       setShowDashboard(true)
       
-      // Clear the auth completed flag
+      // Clear flags
       if (authCompleted) {
         localStorage.removeItem('auth_completed')
+      }
+      localStorage.removeItem('force_dashboard')
+    } else {
+      // Check if we should force dashboard view after auth
+      const forceDashboard = localStorage.getItem('force_dashboard')
+      if (forceDashboard) {
+        console.log('Force dashboard flag detected, checking auth again...')
+        localStorage.removeItem('force_dashboard')
+        // Retry auth check in case there was a timing issue
+        setTimeout(() => {
+          const retryToken = localStorage.getItem('discord_token')
+          const retryUserData = localStorage.getItem('user_data')
+          if (retryToken && retryUserData) {
+            setIsLoggedIn(true)
+            setUser(JSON.parse(retryUserData))
+            setShowDashboard(true)
+          }
+        }, 100)
+      } else {
+        console.log('No auth data found, showing login screen')
+        setIsLoggedIn(false)
+        setShowDashboard(false)
       }
     }
 
