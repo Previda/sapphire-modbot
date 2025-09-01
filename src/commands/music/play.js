@@ -205,26 +205,60 @@ module.exports = {
                 }
             };
 
-            // Set up player event handlers
-            player.on(AudioPlayerStatus.Playing, () => {
-                console.log(`🎵 Now playing: ${songInfo.title}`);
+            // Handle player events
+            player.on('stateChange', (oldState, newState) => {
+                console.log(`🎵 Player state: ${oldState.status} -> ${newState.status}`);
+                
+                if (newState.status === 'idle') {
+                    console.log('🎵 Playback finished');
+                    // Don't destroy connection here - let it stay for next song
+                }
             });
-
-            player.on(AudioPlayerStatus.Idle, () => {
-                console.log('🎵 Playback finished - staying connected for next song');
-                // Don't destroy connection, let it stay for next songs
-            });
-
+            
             player.on('error', (error) => {
                 console.error('❌ Audio player error:', error.message);
-                // Don't destroy connection on player errors, just notify user
                 
-                interaction.followUp({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Playback Error')
-                        .setDescription('Audio playback failed during stream. Bot will stay connected for next song.')]
-                }).catch(() => console.log('Could not send error follow-up'));
+                // Try to restart with a different method
+                console.log('🔄 Attempting recovery with different audio method...');
+                
+                // Try basic ytdl as recovery
+                try {
+                    const recoveryStream = ytdl(songUrl, {
+                        filter: 'audioonly',
+                        quality: 'lowestaudio',
+                        highWaterMark: 1 << 25,
+                        requestOptions: {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36 (KHTML, like Gecko) Raspbian Chromium/78.0.3904.108 Chrome/78.0.3904.108 Safari/537.36'
+                            }
+                        }
+                    });
+                    
+                    const recoveryResource = createAudioResource(recoveryStream, {
+                        inlineVolume: true,
+                        inputType: 'arbitrary'
+                    });
+                    
+                    player.play(recoveryResource);
+                    console.log('🔄 Recovery attempt started');
+                    
+                    interaction.followUp({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xffaa00)
+                            .setTitle('🔄 Audio Recovery')
+                            .setDescription('Playback failed, attempting recovery with different stream method...')]
+                    }).catch(console.error);
+                    
+                } catch (recoveryError) {
+                    console.error('❌ Recovery failed:', recoveryError);
+                    
+                    interaction.followUp({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle('❌ Playback Error')
+                            .setDescription(`Audio playback failed during stream. Bot will stay connected for next song.\n\n**Error:** ${error.message}\n\n**Suggestion:** Try a different song or use \`/play <song name>\` with a popular song.`)]
+                    }).catch(console.error);
+                }
             });
 
             // Connection event handlers
