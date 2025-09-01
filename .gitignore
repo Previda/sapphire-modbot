@@ -1,92 +1,31 @@
-# Database
-data/
-
-# Environment variables
-.env
-.env.local
-.env.production
-
-# Firebase credentials
-firebase-service-account.json
-
 # Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Logs
-logs
-*.log
-pm2.log
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Backup files
-*-backup*
-*-old*
-*-fixed*
-*.bak
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-.parcel-cache/
-
-# Coverage and testing
-coverage/
-.nyc_output
-test-results/
-
-# Build outputs
-dist/
-build/
+# Next.js
 .next/
-.nuxt/
+out/
 
-# IDE and editor files
+# Production
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*.sublime-*
 
-# OS generated files
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
-desktop.ini
 
-# Pi-specific
-*.pid
-systemd-logs/
-pm2-logs/
-bot.log
-nohup.out
-*.backup
-
-# Database backups
-backup_*.sql
-*.dump
-
-# Temporary files
-temp/
-tmp/
-
-# Deployment directory
-sapphire-bot/
+# Logs
+*.log
