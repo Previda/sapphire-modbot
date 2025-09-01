@@ -60,6 +60,26 @@ export default function Home() {
       </Head>
 
       <div className="min-h-screen gradient-bg">
+        {/* Navigation Bar */}
+        <nav className="absolute top-0 left-0 right-0 z-10 p-6">
+          <div className="glass-card compact-padding">
+            <div className="flex justify-between items-center max-w-7xl mx-auto">
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl">🌌</span>
+                <span className="text-xl font-bold text-white">Skyfall</span>
+              </div>
+              <div className="flex items-center space-x-6">
+                <a href="#features" className="text-white/80 hover:text-white transition-colors">Features</a>
+                <a href="#faq" className="text-white/80 hover:text-white transition-colors">FAQ</a>
+                <a href="#terms" className="text-white/80 hover:text-white transition-colors">Terms</a>
+                <button className="btn-secondary text-white font-semibold">
+                  Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        </nav>
+
         {/* Hero Section */}
         {!isLoggedIn && (
           <div className="flex items-center justify-center min-h-screen px-6 animate-fade-in">
@@ -81,23 +101,35 @@ export default function Home() {
               </div>
 
               {/* Feature Cards */}
-              <div className="grid-auto-fit mb-16 animate-fade-in" style={{animationDelay: '0.6s'}}>
+              <div id="features" className="grid-auto-fit mb-16 animate-fade-in" style={{animationDelay: '0.6s'}}>
                 <div className="glass-card card-padding card-hover group">
-                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-300">🎵</div>
+                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-500">🎵</div>
                   <h3 className="text-2xl font-bold heading-gradient mb-4">Music Engine</h3>
                   <p className="text-white/70 leading-relaxed text-lg">Advanced audio streaming with YouTube & Spotify integration</p>
+                  <div className="mt-6 flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-white/60 text-sm">Active</span>
+                  </div>
                 </div>
                 
                 <div className="glass-card card-padding card-hover group">
-                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '0.5s'}}>⚖️</div>
+                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-500" style={{animationDelay: '0.5s'}}>⚖️</div>
                   <h3 className="text-2xl font-bold heading-gradient mb-4">Justice System</h3>
                   <p className="text-white/70 leading-relaxed text-lg">Automated moderation with intelligent appeal processing</p>
+                  <div className="mt-6 flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    <span className="text-white/60 text-sm">Monitoring</span>
+                  </div>
                 </div>
                 
                 <div className="glass-card card-padding card-hover group">
-                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '1s'}}>⚙️</div>
+                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-500" style={{animationDelay: '1s'}}>⚙️</div>
                   <h3 className="text-2xl font-bold heading-gradient mb-4">Command Arsenal</h3>
                   <p className="text-white/70 leading-relaxed text-lg">Comprehensive toolkit for server management and automation</p>
+                  <div className="mt-6 flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                    <span className="text-white/60 text-sm">Ready</span>
+                  </div>
                 </div>
               </div>
 
@@ -120,6 +152,52 @@ export default function Home() {
                     <div className="w-3 h-3 status-online rounded-full animate-pulse shadow-lg"></div>
                     <span className="text-white/90 font-medium tracking-wide">System Status: Operational</span>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* FAQ Section */}
+        {!isLoggedIn && (
+          <div id="faq" className="py-20 px-6">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-4xl font-bold heading-gradient mb-12 text-center">Frequently Asked Questions</h2>
+              <div className="space-y-6">
+                <div className="glass-card card-padding">
+                  <h3 className="text-xl font-semibold text-white mb-3">How do I add Skyfall to my server?</h3>
+                  <p className="text-white/70">Click the Launch Dashboard button and authorize Skyfall with your Discord account. Then select your server and configure the bot settings.</p>
+                </div>
+                <div className="glass-card card-padding">
+                  <h3 className="text-xl font-semibold text-white mb-3">What permissions does Skyfall need?</h3>
+                  <p className="text-white/70">Skyfall requires basic permissions for moderation, music playback, and server management. All permissions are clearly listed during the authorization process.</p>
+                </div>
+                <div className="glass-card card-padding">
+                  <h3 className="text-xl font-semibold text-white mb-3">Is Skyfall free to use?</h3>
+                  <p className="text-white/70">Yes! Skyfall offers a comprehensive free tier with all core features. Premium features may be available in the future.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Terms Section */}
+        {!isLoggedIn && (
+          <div id="terms" className="py-20 px-6 bg-black/20">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-4xl font-bold heading-gradient mb-12 text-center">Terms of Service</h2>
+              <div className="glass-card card-padding">
+                <div className="text-white/70 space-y-4 leading-relaxed">
+                  <p>By using Skyfall, you agree to:</p>
+                  <ul className="list-disc list-inside space-y-2 ml-4">
+                    <li>Use the bot responsibly and in accordance with Discord's Terms of Service</li>
+                    <li>Not abuse or exploit the bot's features for malicious purposes</li>
+                    <li>Respect other users and maintain appropriate conduct</li>
+                    <li>Understand that service availability may vary</li>
+                  </ul>
+                  <p className="mt-6 text-sm text-white/50">
+                    Last updated: January 2025. For questions, contact us through our Discord server.
+                  </p>
                 </div>
               </div>
             </div>
