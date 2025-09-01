@@ -72,23 +72,23 @@ export default function Home() {
               </div>
 
               {/* Feature Cards */}
-              <div className="grid md:grid-cols-3 gap-6 mb-12 animate-fade-in" style={{animationDelay: '0.6s'}}>
-                <div className="glass rounded-xl p-6 card-hover">
-                  <div className="text-4xl mb-4">🎵</div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Skyfall Music</h3>
-                  <p className="text-white opacity-75">Control Skyfall's music system with live updates and queue management</p>
+              <div className="grid-auto-fit mb-12 animate-fade-in" style={{animationDelay: '0.6s'}}>
+                <div className="glass-card card-padding card-hover">
+                  <div className="text-5xl mb-6 animate-float">🎵</div>
+                  <h3 className="text-xl font-bold heading-gradient mb-3">Skyfall Music</h3>
+                  <p className="text-muted leading-relaxed">Control Skyfall's music system with live updates and queue management</p>
                 </div>
                 
-                <div className="glass rounded-xl p-6 card-hover">
-                  <div className="text-4xl mb-4">⚖️</div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Skyfall Appeals</h3>
-                  <p className="text-white opacity-75">Manage appeals and justice through Skyfall's advanced system</p>
+                <div className="glass-card card-padding card-hover">
+                  <div className="text-5xl mb-6 animate-float" style={{animationDelay: '0.5s'}}>⚖️</div>
+                  <h3 className="text-xl font-bold heading-gradient mb-3">Skyfall Appeals</h3>
+                  <p className="text-muted leading-relaxed">Manage appeals and justice through Skyfall's advanced system</p>
                 </div>
                 
-                <div className="glass rounded-xl p-6 card-hover">
-                  <div className="text-4xl mb-4">⚙️</div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Skyfall Commands</h3>
-                  <p className="text-white opacity-75">Configure and customize Skyfall's powerful command arsenal</p>
+                <div className="glass-card card-padding card-hover">
+                  <div className="text-5xl mb-6 animate-float" style={{animationDelay: '1s'}}>⚙️</div>
+                  <h3 className="text-xl font-bold heading-gradient mb-3">Skyfall Commands</h3>
+                  <p className="text-muted leading-relaxed">Configure and customize Skyfall's powerful command arsenal</p>
                 </div>
               </div>
 
@@ -96,18 +96,19 @@ export default function Home() {
               <div className="space-y-4 animate-fade-in" style={{animationDelay: '0.9s'}}>
                 <button
                   onClick={handleDiscordLogin}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  className="btn-primary text-white font-bold text-lg flex-center space-x-3"
                 >
-                  🌌 Access Skyfall Command Center
+                  <span>🌌</span>
+                  <span>Access Skyfall Command Center</span>
                 </button>
               </div>
 
               {/* Status Indicator */}
               <div className="mt-12 animate-fade-in" style={{animationDelay: '1.2s'}}>
-                <div className="glass rounded-lg p-4 inline-block">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-custom"></div>
-                    <span className="text-white font-medium">Skyfall Status: Online</span>
+                <div className="glass-card compact-padding inline-block">
+                  <div className="flex-center space-x-3">
+                    <div className="w-4 h-4 status-online rounded-full animate-pulse"></div>
+                    <span className="text-white font-semibold">Skyfall Status: Online</span>
                   </div>
                 </div>
               </div>
@@ -156,41 +157,41 @@ function DashboardMain({ user }) {
   }, [])
 
   return (
-    <div className="min-h-screen p-6 animate-fade-in">
+    <div className="min-h-screen section-padding animate-fade-in">
       {/* Header with User Profile */}
-      <div className="glass rounded-xl p-6 mb-6">
+      <div className="glass-card card-padding mb-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-bold text-white">🌌 Skyfall Control Room</h1>
+            <h1 className="text-4xl font-bold heading-gradient">🌌 Skyfall Control Room</h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             {/* User Profile */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-4">
               <img 
                 src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png?size=64`}
                 alt={user?.username || 'User'}
-                className="w-10 h-10 rounded-full border-2 border-indigo-400"
+                className="w-12 h-12 rounded-full border-2 border-indigo-400/50 shadow-lg"
                 onError={(e) => {
                   e.target.src = `https://cdn.discordapp.com/embed/avatars/${(user?.id || '0') % 5}.png`
                 }}
               />
               <div className="text-right">
-                <div className="text-white font-semibold">Welcome, {user?.username || 'User'}!</div>
-                <div className="text-white opacity-75 text-sm">#{user?.discriminator || '0000'}</div>
+                <div className="text-white font-bold">Welcome, {user?.username || 'User'}!</div>
+                <div className="text-muted text-sm">#{user?.discriminator || '0000'}</div>
               </div>
             </div>
             
             {/* Status */}
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-custom"></div>
-              <span className="text-white">Skyfall Online</span>
+            <div className="flex-center space-x-3">
+              <div className="w-3 h-3 status-online rounded-full animate-pulse"></div>
+              <span className="text-white font-semibold">Skyfall Online</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="glass rounded-xl p-2 mb-6">
+      <div className="glass-card compact-padding mb-6">
         <nav className="flex space-x-2">
           {[
             { id: 'overview', name: 'Skyfall Overview', icon: '🌌' },
@@ -202,14 +203,12 @@ function DashboardMain({ user }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-white hover:bg-white hover:bg-opacity-10'
+              className={`tab-button flex-center space-x-2 ${
+                activeTab === tab.id ? 'tab-active' : ''
               }`}
             >
               <span>{tab.icon}</span>
-              <span className="font-medium">{tab.name}</span>
+              <span className="font-semibold">{tab.name}</span>
             </button>
           ))}
         </nav>
@@ -443,13 +442,13 @@ function ModerationTab() {
 
 function StatCard({ icon, title, value }) {
   return (
-    <div className="glass rounded-xl p-6 card-hover">
+    <div className="glass-card card-padding card-hover">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-white opacity-75 text-sm">{title}</p>
-          <p className="text-2xl font-bold text-white">{value}</p>
+          <p className="text-muted text-sm font-medium">{title}</p>
+          <p className="text-3xl font-bold text-white mt-2">{value}</p>
         </div>
-        <div className="text-3xl">{icon}</div>
+        <div className="text-4xl animate-float">{icon}</div>
       </div>
     </div>
   )

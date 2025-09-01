@@ -127,7 +127,7 @@ module.exports = {
                     songInfo = {
                         title: info.videoDetails.title,
                         artist: info.videoDetails.author.name,
-                        duration: this.formatDuration(parseInt(info.videoDetails.lengthSeconds)),
+                        duration: module.exports.formatDuration(parseInt(info.videoDetails.lengthSeconds)),
                         thumbnail: info.videoDetails.thumbnails[0]?.url,
                         url: songUrl,
                         source: 'YouTube'
@@ -190,6 +190,7 @@ module.exports = {
             
             // Create player and audio resource
             const player = createAudioPlayer();
+            let resource; // Declare resource variable
             
             // Connection cleanup handler
             let isDestroyed = false;
