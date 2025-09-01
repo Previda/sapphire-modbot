@@ -39,10 +39,13 @@ export default function Home() {
   }, [])
 
   const handleDiscordLogin = () => {
-    // Discord OAuth URL - you need to set NEXT_PUBLIC_DISCORD_CLIENT_ID in Vercel
+    // Discord OAuth URL for user authentication only (not bot installation)
     const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222'
-    const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback')
+    const redirectUri = encodeURIComponent('https://skyfall-omega.vercel.app/auth/callback')
     const discordUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20guilds`
+    
+    console.log('Discord OAuth URL:', discordUrl)
+    console.log('Redirect URI:', redirectUri)
     
     window.location.href = discordUrl
   }

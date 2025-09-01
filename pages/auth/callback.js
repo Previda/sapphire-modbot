@@ -15,42 +15,41 @@ export default function AuthCallback() {
 
   const exchangeCodeForToken = async (code) => {
     try {
-      console.log('Starting Discord auth exchange with code:', code)
+      console.log(' Starting Discord auth exchange with code:', code)
       const response = await fetch('/api/auth/discord', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
       })
-
-      console.log('Response status:', response.status)
+      console.log(' Response status:', response.status)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(' Auth API error:', errorText)
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
+      }
+      
       const data = await response.json()
-      console.log('Response data:', data)
-
-      if (response.ok) {
-        console.log('Auth successful, storing data...')
+      console.log(' Auth successful, user data received')
+      
+      if (data.access_token && data.user) {
         localStorage.setItem('discord_token', data.access_token)
         localStorage.setItem('user_data', JSON.stringify(data.user))
         localStorage.setItem('auth_completed', 'true')
         
-        console.log('Redirecting to dashboard...')
-        // Set a flag to force dashboard view
-        localStorage.setItem('force_dashboard', 'true')
-        
-        // Use setTimeout to ensure localStorage is written
-        setTimeout(() => {
-          window.location.replace(window.location.origin + '/')
-        }, 200)
+        console.log(' Redirecting to dashboard...')
+        window.location.replace('/')
       } else {
-        console.error('Auth failed:', response.status, data)
-        alert('Auth failed: ' + JSON.stringify(data))
-        window.location.href = window.location.origin + '/?error=auth_failed'
+        throw new Error('Missing token or user data in response')
       }
     } catch (error) {
-      console.error('Auth error:', error)
-      alert('Auth error: ' + error.message)
-      window.location.href = window.location.origin + '/?error=auth_failed'
+      console.error(' Auth exchange failed:', error)
+      const errorMsg = error.message.includes('redirect_uri') ? 
+        'OAuth redirect URI mismatch. Please contact support.' : 
+        `Authentication failed: ${error.message}`
+      
+      alert(` ${errorMsg}`)
+      window.location.href = '/?error=auth_failed'
     }
   }
 
