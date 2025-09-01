@@ -117,7 +117,7 @@ export default function Home() {
 
         {/* Dashboard View */}
         {isLoggedIn && (
-          <DashboardMain />
+          <DashboardMain user={user} />
         )}
       </div>
     </>
@@ -125,16 +125,62 @@ export default function Home() {
 }
 
 // Dashboard Component
-function DashboardMain() {
+function DashboardMain({ user }) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [userGuilds, setUserGuilds] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Fetch user guilds from Discord API
+    const fetchUserGuilds = async () => {
+      try {
+        const token = localStorage.getItem('discord_token')
+        const response = await fetch('/api/auth/guilds', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (response.ok) {
+          const guilds = await response.json()
+          setUserGuilds(guilds)
+        }
+      } catch (error) {
+        console.error('Failed to fetch guilds:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserGuilds()
+  }, [])
 
   return (
     <div className="min-h-screen p-6 animate-fade-in">
-      {/* Header */}
+      {/* Header with User Profile */}
       <div className="glass rounded-xl p-6 mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-white">🌌 Skyfall Control Room</h1>
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-3xl font-bold text-white">🌌 Skyfall Control Room</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            {/* User Profile */}
+            <div className="flex items-center space-x-3">
+              <img 
+                src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png?size=64`}
+                alt={user?.username || 'User'}
+                className="w-10 h-10 rounded-full border-2 border-indigo-400"
+                onError={(e) => {
+                  e.target.src = `https://cdn.discordapp.com/embed/avatars/${(user?.id || '0') % 5}.png`
+                }}
+              />
+              <div className="text-right">
+                <div className="text-white font-semibold">Welcome, {user?.username || 'User'}!</div>
+                <div className="text-white opacity-75 text-sm">#{user?.discriminator || '0000'}</div>
+              </div>
+            </div>
+            
+            {/* Status */}
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-custom"></div>
               <span className="text-white">Skyfall Online</span>
@@ -171,7 +217,7 @@ function DashboardMain() {
 
       {/* Tab Content */}
       <div className="animate-fade-in">
-        {activeTab === 'overview' && <OverviewTab />}
+        {activeTab === 'overview' && <OverviewTab user={user} userGuilds={userGuilds} loading={loading} />}
         {activeTab === 'music' && <MusicTab />}
         {activeTab === 'appeals' && <AppealsTab />}
         {activeTab === 'commands' && <CommandsTab />}
@@ -182,13 +228,104 @@ function DashboardMain() {
 }
 
 // Tab Components
-function OverviewTab() {
+function OverviewTab({ user, userGuilds, loading }) {
+  const elevatedGuilds = userGuilds.elevatedGuilds || []
+  const totalGuilds = userGuilds.totalGuilds || 0
+
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard icon="👥" title="Total Users" value="1,234" />
-      <StatCard icon="🎵" title="Songs Played" value="5,678" />
-      <StatCard icon="⚖️" title="Pending Appeals" value="12" />
-      <StatCard icon="🛡️" title="Active Moderation" value="3" />
+    <div className="space-y-6">
+      {/* User Profile Section */}
+      <div className="glass rounded-xl p-6">
+        <h2 className="text-2xl font-bold text-white mb-4">👤 Commander Profile</h2>
+        <div className="flex items-center space-x-6">
+          <img 
+            src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png?size=128`}
+            alt={user?.username || 'User'}
+            className="w-20 h-20 rounded-full border-4 border-indigo-400"
+            onError={(e) => {
+              e.target.src = `https://cdn.discordapp.com/embed/avatars/${(user?.id || '0') % 5}.png`
+            }}
+          />
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-white">{user?.username || 'Unknown User'}</h3>
+            <p className="text-white opacity-75">#{user?.discriminator || '0000'}</p>
+            <p className="text-indigo-300 mt-2">Discord ID: {user?.id || 'Unknown'}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-white opacity-75 text-sm mb-1">Access Level</div>
+            <div className="px-3 py-1 bg-indigo-600 text-white rounded-full text-sm font-semibold">
+              Skyfall Commander
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Server Permissions */}
+      <div className="glass rounded-xl p-6">
+        <h2 className="text-2xl font-bold text-white mb-4">🏰 Your Kingdoms</h2>
+        {loading ? (
+          <div className="text-white opacity-75">Loading your server permissions...</div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-indigo-600/20 rounded-lg p-4 border border-indigo-400/30">
+                <div className="text-2xl font-bold text-white">{totalGuilds}</div>
+                <div className="text-white opacity-75">Total Servers</div>
+              </div>
+              <div className="bg-emerald-600/20 rounded-lg p-4 border border-emerald-400/30">
+                <div className="text-2xl font-bold text-white">{elevatedGuilds.length}</div>
+                <div className="text-white opacity-75">Elevated Access</div>
+              </div>
+            </div>
+            
+            {elevatedGuilds.length > 0 ? (
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Servers with Elevated Access:</h3>
+                <div className="grid gap-3">
+                  {elevatedGuilds.slice(0, 5).map((guild) => (
+                    <div key={guild.id} className="flex items-center space-x-3 bg-white/5 rounded-lg p-3">
+                      {guild.icon ? (
+                        <img 
+                          src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=32`}
+                          alt={guild.name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {guild.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <div className="text-white font-medium">{guild.name}</div>
+                        <div className="text-white opacity-60 text-sm">
+                          {guild.owner ? 'Owner' : 'Administrator'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {elevatedGuilds.length > 5 && (
+                    <div className="text-white opacity-75 text-sm text-center">
+                      +{elevatedGuilds.length - 5} more servers...
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-white opacity-75 text-center py-4">
+                No servers with elevated permissions found
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard icon="👥" title="Total Users" value="1,234" />
+        <StatCard icon="🎵" title="Songs Played" value="5,678" />
+        <StatCard icon="⚖️" title="Pending Appeals" value="12" />
+        <StatCard icon="🛡️" title="Active Moderation" value="3" />
+      </div>
     </div>
   )
 }
