@@ -33,9 +33,15 @@ export default async function handler(req, res) {
 
     if (!tokenResponse.ok) {
       console.error('❌ Token exchange failed:', tokenData)
+      console.error('Request body was:', {
+        client_id: process.env.DISCORD_CLIENT_ID || '1358527215020544222',
+        grant_type: 'authorization_code',
+        redirect_uri: 'https://skyfall-omega.vercel.app/auth/callback',
+      })
       return res.status(400).json({ 
-        error: 'Failed to exchange code for token',
-        details: tokenData.error_description || tokenData.error || 'Unknown error'
+        error: 'Token exchange failed',
+        discord_error: tokenData.error || 'unknown_error',
+        description: tokenData.error_description || 'Failed to exchange authorization code'
       })
     }
 
