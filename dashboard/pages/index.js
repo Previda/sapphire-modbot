@@ -54,10 +54,10 @@ export default function Home() {
               {/* Logo/Title */}
               <div className="mb-8">
                 <h1 className="text-6xl font-bold text-white mb-4 animate-slide-in">
-                  🌌 Skyfall
+                  🌌 SKYFALL
                 </h1>
                 <p className="text-xl text-white opacity-90 animate-fade-in" style={{animationDelay: '0.3s'}}>
-                  Advanced Skyfall Bot Management Dashboard
+                  Ultimate Skyfall Bot Command Center
                 </p>
               </div>
 
@@ -65,20 +65,20 @@ export default function Home() {
               <div className="grid md:grid-cols-3 gap-6 mb-12 animate-fade-in" style={{animationDelay: '0.6s'}}>
                 <div className="glass rounded-xl p-6 card-hover">
                   <div className="text-4xl mb-4">🎵</div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Music Control</h3>
-                  <p className="text-white opacity-75">Manage music playback, queue, and live updates</p>
+                  <h3 className="text-xl font-semibold text-white mb-2">Skyfall Music</h3>
+                  <p className="text-white opacity-75">Control Skyfall's music system with live updates and queue management</p>
                 </div>
                 
                 <div className="glass rounded-xl p-6 card-hover">
                   <div className="text-4xl mb-4">⚖️</div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Appeal Management</h3>
-                  <p className="text-white opacity-75">Review and process user appeals with ease</p>
+                  <h3 className="text-xl font-semibold text-white mb-2">Skyfall Appeals</h3>
+                  <p className="text-white opacity-75">Manage appeals and justice through Skyfall's advanced system</p>
                 </div>
                 
                 <div className="glass rounded-xl p-6 card-hover">
                   <div className="text-4xl mb-4">⚙️</div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Command Control</h3>
-                  <p className="text-white opacity-75">Toggle and customize bot commands dynamically</p>
+                  <h3 className="text-xl font-semibold text-white mb-2">Skyfall Commands</h3>
+                  <p className="text-white opacity-75">Configure and customize Skyfall's powerful command arsenal</p>
                 </div>
               </div>
 
@@ -89,7 +89,7 @@ export default function Home() {
                     onClick={handleDiscordLogin}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                   >
-                    🔐 Login with Discord
+                    🌌 Access Skyfall Command Center
                   </button>
                 ) : (
                   <div className="space-y-4">
@@ -100,7 +100,7 @@ export default function Home() {
                       onClick={openDashboard}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                     >
-                      📊 Open Dashboard
+                      🌌 Enter Skyfall Control Room
                     </button>
                   </div>
                 )}
@@ -111,7 +111,7 @@ export default function Home() {
                 <div className="glass rounded-lg p-4 inline-block">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-custom"></div>
-                    <span className="text-white font-medium">Bot Status: Online</span>
+                    <span className="text-white font-medium">Skyfall Status: Online</span>
                   </div>
                 </div>
               </div>
@@ -137,11 +137,11 @@ function DashboardMain() {
       {/* Header */}
       <div className="glass rounded-xl p-6 mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-white">🌌 Skyfall Control Room</h1>
           <div className="flex space-x-4">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-custom"></div>
-              <span className="text-white">Bot Online</span>
+              <span className="text-white">Skyfall Online</span>
             </div>
           </div>
         </div>
@@ -151,11 +151,11 @@ function DashboardMain() {
       <div className="glass rounded-xl p-2 mb-6">
         <nav className="flex space-x-2">
           {[
-            { id: 'overview', name: 'Overview', icon: '📊' },
-            { id: 'music', name: 'Music', icon: '🎵' },
-            { id: 'appeals', name: 'Appeals', icon: '⚖️' },
-            { id: 'commands', name: 'Commands', icon: '⚙️' },
-            { id: 'moderation', name: 'Moderation', icon: '🛡️' }
+            { id: 'overview', name: 'Skyfall Overview', icon: '🌌' },
+            { id: 'music', name: 'Skyfall Music', icon: '🎵' },
+            { id: 'appeals', name: 'Skyfall Justice', icon: '⚖️' },
+            { id: 'commands', name: 'Skyfall Arsenal', icon: '⚙️' },
+            { id: 'moderation', name: 'Skyfall Guard', icon: '🛡️' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -201,14 +201,14 @@ function MusicTab() {
   return (
     <div className="space-y-6">
       <div className="glass rounded-xl p-6">
-        <h2 className="text-2xl font-bold text-white mb-4">🎵 Now Playing</h2>
+        <h2 className="text-2xl font-bold text-white mb-4">🌌 Skyfall Music Engine</h2>
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 bg-indigo-600 rounded-lg flex items-center justify-center">
             <span className="text-2xl">🎵</span>
           </div>
           <div>
-            <h3 className="text-white font-semibold">No music playing</h3>
-            <p className="text-white opacity-75">Queue is empty</p>
+            <h3 className="text-white font-semibold">Skyfall is silent</h3>
+            <p className="text-white opacity-75">Music queue awaits your command</p>
           </div>
         </div>
       </div>
@@ -219,9 +219,9 @@ function MusicTab() {
 function AppealsTab() {
   return (
     <div className="glass rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-4">⚖️ Appeal Management</h2>
+      <h2 className="text-2xl font-bold text-white mb-4">⚖️ Skyfall Justice System</h2>
       <div className="text-white opacity-75">
-        <p>No pending appeals</p>
+        <p>No appeals requiring Skyfall's judgment</p>
       </div>
     </div>
   )
@@ -230,9 +230,9 @@ function AppealsTab() {
 function CommandsTab() {
   return (
     <div className="glass rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-4">⚙️ Command Management</h2>
+      <h2 className="text-2xl font-bold text-white mb-4">⚙️ Skyfall Command Arsenal</h2>
       <div className="text-white opacity-75">
-        <p>Command toggles and settings will appear here</p>
+        <p>Configure Skyfall's powerful command arsenal</p>
       </div>
     </div>
   )
@@ -241,9 +241,9 @@ function CommandsTab() {
 function ModerationTab() {
   return (
     <div className="glass rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-4">🛡️ Moderation Tools</h2>
+      <h2 className="text-2xl font-bold text-white mb-4">🛡️ Skyfall Guardian Systems</h2>
       <div className="text-white opacity-75">
-        <p>Moderation actions and logs will appear here</p>
+        <p>Skyfall's protection protocols and guardian logs</p>
       </div>
     </div>
   )
