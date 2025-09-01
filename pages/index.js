@@ -217,72 +217,105 @@ export default function Home() {
 function DashboardMain({ user }) {
   const [activeTab, setActiveTab] = useState('overview')
   const [userGuilds, setUserGuilds] = useState([])
+  const [selectedServer, setSelectedServer] = useState(null)
+  const [serverCommands, setServerCommands] = useState({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Fetch user guilds from Discord API
-    const fetchUserGuilds = async () => {
-      try {
-        const token = localStorage.getItem('discord_token')
-        const response = await fetch('/api/auth/guilds', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        if (response.ok) {
-          const guilds = await response.json()
-          setUserGuilds(guilds)
-        }
-      } catch (error) {
-        console.error('Failed to fetch guilds:', error)
-      } finally {
-        setLoading(false)
+    // Set mock guilds data for testing
+    const mockGuilds = [
+      { 
+        id: '1234567890123456789', 
+        name: 'Skyfall Test Server', 
+        icon: null, 
+        owner: true, 
+        permissions: '8',
+        hasSkyfall: true 
+      },
+      { 
+        id: '9876543210987654321', 
+        name: 'Gaming Community', 
+        icon: null, 
+        owner: false, 
+        permissions: '8',
+        hasSkyfall: false 
+      },
+      { 
+        id: '1111222233334444555', 
+        name: 'Music Lovers', 
+        icon: null, 
+        owner: true, 
+        permissions: '8',
+        hasSkyfall: true 
       }
-    }
-
-    fetchUserGuilds()
+    ]
+    
+    setUserGuilds(mockGuilds)
+    setSelectedServer(mockGuilds[0]) // Auto-select first server
+    setLoading(false)
   }, [])
 
   return (
     <div className="min-h-screen section-padding animate-fade-in">
-      {/* Header with User Profile */}
-      <div className="glass-card card-padding mb-8">
+      {/* Header */}
+      <div className="glass-card card-padding mb-6">
         <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-6">
-            <h1 className="text-5xl font-black heading-gradient">🌌 Skyfall</h1>
-            <div className="h-8 w-px bg-white/20"></div>
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 status-online rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-              <span className="text-white/90 font-medium">Online & Ready</span>
-            </div>
-          </div>
           <div className="flex items-center space-x-4">
-            {/* Add to Server Button */}
+            <h1 className="text-4xl font-black heading-gradient">🌌 Skyfall</h1>
+            <div className="w-2 h-2 status-online rounded-full animate-pulse"></div>
+          </div>
+          <div className="flex items-center space-x-3">
             <button 
               onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands`, '_blank')}
-              className="btn-secondary text-white font-semibold flex items-center space-x-2 hover:scale-105 transition-transform"
+              className="btn-secondary text-white font-semibold flex items-center space-x-2"
             >
               <span>➕</span>
-              <span>Add to Server</span>
+              <span>Add Bot</span>
             </button>
-            
-            {/* User Profile */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <img 
                 src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png?size=64`}
                 alt={user?.username || 'User'}
-                className="w-14 h-14 rounded-full border-2 border-purple-400/50 shadow-xl"
+                className="w-10 h-10 rounded-full border border-purple-400/50"
                 onError={(e) => {
                   e.target.src = `https://cdn.discordapp.com/embed/avatars/${(user?.id || '0') % 5}.png`
                 }}
               />
-              <div className="text-right">
-                <div className="text-white font-bold text-lg">{user?.username || 'SkyfallCommander'}</div>
-                <div className="text-white/60 text-sm">Access Level: Skyfall Commander</div>
-              </div>
+              <span className="text-white font-semibold">{user?.username || 'SkyfallCommander'}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Server Selector */}
+      <div className="glass-card card-padding mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <span className="text-white font-semibold">Server:</span>
+            <select 
+              value={selectedServer?.id || ''} 
+              onChange={(e) => {
+                const server = userGuilds.find(g => g.id === e.target.value)
+                setSelectedServer(server)
+              }}
+              className="bg-black/30 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-purple-400 focus:outline-none"
+            >
+              {userGuilds.map(guild => (
+                <option key={guild.id} value={guild.id} className="bg-gray-800">
+                  {guild.name} {guild.hasSkyfall ? '✅' : '❌'}
+                </option>
+              ))}
+            </select>
+          </div>
+          {selectedServer && !selectedServer.hasSkyfall && (
+            <button 
+              onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands&guild_id=${selectedServer.id}`, '_blank')}
+              className="btn-primary text-white font-semibold flex items-center space-x-2"
+            >
+              <span>➕</span>
+              <span>Add Skyfall to {selectedServer.name}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -314,85 +347,73 @@ function DashboardMain({ user }) {
 
       {/* Tab Content */}
       <div className="animate-fade-in">
-        {activeTab === 'overview' && <OverviewTab user={user} userGuilds={userGuilds} loading={loading} />}
-        {activeTab === 'music' && <MusicTab />}
-        {activeTab === 'appeals' && <AppealsTab />}
-        {activeTab === 'commands' && <CommandsTab />}
-        {activeTab === 'moderation' && <ModerationTab />}
+        {activeTab === 'overview' && <OverviewTab selectedServer={selectedServer} />}
+        {activeTab === 'commands' && <CommandsTab selectedServer={selectedServer} serverCommands={serverCommands} setServerCommands={setServerCommands} />}
+        {activeTab === 'music' && <MusicTab selectedServer={selectedServer} />}
+        {activeTab === 'appeals' && <AppealsTab selectedServer={selectedServer} />}
+        {activeTab === 'moderation' && <ModerationTab selectedServer={selectedServer} />}
       </div>
     </div>
   )
 }
 
 // Tab Components
-function OverviewTab({ user, userGuilds, loading }) {
-  return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
+function OverviewTab({ selectedServer }) {
+  if (!selectedServer) {
+    return (
       <div className="glass-card card-padding text-center">
-        <div className="text-6xl mb-6 animate-float">🚀</div>
-        <h2 className="text-4xl font-bold heading-gradient mb-4">Welcome to Skyfall</h2>
-        <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-          Your command center for advanced Discord server management and automation
-        </p>
-        <div className="flex justify-center space-x-4">
-          <button 
-            onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands`, '_blank')}
-            className="btn-primary text-white font-bold flex items-center space-x-3 px-8 py-4"
-          >
-            <span>➕</span>
-            <span>Add to New Server</span>
-          </button>
-          <button className="btn-secondary text-white font-semibold px-8 py-4">
-            View Documentation
-          </button>
-        </div>
+        <div className="text-4xl mb-4">🏰</div>
+        <h3 className="text-xl font-bold text-white mb-2">No Server Selected</h3>
+        <p className="text-white/70">Please select a server to view its overview</p>
       </div>
+    )
+  }
 
-      {/* Quick Stats */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
-          <div className="text-4xl mb-3 animate-float">👥</div>
-          <div className="text-3xl font-bold text-white mb-2">1,234</div>
-          <div className="text-white/70">Total Users</div>
-        </div>
-        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
-          <div className="text-4xl mb-3 animate-float" style={{animationDelay: '0.2s'}}>🎵</div>
-          <div className="text-3xl font-bold text-white mb-2">5,678</div>
-          <div className="text-white/70">Songs Played</div>
-        </div>
-        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
-          <div className="text-4xl mb-3 animate-float" style={{animationDelay: '0.4s'}}>⚖️</div>
-          <div className="text-3xl font-bold text-white mb-2">12</div>
-          <div className="text-white/70">Pending Appeals</div>
-        </div>
-        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
-          <div className="text-4xl mb-3 animate-float" style={{animationDelay: '0.6s'}}>🛡️</div>
-          <div className="text-3xl font-bold text-white mb-2">3</div>
-          <div className="text-white/70">Active Guards</div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
+  return (
+    <div className="space-y-6">
+      {/* Server Info */}
       <div className="glass-card card-padding">
-        <h3 className="text-2xl font-bold heading-gradient mb-6 text-center">Quick Actions</h3>
-        <div className="grid md:grid-cols-3 gap-6">
-          <button className="glass-card card-padding card-hover group text-center">
-            <div className="text-5xl mb-4 animate-float group-hover:scale-110 transition-transform duration-300">🎵</div>
-            <h4 className="text-xl font-bold text-white mb-2">Music Controls</h4>
-            <p className="text-white/70">Manage playlists and audio</p>
-          </button>
-          <button className="glass-card card-padding card-hover group text-center">
-            <div className="text-5xl mb-4 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '0.3s'}}>⚙️</div>
-            <h4 className="text-xl font-bold text-white mb-2">Bot Settings</h4>
-            <p className="text-white/70">Configure commands and features</p>
-          </button>
-          <button className="glass-card card-padding card-hover group text-center">
-            <div className="text-5xl mb-4 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '0.6s'}}>📊</div>
-            <h4 className="text-xl font-bold text-white mb-2">Server Analytics</h4>
-            <p className="text-white/70">View detailed statistics</p>
-          </button>
+        <div className="flex items-center space-x-4 mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            {selectedServer.name.charAt(0)}
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">{selectedServer.name}</h2>
+            <p className="text-white/70">{selectedServer.hasSkyfall ? 'Skyfall Active' : 'Skyfall Not Added'}</p>
+          </div>
+          <div className="ml-auto">
+            {selectedServer.hasSkyfall ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-green-400 font-semibold">Online</span>
+              </div>
+            ) : (
+              <button 
+                onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands&guild_id=${selectedServer.id}`, '_blank')}
+                className="btn-primary text-white font-semibold"
+              >
+                Add Skyfall
+              </button>
+            )}
+          </div>
         </div>
+        
+        {selectedServer.hasSkyfall && (
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-blue-500/20 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white">847</div>
+              <div className="text-white/70 text-sm">Members</div>
+            </div>
+            <div className="bg-green-500/20 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white">23</div>
+              <div className="text-white/70 text-sm">Commands Used</div>
+            </div>
+            <div className="bg-purple-500/20 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-white">156</div>
+              <div className="text-white/70 text-sm">Songs Played</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -462,22 +483,290 @@ function MusicTab() {
   )
 }
 
-function AppealsTab() {
-  return (
-    <div className="space-y-8">
+function AppealsTab({ selectedServer }) {
+  if (!selectedServer || !selectedServer.hasSkyfall) {
+    return (
       <div className="glass-card card-padding text-center">
-        <div className="text-6xl mb-6 animate-float">⚖️</div>
-        <h2 className="text-4xl font-bold heading-gradient mb-4">Justice System</h2>
-        <p className="text-xl text-white/80 mb-8">Automated moderation with intelligent appeal processing</p>
-        
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="bg-blue-500/20 rounded-2xl p-6 border border-blue-400/30">
-            <div className="text-3xl font-bold text-white mb-2">12</div>
-            <div className="text-white/70">Pending Appeals</div>
+        <div className="text-4xl mb-4">⚖️</div>
+        <h3 className="text-xl font-bold text-white mb-2">
+          {!selectedServer ? 'No Server Selected' : 'Skyfall Not Added'}
+        </h3>
+        <p className="text-white/70">
+          {!selectedServer ? 'Select a server to view justice system' : `Add Skyfall to ${selectedServer.name} to use justice features`}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="glass-card card-padding">
+        <h2 className="text-2xl font-bold heading-gradient">Justice System for {selectedServer.name}</h2>
+        <p className="text-white/70">Manage appeals and moderation cases</p>
+      </div>
+      
+      {/* Stats */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="glass-card card-padding text-center">
+          <div className="text-3xl font-bold text-white mb-2">4</div>
+          <div className="text-white/70">Pending Appeals</div>
+        </div>
+        <div className="glass-card card-padding text-center">
+          <div className="text-3xl font-bold text-white mb-2">89</div>
+          <div className="text-white/70">Resolved Cases</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CommandsTab({ selectedServer, serverCommands, setServerCommands }) {
+  const [editingCommand, setEditingCommand] = useState(null)
+  
+  if (!selectedServer) {
+    return (
+      <div className="glass-card card-padding text-center">
+        <div className="text-4xl mb-4">⚙️</div>
+        <h3 className="text-xl font-bold text-white mb-2">No Server Selected</h3>
+        <p className="text-white/70">Select a server to customize its commands</p>
+      </div>
+    )
+  }
+
+  if (!selectedServer.hasSkyfall) {
+    return (
+      <div className="glass-card card-padding text-center">
+        <div className="text-4xl mb-4">❌</div>
+        <h3 className="text-xl font-bold text-white mb-2">Skyfall Not Added</h3>
+        <p className="text-white/70 mb-6">Add Skyfall to {selectedServer.name} to customize commands</p>
+        <button 
+          onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands&guild_id=${selectedServer.id}`, '_blank')}
+          className="btn-primary text-white font-semibold"
+        >
+          Add Skyfall to {selectedServer.name}
+        </button>
+      </div>
+    )
+  }
+
+  const commands = [
+    { id: 'play', name: 'play', category: 'Music', description: 'Play music from YouTube or Spotify', enabled: true },
+    { id: 'skip', name: 'skip', category: 'Music', description: 'Skip current song', enabled: true },
+    { id: 'queue', name: 'queue', category: 'Music', description: 'Show music queue', enabled: true },
+    { id: 'ban', name: 'ban', category: 'Moderation', description: 'Ban a user from the server', enabled: true },
+    { id: 'kick', name: 'kick', category: 'Moderation', description: 'Kick a user from the server', enabled: true },
+    { id: 'warn', name: 'warn', category: 'Moderation', description: 'Warn a user', enabled: true },
+    { id: 'appeal', name: 'appeal', category: 'Justice', description: 'Submit an appeal', enabled: true },
+    { id: 'dice', name: 'dice', category: 'Fun', description: 'Roll dice', enabled: true }
+  ]
+
+  const currentServerCommands = serverCommands[selectedServer.id] || commands
+
+  const updateCommand = (commandId, updates) => {
+    const newCommands = currentServerCommands.map(cmd => 
+      cmd.id === commandId ? { ...cmd, ...updates } : cmd
+    )
+    setServerCommands({
+      ...serverCommands,
+      [selectedServer.id]: newCommands
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="glass-card card-padding">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold heading-gradient">Commands for {selectedServer.name}</h2>
+            <p className="text-white/70">Customize bot commands for this server</p>
           </div>
-          <div className="bg-green-500/20 rounded-2xl p-6 border border-green-400/30">
-            <div className="text-3xl font-bold text-white mb-2">156</div>
-            <div className="text-white/70">Resolved Cases</div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-white/80 text-sm">{currentServerCommands.filter(c => c.enabled).length} Active</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Commands List */}
+      <div className="space-y-4">
+        {['Music', 'Moderation', 'Justice', 'Fun'].map(category => {
+          const categoryCommands = currentServerCommands.filter(cmd => cmd.category === category)
+          
+          return (
+            <div key={category} className="glass-card card-padding">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+                <span>{category === 'Music' ? '🎵' : category === 'Moderation' ? '🛡️' : category === 'Justice' ? '⚖️' : '🎮'}</span>
+                <span>{category} Commands</span>
+              </h3>
+              
+              <div className="space-y-2">
+                {categoryCommands.map(command => (
+                  <div key={command.id} className="flex items-center justify-between p-3 bg-black/20 rounded-lg hover:bg-black/30 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-3 h-3 rounded-full ${command.enabled ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+                      <div>
+                        <div className="text-white font-semibold">/{command.name}</div>
+                        <div className="text-white/60 text-sm">{command.description}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => updateCommand(command.id, { enabled: !command.enabled })}
+                        className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${
+                          command.enabled 
+                            ? 'bg-green-500/20 text-green-400 border border-green-400/30' 
+                            : 'bg-gray-500/20 text-gray-400 border border-gray-400/30'
+                        }`}
+                      >
+                        {command.enabled ? 'Enabled' : 'Disabled'}
+                      </button>
+                      
+                      <button
+                        onClick={() => setEditingCommand(command)}
+                        className="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-400/30 rounded-full text-sm font-semibold hover:bg-blue-500/30 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Command Editor Modal */}
+      {editingCommand && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="glass-card card-padding max-w-md w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Edit /{editingCommand.name}</h3>
+              <button 
+                onClick={() => setEditingCommand(null)}
+                className="text-white/60 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-white/80 text-sm mb-2">Command Description</label>
+                <input
+                  type="text"
+                  value={editingCommand.description}
+                  onChange={(e) => setEditingCommand({...editingCommand, description: e.target.value})}
+                  className="w-full bg-black/30 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-purple-400 focus:outline-none"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="enabled"
+                  checked={editingCommand.enabled}
+                  onChange={(e) => setEditingCommand({...editingCommand, enabled: e.target.checked})}
+                  className="rounded"
+                />
+                <label htmlFor="enabled" className="text-white/80">Enabled</label>
+              </div>
+              
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={() => {
+                    updateCommand(editingCommand.id, editingCommand)
+                    setEditingCommand(null)
+                  }}
+                  className="btn-primary text-white font-semibold flex-1"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => setEditingCommand(null)}
+                  className="btn-secondary text-white font-semibold flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MusicTab({ selectedServer }) {
+  if (!selectedServer || !selectedServer.hasSkyfall) {
+    return (
+      <div className="glass-card card-padding text-center">
+        <div className="text-4xl mb-4">🎵</div>
+        <h3 className="text-xl font-bold text-white mb-2">
+          {!selectedServer ? 'No Server Selected' : 'Skyfall Not Added'}
+        </h3>
+        <p className="text-white/70">
+          {!selectedServer ? 'Select a server to view music controls' : `Add Skyfall to ${selectedServer.name} to use music features`}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="glass-card card-padding">
+        <h2 className="text-2xl font-bold heading-gradient">Music for {selectedServer.name}</h2>
+        <p className="text-white/70">Control music playback in your server</p>
+      </div>
+      
+      {/* Current Player */}
+      <div className="glass-card card-padding">
+        <h3 className="text-lg font-bold text-white mb-4">🎵 Now Playing</h3>
+        <div className="bg-black/30 rounded-xl p-6 text-center">
+          <div className="text-white/60 mb-2">Currently Playing</div>
+          <div className="text-white font-semibold mb-4">No song active</div>
+          <div className="flex justify-center space-x-4 mb-4">
+            <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">⏮️</button>
+            <button className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white hover:scale-110 transition-transform">▶️</button>
+            <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">⏭️</button>
+          </div>
+          <div className="bg-white/10 rounded-full h-1 mb-2">
+            <div className="bg-gradient-to-r from-purple-400 to-blue-400 h-1 rounded-full w-0"></div>
+          </div>
+          <div className="text-white/60 text-xs">0:00 / 0:00</div>
+        </div>
+      </div>
+
+      {/* Quick Controls */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="glass-card card-padding">
+          <h4 className="text-white font-semibold mb-3">🎮 Quick Controls</h4>
+          <div className="space-y-2">
+            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors">🔀 Shuffle Queue</button>
+            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors">🔁 Loop Current</button>
+            <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors">⏹️ Stop Playback</button>
+          </div>
+        </div>
+        
+        <div className="glass-card card-padding">
+          <h4 className="text-white font-semibold mb-3">📊 Music Stats</h4>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-white/70">Songs Played</span>
+              <span className="text-white font-semibold">156</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/70">Queue Length</span>
+              <span className="text-white font-semibold">0</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/70">Total Playtime</span>
+              <span className="text-white font-semibold">12h 34m</span>
+            </div>
           </div>
         </div>
       </div>
@@ -485,57 +774,65 @@ function AppealsTab() {
   )
 }
 
-function CommandsTab() {
-  return (
-    <div className="space-y-8">
+function ModerationTab({ selectedServer }) {
+  if (!selectedServer || !selectedServer.hasSkyfall) {
+    return (
       <div className="glass-card card-padding text-center">
-        <div className="text-6xl mb-6 animate-float">⚙️</div>
-        <h2 className="text-4xl font-bold heading-gradient mb-4">Command Arsenal</h2>
-        <p className="text-xl text-white/80 mb-8">Comprehensive toolkit for server management and automation</p>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <div className="bg-purple-500/20 rounded-2xl p-6 border border-purple-400/30">
-            <div className="text-4xl mb-3">🎵</div>
-            <div className="text-xl font-bold text-white mb-2">Music</div>
-            <div className="text-white/70">15 commands</div>
-          </div>
-          <div className="bg-red-500/20 rounded-2xl p-6 border border-red-400/30">
-            <div className="text-4xl mb-3">🛡️</div>
-            <div className="text-xl font-bold text-white mb-2">Moderation</div>
-            <div className="text-white/70">22 commands</div>
-          </div>
-          <div className="bg-blue-500/20 rounded-2xl p-6 border border-blue-400/30">
-            <div className="text-4xl mb-3">🎮</div>
-            <div className="text-xl font-bold text-white mb-2">Fun</div>
-            <div className="text-white/70">8 commands</div>
-          </div>
+        <div className="text-4xl mb-4">🛡️</div>
+        <h3 className="text-xl font-bold text-white mb-2">
+          {!selectedServer ? 'No Server Selected' : 'Skyfall Not Added'}
+        </h3>
+        <p className="text-white/70">
+          {!selectedServer ? 'Select a server to view moderation tools' : `Add Skyfall to ${selectedServer.name} to use moderation features`}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="glass-card card-padding">
+        <h2 className="text-2xl font-bold heading-gradient">Moderation for {selectedServer.name}</h2>
+        <p className="text-white/70">Server protection and user management tools</p>
+      </div>
+      
+      {/* Server Health */}
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="glass-card card-padding text-center">
+          <div className="text-3xl font-bold text-green-400 mb-2">98.7%</div>
+          <div className="text-white/70">Server Health</div>
+        </div>
+        <div className="glass-card card-padding text-center">
+          <div className="text-3xl font-bold text-yellow-400 mb-2">2</div>
+          <div className="text-white/70">Active Warnings</div>
+        </div>
+        <div className="glass-card card-padding text-center">
+          <div className="text-3xl font-bold text-green-400 mb-2">0</div>
+          <div className="text-white/70">Security Threats</div>
         </div>
       </div>
-    </div>
-  )
-}
 
-function ModerationTab() {
-  return (
-    <div className="space-y-8">
-      <div className="glass-card card-padding text-center">
-        <div className="text-6xl mb-6 animate-float">🛡️</div>
-        <h2 className="text-4xl font-bold heading-gradient mb-4">Moderation Hub</h2>
-        <p className="text-xl text-white/80 mb-8">Advanced server protection and user management</p>
-        
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <div className="bg-green-500/20 rounded-2xl p-6 border border-green-400/30">
-            <div className="text-3xl font-bold text-white mb-2">98.7%</div>
-            <div className="text-white/70">Server Health</div>
-          </div>
-          <div className="bg-yellow-500/20 rounded-2xl p-6 border border-yellow-400/30">
-            <div className="text-3xl font-bold text-white mb-2">3</div>
-            <div className="text-white/70">Active Warnings</div>
-          </div>
-          <div className="bg-red-500/20 rounded-2xl p-6 border border-red-400/30">
-            <div className="text-3xl font-bold text-white mb-2">0</div>
-            <div className="text-white/70">Security Threats</div>
-          </div>
+      {/* Quick Actions */}
+      <div className="glass-card card-padding">
+        <h3 className="text-lg font-bold text-white mb-4">🚀 Quick Actions</h3>
+        <div className="grid md:grid-cols-2 gap-3">
+          <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors flex items-center space-x-3">
+            <span>🔨</span>
+            <span>Ban Management</span>
+          </button>
+          <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors flex items-center space-x-3">
+            <span>⚠️</span>
+            <span>Warning System</span>
+          </button>
+          <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors flex items-center space-x-3">
+            <span>📝</span>
+            <span>Audit Logs</span>
+          </button>
+          <button className="w-full bg-black/20 hover:bg-black/30 text-white p-3 rounded-lg text-left transition-colors flex items-center space-x-3">
+            <span>⚙️</span>
+            <span>Auto-Mod Settings</span>
+          </button>
         </div>
       </div>
     </div>
