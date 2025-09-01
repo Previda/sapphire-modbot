@@ -92,12 +92,17 @@ export default function Home() {
                     🔐 Login with Discord
                   </button>
                 ) : (
-                  <button
-                    onClick={openDashboard}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-                  >
-                    📊 Open Dashboard
-                  </button>
+                  <div className="space-y-4">
+                    <div className="text-white text-lg">
+                      Welcome back, {user?.username || 'User'}!
+                    </div>
+                    <button
+                      onClick={openDashboard}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    >
+                      📊 Open Dashboard
+                    </button>
+                  </div>
                 )}
               </div>
 
