@@ -42,7 +42,7 @@ export default function Home() {
     <>
       <Head>
         <title>Skyfall Dashboard</title>
-        <meta name="description" content="Modern Discord Bot Management Dashboard" />
+        <meta name="description" content="Skyfall Bot Management Dashboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -57,7 +57,7 @@ export default function Home() {
                   🌌 Skyfall
                 </h1>
                 <p className="text-xl text-white opacity-90 animate-fade-in" style={{animationDelay: '0.3s'}}>
-                  Advanced Discord Bot Management Dashboard
+                  Advanced Skyfall Bot Management Dashboard
                 </p>
               </div>
 
