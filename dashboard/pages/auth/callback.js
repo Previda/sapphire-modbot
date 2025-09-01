@@ -15,6 +15,7 @@ export default function AuthCallback() {
 
   const exchangeCodeForToken = async (code) => {
     try {
+      console.log('Starting Discord auth exchange...')
       const response = await fetch('/api/auth/discord', {
         method: 'POST',
         headers: {
@@ -25,18 +26,23 @@ export default function AuthCallback() {
 
       if (response.ok) {
         const data = await response.json()
+        console.log('Auth successful, storing data...')
         localStorage.setItem('discord_token', data.access_token)
         localStorage.setItem('user_data', JSON.stringify(data.user))
+        localStorage.setItem('auth_completed', 'true')
         
-        // Force redirect to the correct dashboard
-        window.location.href = window.location.origin + '/?logged_in=true'
+        console.log('Redirecting to dashboard...')
+        // Use setTimeout to ensure localStorage is written
+        setTimeout(() => {
+          window.location.replace(window.location.origin + '/')
+        }, 100)
       } else {
         console.error('Auth failed:', response)
         window.location.href = window.location.origin + '/?error=auth_failed'
       }
     } catch (error) {
       console.error('Auth error:', error)
-      router.push('/?error=auth_failed')
+      window.location.href = window.location.origin + '/?error=auth_failed'
     }
   }
 

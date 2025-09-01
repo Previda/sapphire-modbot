@@ -7,27 +7,30 @@ export default function Home() {
   const [showDashboard, setShowDashboard] = useState(false)
 
   useEffect(() => {
+    console.log('Dashboard loading, checking auth state...')
+    
     // Check if user is logged in from localStorage
     const token = localStorage.getItem('discord_token')
     const userData = localStorage.getItem('user_data')
+    const authCompleted = localStorage.getItem('auth_completed')
+    
+    console.log('Auth check:', { token: !!token, userData: !!userData, authCompleted })
     
     if (token && userData) {
+      console.log('Found auth data, setting logged in state')
       setIsLoggedIn(true)
       setUser(JSON.parse(userData))
       setShowDashboard(true)
+      
+      // Clear the auth completed flag
+      if (authCompleted) {
+        localStorage.removeItem('auth_completed')
+      }
     }
 
-    // Check URL for login success
+    // Clean URL without redirect if there are params
     const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('logged_in') === 'true') {
-      const storedUserData = localStorage.getItem('user_data')
-      if (storedUserData) {
-        setUser(JSON.parse(storedUserData))
-      }
-      setIsLoggedIn(true)
-      setShowDashboard(true)
-      
-      // Clean URL without redirect
+    if (urlParams.toString()) {
       window.history.replaceState({}, document.title, window.location.pathname)
     }
   }, [])
