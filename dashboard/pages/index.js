@@ -4,7 +4,7 @@ import Head from 'next/head'
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
-  const [showDashboard, setShowDashboard] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     console.log('Dashboard loading, checking auth state...')
@@ -12,43 +12,19 @@ export default function Home() {
     // Check if user is logged in from localStorage
     const token = localStorage.getItem('discord_token')
     const userData = localStorage.getItem('user_data')
-    const authCompleted = localStorage.getItem('auth_completed')
     
-    console.log('Auth check:', { token: !!token, userData: !!userData, authCompleted })
+    console.log('Auth check:', { token: !!token, userData: !!userData })
     
     if (token && userData) {
       console.log('Found auth data, setting logged in state')
       const parsedUser = JSON.parse(userData)
       setIsLoggedIn(true)
       setUser(parsedUser)
-      setShowDashboard(true)
-      
-      // Clear flags
-      if (authCompleted) {
-        localStorage.removeItem('auth_completed')
-      }
-      localStorage.removeItem('force_dashboard')
+      setIsLoading(false)
     } else {
-      // Check if we should force dashboard view after auth
-      const forceDashboard = localStorage.getItem('force_dashboard')
-      if (forceDashboard) {
-        console.log('Force dashboard flag detected, checking auth again...')
-        localStorage.removeItem('force_dashboard')
-        // Retry auth check in case there was a timing issue
-        setTimeout(() => {
-          const retryToken = localStorage.getItem('discord_token')
-          const retryUserData = localStorage.getItem('user_data')
-          if (retryToken && retryUserData) {
-            setIsLoggedIn(true)
-            setUser(JSON.parse(retryUserData))
-            setShowDashboard(true)
-          }
-        }, 100)
-      } else {
-        console.log('No auth data found, showing login screen')
-        setIsLoggedIn(false)
-        setShowDashboard(false)
-      }
+      console.log('No auth data found, showing login screen')
+      setIsLoggedIn(false)
+      setIsLoading(false)
     }
 
     // Clean URL without redirect if there are params
@@ -56,6 +32,10 @@ export default function Home() {
     if (urlParams.toString()) {
       window.history.replaceState({}, document.title, window.location.pathname)
     }
+    
+    // Clean up any leftover flags
+    localStorage.removeItem('auth_completed')
+    localStorage.removeItem('force_dashboard')
   }, [])
 
   const handleDiscordLogin = () => {
@@ -67,9 +47,6 @@ export default function Home() {
     window.location.href = discordUrl
   }
 
-  const openDashboard = () => {
-    setShowDashboard(true)
-  }
 
   return (
     <>
@@ -81,7 +58,7 @@ export default function Home() {
 
       <div className="min-h-screen gradient-bg">
         {/* Hero Section */}
-        {!showDashboard && (
+        {!isLoggedIn && (
           <div className="flex items-center justify-center min-h-screen px-4 animate-fade-in">
             <div className="text-center max-w-4xl mx-auto">
               {/* Logo/Title */}
@@ -117,26 +94,12 @@ export default function Home() {
 
               {/* Action Buttons */}
               <div className="space-y-4 animate-fade-in" style={{animationDelay: '0.9s'}}>
-                {!isLoggedIn ? (
-                  <button
-                    onClick={handleDiscordLogin}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-                  >
-                    🌌 Access Skyfall Command Center
-                  </button>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-white text-lg">
-                      Welcome back, {user?.username || 'User'}!
-                    </div>
-                    <button
-                      onClick={openDashboard}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-                    >
-                      🌌 Enter Skyfall Control Room
-                    </button>
-                  </div>
-                )}
+                <button
+                  onClick={handleDiscordLogin}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                >
+                  🌌 Access Skyfall Command Center
+                </button>
               </div>
 
               {/* Status Indicator */}
@@ -153,7 +116,7 @@ export default function Home() {
         )}
 
         {/* Dashboard View */}
-        {showDashboard && (
+        {isLoggedIn && (
           <DashboardMain />
         )}
       </div>
