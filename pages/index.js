@@ -62,64 +62,13 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-screen px-4 animate-fade-in">
             <div className="text-center max-w-4xl mx-auto">
               {/* Logo/Title */}
-              <div className="mb-12 animate-scale-in">
-                <div className="flex justify-center mb-6">
-                  <div className="relative animate-float">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-400 via-purple-500 to-indigo-600 p-1 animate-glow">
-                      <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
-                        <div className="relative">
-                          {/* Starry pattern */}
-                          <div className="absolute inset-0 opacity-30">
-                            {[...Array(20)].map((_, i) => (
-                              <div
-                                key={i}
-                                className="absolute w-1 h-1 bg-white rounded-full animate-pulse-custom"
-                                style={{
-                                  top: `${Math.random() * 100}%`,
-                                  left: `${Math.random() * 100}%`,
-                                  animationDelay: `${Math.random() * 2}s`
-                                }}
-                              />
-                            ))}
-                          </div>
-                          {/* Meteor/comet trail */}
-                          <div className="relative z-10">
-                            <svg width="80" height="80" viewBox="0 0 100 100" className="text-white">
-                              <defs>
-                                <radialGradient id="meteorGradient" cx="30%" cy="30%">
-                                  <stop offset="0%" stopColor="white" />
-                                  <stop offset="100%" stopColor="rgba(255,255,255,0.3)" />
-                                </radialGradient>
-                              </defs>
-                              {/* Main meteor body */}
-                              <ellipse cx="35" cy="35" rx="12" ry="20" fill="url(#meteorGradient)" transform="rotate(-45 35 35)" />
-                              {/* Sparkles */}
-                              <circle cx="20" cy="20" r="2" fill="white" opacity="0.8" />
-                              <circle cx="60" cy="15" r="1.5" fill="white" opacity="0.6" />
-                              <circle cx="70" cy="40" r="1" fill="white" opacity="0.7" />
-                              <circle cx="15" cy="60" r="1" fill="white" opacity="0.5" />
-                              {/* Trailing stars */}
-                              <path d="M45 45 L50 50 L55 45 L50 40 Z" fill="white" opacity="0.4" />
-                              <path d="M55 55 L58 58 L61 55 L58 52 Z" fill="white" opacity="0.3" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <h1 className="text-7xl font-bold text-white mb-6 animate-slide-in bg-gradient-to-r from-white via-indigo-200 to-purple-200 bg-clip-text text-transparent">
-                  SKYFALL
+              <div className="mb-8">
+                <h1 className="text-6xl font-bold text-white mb-4 animate-slide-in">
+                  🌌 SKYFALL
                 </h1>
-                <p className="text-2xl text-white opacity-90 animate-fade-in font-light" style={{animationDelay: '0.3s'}}>
-                  Elite Discord Command Center
+                <p className="text-xl text-white opacity-90 animate-fade-in" style={{animationDelay: '0.3s'}}>
+                  Ultimate Skyfall Bot Command Center
                 </p>
-                <div className="mt-4 animate-fade-in" style={{animationDelay: '0.6s'}}>
-                  <div className="inline-flex items-center space-x-2 glass-hover px-4 py-2 rounded-full">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse-custom status-online"></div>
-                    <span className="text-white text-sm font-medium">System Operational</span>
-                  </div>
-                </div>
               </div>
 
               {/* Feature Cards */}
@@ -147,18 +96,10 @@ export default function Home() {
               <div className="space-y-4 animate-fade-in" style={{animationDelay: '0.9s'}}>
                 <button
                   onClick={handleDiscordLogin}
-                  className="btn-primary text-white font-bold py-5 px-10 rounded-2xl text-xl relative overflow-hidden group"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                 >
-                  <span className="relative z-10 flex items-center space-x-3">
-                    <span className="text-2xl">🚀</span>
-                    <span>Access Skyfall Command Center</span>
-                  </span>
+                  🌌 Access Skyfall Command Center
                 </button>
-                <div className="mt-6">
-                  <p className="text-white opacity-60 text-sm">
-                    Secure Discord OAuth • Advanced Permissions • Real-time Control
-                  </p>
-                </div>
               </div>
 
               {/* Status Indicator */}
