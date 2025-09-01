@@ -43,22 +43,20 @@ export default function AuthCallback() {
         throw new Error('Missing token or user data in response')
       }
     } catch (error) {
-      console.error(' Auth exchange failed:', error)
-      const errorMsg = error.message.includes('redirect_uri') ? 
-        'OAuth redirect URI mismatch. Please contact support.' : 
-        `Authentication failed: ${error.message}`
+      console.error('❌ Auth exchange failed:', error)
       
-      alert(` ${errorMsg}`)
+      // Simply redirect back to home without showing alert
       window.location.href = '/?error=auth_failed'
     }
   }
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center">
-      <div className="glass rounded-xl p-8 text-center animate-fade-in">
-        <div className="text-4xl mb-4 animate-pulse-custom">🔐</div>
-        <h2 className="text-2xl font-bold text-white mb-2">Authenticating...</h2>
-        <p className="text-white opacity-75">Please wait while we log you in</p>
+      <div className="glass-card card-padding text-center animate-fade-in max-w-md mx-auto">
+        <div className="text-6xl mb-8 animate-float">🔐</div>
+        <h2 className="text-3xl font-bold heading-gradient mb-4">Authenticating</h2>
+        <p className="text-white/70 text-lg leading-relaxed mb-6">Securing your connection to Skyfall...</p>
+        <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto"></div>
       </div>
     </div>
   )

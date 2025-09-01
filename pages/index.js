@@ -62,56 +62,60 @@ export default function Home() {
       <div className="min-h-screen gradient-bg">
         {/* Hero Section */}
         {!isLoggedIn && (
-          <div className="flex items-center justify-center min-h-screen px-4 animate-fade-in">
-            <div className="text-center max-w-4xl mx-auto">
+          <div className="flex items-center justify-center min-h-screen px-6 animate-fade-in">
+            <div className="text-center max-w-5xl mx-auto">
               {/* Logo/Title */}
-              <div className="mb-8">
-                <h1 className="text-6xl font-bold text-white mb-4 animate-slide-in">
-                  🌌 SKYFALL
-                </h1>
-                <p className="text-xl text-white opacity-90 animate-fade-in" style={{animationDelay: '0.3s'}}>
-                  Ultimate Skyfall Bot Command Center
+              <div className="mb-16">
+                <div className="mb-8">
+                  <div className="text-8xl mb-6 animate-float">🌌</div>
+                  <h1 className="text-7xl font-black heading-gradient mb-6 tracking-tight">
+                    SKYFALL
+                  </h1>
+                </div>
+                <p className="text-2xl text-white/80 font-light animate-fade-in leading-relaxed" style={{animationDelay: '0.3s'}}>
+                  Professional Discord Bot Management Platform
                 </p>
               </div>
 
               {/* Feature Cards */}
-              <div className="grid-auto-fit mb-12 animate-fade-in" style={{animationDelay: '0.6s'}}>
-                <div className="glass-card card-padding card-hover">
-                  <div className="text-5xl mb-6 animate-float">🎵</div>
-                  <h3 className="text-xl font-bold heading-gradient mb-3">Skyfall Music</h3>
-                  <p className="text-muted leading-relaxed">Control Skyfall's music system with live updates and queue management</p>
+              <div className="grid-auto-fit mb-16 animate-fade-in" style={{animationDelay: '0.6s'}}>
+                <div className="glass-card card-padding card-hover group">
+                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-300">🎵</div>
+                  <h3 className="text-2xl font-bold heading-gradient mb-4">Music Engine</h3>
+                  <p className="text-white/70 leading-relaxed text-lg">Advanced audio streaming with YouTube & Spotify integration</p>
                 </div>
                 
-                <div className="glass-card card-padding card-hover">
-                  <div className="text-5xl mb-6 animate-float" style={{animationDelay: '0.5s'}}>⚖️</div>
-                  <h3 className="text-xl font-bold heading-gradient mb-3">Skyfall Appeals</h3>
-                  <p className="text-muted leading-relaxed">Manage appeals and justice through Skyfall's advanced system</p>
+                <div className="glass-card card-padding card-hover group">
+                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '0.5s'}}>⚖️</div>
+                  <h3 className="text-2xl font-bold heading-gradient mb-4">Justice System</h3>
+                  <p className="text-white/70 leading-relaxed text-lg">Automated moderation with intelligent appeal processing</p>
                 </div>
                 
-                <div className="glass-card card-padding card-hover">
-                  <div className="text-5xl mb-6 animate-float" style={{animationDelay: '1s'}}>⚙️</div>
-                  <h3 className="text-xl font-bold heading-gradient mb-3">Skyfall Commands</h3>
-                  <p className="text-muted leading-relaxed">Configure and customize Skyfall's powerful command arsenal</p>
+                <div className="glass-card card-padding card-hover group">
+                  <div className="text-6xl mb-8 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '1s'}}>⚙️</div>
+                  <h3 className="text-2xl font-bold heading-gradient mb-4">Command Arsenal</h3>
+                  <p className="text-white/70 leading-relaxed text-lg">Comprehensive toolkit for server management and automation</p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-4 animate-fade-in" style={{animationDelay: '0.9s'}}>
+              <div className="flex flex-col items-center space-y-6 animate-fade-in" style={{animationDelay: '0.9s'}}>
                 <button
                   onClick={handleDiscordLogin}
-                  className="btn-primary text-white font-bold text-lg flex-center space-x-3"
+                  className="btn-primary text-white font-bold text-xl flex-center space-x-4 px-12 py-6 shadow-2xl"
                 >
-                  <span>🌌</span>
-                  <span>Access Skyfall Command Center</span>
+                  <span className="text-2xl">🚀</span>
+                  <span>Launch Dashboard</span>
                 </button>
+                <p className="text-white/60 text-sm font-medium tracking-wide">Secure Discord OAuth Authentication</p>
               </div>
 
               {/* Status Indicator */}
-              <div className="mt-12 animate-fade-in" style={{animationDelay: '1.2s'}}>
+              <div className="mt-16 animate-fade-in" style={{animationDelay: '1.2s'}}>
                 <div className="glass-card compact-padding inline-block">
-                  <div className="flex-center space-x-3">
-                    <div className="w-4 h-4 status-online rounded-full animate-pulse"></div>
-                    <span className="text-white font-semibold">Skyfall Status: Online</span>
+                  <div className="flex-center space-x-4">
+                    <div className="w-3 h-3 status-online rounded-full animate-pulse shadow-lg"></div>
+                    <span className="text-white/90 font-medium tracking-wide">System Status: Operational</span>
                   </div>
                 </div>
               </div>

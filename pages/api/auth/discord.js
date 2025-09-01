@@ -11,6 +11,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('🔐 Starting token exchange with Discord API...')
+    
     // Exchange code for access token
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
@@ -18,7 +20,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: process.env.DISCORD_CLIENT_ID,
+        client_id: process.env.DISCORD_CLIENT_ID || '1358527215020544222',
         client_secret: process.env.DISCORD_CLIENT_SECRET,
         grant_type: 'authorization_code',
         code: code,
@@ -27,9 +29,14 @@ export default async function handler(req, res) {
     })
 
     const tokenData = await tokenResponse.json()
+    console.log('📡 Discord token response status:', tokenResponse.status)
 
     if (!tokenResponse.ok) {
-      return res.status(400).json({ error: 'Failed to exchange code for token' })
+      console.error('❌ Token exchange failed:', tokenData)
+      return res.status(400).json({ 
+        error: 'Failed to exchange code for token',
+        details: tokenData.error_description || tokenData.error || 'Unknown error'
+      })
     }
 
     // Get user information

@@ -7,13 +7,18 @@ module.exports = {
 
     async execute(interaction) {
         const embed = new EmbedBuilder()
-            .setTitle('🤖 Sapphire ModBot - Complete Command List')
-            .setDescription('**Advanced Discord Moderation Bot with Interactive Menus**')
+            .setTitle('🌌 Skyfall Bot - Complete Command Arsenal')
+            .setDescription('**Advanced Discord Management Bot with Professional Dashboard**')
             .setColor(0x0099ff)
             .addFields(
                 {
                     name: '🔨 Moderation Commands',
                     value: '`/ban` - Ban user (with message deletion, silent mode)\n`/kick` - Kick user with case tracking\n`/warn` - Warn user with appeal system\n`/mute` - Mute user with duration support\n`/slowmode` - Set channel slowmode (0-21600s)\n`/modstats` - View moderation statistics',
+                    inline: false
+                },
+                {
+                    name: '🎵 Skyfall Music System',
+                    value: '`/play` - Play music from YouTube/Spotify\n`/skip` - Skip current song\n`/stop` - Stop music and disconnect\n`/queue` - View music queue\n`/volume` - Adjust playback volume\n`/nowplaying` - Show current song info',
                     inline: false
                 },
                 {
@@ -32,8 +37,8 @@ module.exports = {
                     inline: false
                 },
                 {
-                    name: '🛠️ Utilities',
-                    value: '`/userinfo` - Comprehensive user information\n`/tempsys` - Skyfall system stats\n**Interactive:** `!ticket` menu in channels',
+                    name: '🛠️ Skyfall Utilities',
+                    value: '`/userinfo` - Comprehensive user information\n`/tempsys` - Skyfall system stats\n`/sysinfo` - Raspberry Pi system info\n**Interactive:** `!ticket` menu in channels',
                     inline: false
                 },
                 {
@@ -52,7 +57,7 @@ module.exports = {
                     inline: false
                 }
             )
-            .setFooter({ text: 'Use slash commands (/) or DM commands (!). Type !ticket for interactive menu.' })
+            .setFooter({ text: 'Skyfall Bot v2.0 - Use slash commands (/) or DM commands (!). Dashboard: skyfall-omega.vercel.app' })
             .setTimestamp();
 
         await interaction.reply({ embeds: [embed] });
