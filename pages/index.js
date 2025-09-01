@@ -65,15 +65,18 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-screen px-6 animate-fade-in">
             <div className="text-center max-w-5xl mx-auto">
               {/* Logo/Title */}
-              <div className="mb-16">
-                <div className="mb-8">
-                  <div className="text-8xl mb-6 animate-float">🌌</div>
-                  <h1 className="text-7xl font-black heading-gradient mb-6 tracking-tight">
+              <div className="mb-20">
+                <div className="mb-12">
+                  <div className="text-9xl mb-8 animate-float">🌌</div>
+                  <h1 className="text-8xl font-black heading-gradient mb-8 tracking-tighter leading-none">
                     SKYFALL
                   </h1>
                 </div>
-                <p className="text-2xl text-white/80 font-light animate-fade-in leading-relaxed" style={{animationDelay: '0.3s'}}>
-                  Professional Discord Bot Management Platform
+                <p className="text-3xl text-white/85 font-extralight animate-fade-in leading-relaxed max-w-3xl mx-auto" style={{animationDelay: '0.3s'}}>
+                  Next-Generation Discord Bot Management
+                </p>
+                <p className="text-lg text-white/60 font-light mt-4 animate-fade-in" style={{animationDelay: '0.5s'}}>
+                  Experience seamless server control with advanced automation
                 </p>
               </div>
 
