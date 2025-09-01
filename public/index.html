@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skyfall Bot Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        .feature ul {
+            list-style: none;
+            padding-left: 1rem;
+        }
+        
+        .feature li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .feature li::before {
+            content: '✅';
+            position: absolute;
+            left: -1.5rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        
+        .stat {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat h4 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat p {
+            opacity: 0.8;
+        }
+        
+        .cta {
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Skyfall Bot</h1>
+            <p>Advanced Discord Bot with Modular Systems & Firebase Integration</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <h4>🔥</h4>
+                <p>Firebase Powered</p>
+            </div>
+            <div class="stat">
+                <h4>⚡</h4>
+                <p>Lightning Fast</p>
+            </div>
+            <div class="stat">
+                <h4>🛡️</h4>
+                <p>Auto Moderation</p>
+            </div>
+            <div class="stat">
+                <h4>📊</h4>
+                <p>XP System</p>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🛡️ Auto Moderation</h3>
+                <ul>
+                    <li>Spam Detection</li>
+                    <li>Toxicity Filtering</li>
+                    <li>Link Protection</li>
+                    <li>Caps Detection</li>
+                    <li>Zalgo Text Blocking</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>📊 XP & Leveling</h3>
+                <ul>
+                    <li>Message-based XP gain</li>
+                    <li>Level progression</li>
+                    <li>Server leaderboards</li>
+                    <li>Role rewards</li>
+                    <li>Progress tracking</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>🎫 Ticket System</h3>
+                <ul>
+                    <li>Interactive buttons</li>
+                    <li>Transcript generation</li>
+                    <li>User management</li>
+                    <li>Category support</li>
+                    <li>Staff controls</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>📝 Logging System</h3>
+                <ul>
+                    <li>Moderation logs</li>
+                    <li>Member tracking</li>
+                    <li>Channel events</li>
+                    <li>Voice activity</li>
+                    <li>Custom events</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>⚖️ Appeals System</h3>
+                <ul>
+                    <li>Interactive forms</li>
+                    <li>Case management</li>
+                    <li>Status tracking</li>
+                    <li>Staff review</li>
+                    <li>Automated notifications</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>🔥 Firebase Integration</h3>
+                <ul>
+                    <li>Cloud database</li>
+                    <li>Real-time sync</li>
+                    <div class="cta-buttons">
+                    <a href="#features" class="btn btn-primary">
+                        <i class="fas fa-rocket"></i>
+                        Explore Features
+                    </a>
+                    <a href="https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_ID&permissions=8&scope=bot%20applications.commands" class="btn btn-secondary" target="_blank">
+                        <i class="fab fa-discord"></i>
+                        Add to Server
+                    </a>
+                    <a href="/dashboard" class="btn btn-accent" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <i class="fas fa-cogs"></i>
+                        Admin Dashboard
+                    </a>
+                </div>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="cta">
+            <a href="https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_ID&permissions=8&scope=bot%20applications.commands" class="btn">
+                🚀 Invite Skyfall Bot
+            </a>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2025 Skyfall Bot. Powered by Firebase & Discord.js v14</p>
+            <p>Created by Previda</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQOVGGNyHK_sT-fjPfJl7TydrS4QzMUjc",
+            authDomain: "previda-bot.firebaseapp.com",
+            databaseURL: "https://previda-bot-default-rtdb.firebaseio.com",
+            projectId: "previda-bot",
+            storageBucket: "previda-bot.firebasestorage.app",
+            messagingSenderId: "331157985552",
+            appId: "1:331157985552:web:cbdd398d89a1d27472ad95",
+            measurementId: "G-FHS7YR9ME0"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
+</body>
+</html>
