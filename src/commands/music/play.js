@@ -270,7 +270,7 @@ module.exports = {
                     
                     exec(ytDlpCommand, { timeout: 30000 }, (error, stdout, stderr) => {
                         if (error) {
-                            console.log('yt-dlp failed:', error.message);
+                            console.log('yt-dlp failed:', error.message, error);
                             reject(error);
                         } else {
                             console.log('✅ yt-dlp extraction successful');
@@ -302,6 +302,7 @@ module.exports = {
                 }
                 
             } catch (ytDlpError) {
+                console.log('Method 1 (yt-dlp) full error:', ytDlpError);
                 console.log('Method 1 (yt-dlp) failed:', ytDlpError.message);
             }
             
@@ -333,7 +334,9 @@ module.exports = {
                     audioCreated = true;
                     
                 } catch (ytdlError) {
-                    console.log('Method 2 (ytdl-core) failed:', ytdlError.message);
+                    console.log('Method 2 (ytdl-core) full error:', ytdlError);
+
+                    console.log('Method 2 (ytdl-core) failed:', ytdlError.message, ytdlError);
                 }
             }
             
@@ -355,7 +358,9 @@ module.exports = {
                     audioCreated = true;
                     
                 } catch (basicError) {
-                    console.error('❌ All methods failed:', basicError.message);
+                    console.log('Method 3 (basic fallback) full error:', basicError);
+
+                    console.error('❌ All methods failed:', basicError.message, basicError);
                 }
             }
             
