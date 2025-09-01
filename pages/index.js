@@ -247,56 +247,66 @@ function DashboardMain({ user }) {
   return (
     <div className="min-h-screen section-padding animate-fade-in">
       {/* Header with User Profile */}
-      <div className="glass-card card-padding mb-6">
+      <div className="glass-card card-padding mb-8">
         <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-4xl font-bold heading-gradient">🌌 Skyfall Control Room</h1>
-          </div>
           <div className="flex items-center space-x-6">
+            <h1 className="text-5xl font-black heading-gradient">🌌 Skyfall</h1>
+            <div className="h-8 w-px bg-white/20"></div>
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 status-online rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+              <span className="text-white/90 font-medium">Online & Ready</span>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            {/* Add to Server Button */}
+            <button 
+              onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands`, '_blank')}
+              className="btn-secondary text-white font-semibold flex items-center space-x-2 hover:scale-105 transition-transform"
+            >
+              <span>➕</span>
+              <span>Add to Server</span>
+            </button>
+            
             {/* User Profile */}
             <div className="flex items-center space-x-4">
               <img 
                 src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png?size=64`}
                 alt={user?.username || 'User'}
-                className="w-12 h-12 rounded-full border-2 border-indigo-400/50 shadow-lg"
+                className="w-14 h-14 rounded-full border-2 border-purple-400/50 shadow-xl"
                 onError={(e) => {
                   e.target.src = `https://cdn.discordapp.com/embed/avatars/${(user?.id || '0') % 5}.png`
                 }}
               />
               <div className="text-right">
-                <div className="text-white font-bold">Welcome, {user?.username || 'User'}!</div>
-                <div className="text-muted text-sm">#{user?.discriminator || '0000'}</div>
+                <div className="text-white font-bold text-lg">{user?.username || 'SkyfallCommander'}</div>
+                <div className="text-white/60 text-sm">Access Level: Skyfall Commander</div>
               </div>
-            </div>
-            
-            {/* Status */}
-            <div className="flex-center space-x-3">
-              <div className="w-3 h-3 status-online rounded-full animate-pulse"></div>
-              <span className="text-white font-semibold">Skyfall Online</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="glass-card compact-padding mb-6">
-        <nav className="flex space-x-2">
+      <div className="glass-card compact-padding mb-8">
+        <nav className="flex space-x-1 overflow-x-auto">
           {[
-            { id: 'overview', name: 'Skyfall Overview', icon: '🌌' },
-            { id: 'music', name: 'Skyfall Music', icon: '🎵' },
-            { id: 'appeals', name: 'Skyfall Justice', icon: '⚖️' },
-            { id: 'commands', name: 'Skyfall Arsenal', icon: '⚙️' },
-            { id: 'moderation', name: 'Skyfall Guard', icon: '🛡️' }
+            { id: 'overview', name: 'Overview', icon: '🌌' },
+            { id: 'music', name: 'Music', icon: '🎵' },
+            { id: 'appeals', name: 'Justice', icon: '⚖️' },
+            { id: 'commands', name: 'Commands', icon: '⚙️' },
+            { id: 'moderation', name: 'Moderation', icon: '🛡️' }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`tab-button flex-center space-x-2 ${
-                activeTab === tab.id ? 'tab-active' : ''
+              className={`tab-button flex-center space-x-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 whitespace-nowrap ${
+                activeTab === tab.id 
+                  ? 'bg-gradient-to-r from-purple-500/30 to-blue-500/30 text-white border border-purple-400/50 shadow-lg' 
+                  : 'text-white/70 hover:text-white hover:bg-white/10 border border-transparent'
               }`}
             >
-              <span>{tab.icon}</span>
-              <span className="font-semibold">{tab.name}</span>
+              <span className="text-xl">{tab.icon}</span>
+              <span>{tab.name}</span>
             </button>
           ))}
         </nav>
@@ -316,102 +326,73 @@ function DashboardMain({ user }) {
 
 // Tab Components
 function OverviewTab({ user, userGuilds, loading }) {
-  const elevatedGuilds = userGuilds.elevatedGuilds || []
-  const totalGuilds = userGuilds.totalGuilds || 0
-
   return (
-    <div className="space-y-6">
-      {/* User Profile Section */}
-      <div className="glass rounded-xl p-6">
-        <h2 className="text-2xl font-bold text-white mb-4">👤 Commander Profile</h2>
-        <div className="flex items-center space-x-6">
-          <img 
-            src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png?size=128`}
-            alt={user?.username || 'User'}
-            className="w-20 h-20 rounded-full border-4 border-indigo-400"
-            onError={(e) => {
-              e.target.src = `https://cdn.discordapp.com/embed/avatars/${(user?.id || '0') % 5}.png`
-            }}
-          />
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-white">{user?.username || 'Unknown User'}</h3>
-            <p className="text-white opacity-75">#{user?.discriminator || '0000'}</p>
-            <p className="text-indigo-300 mt-2">Discord ID: {user?.id || 'Unknown'}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-white opacity-75 text-sm mb-1">Access Level</div>
-            <div className="px-3 py-1 bg-indigo-600 text-white rounded-full text-sm font-semibold">
-              Skyfall Commander
-            </div>
-          </div>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div className="glass-card card-padding text-center">
+        <div className="text-6xl mb-6 animate-float">🚀</div>
+        <h2 className="text-4xl font-bold heading-gradient mb-4">Welcome to Skyfall</h2>
+        <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+          Your command center for advanced Discord server management and automation
+        </p>
+        <div className="flex justify-center space-x-4">
+          <button 
+            onClick={() => window.open(`https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands`, '_blank')}
+            className="btn-primary text-white font-bold flex items-center space-x-3 px-8 py-4"
+          >
+            <span>➕</span>
+            <span>Add to New Server</span>
+          </button>
+          <button className="btn-secondary text-white font-semibold px-8 py-4">
+            View Documentation
+          </button>
         </div>
       </div>
 
-      {/* Server Permissions */}
-      <div className="glass rounded-xl p-6">
-        <h2 className="text-2xl font-bold text-white mb-4">🏰 Your Kingdoms</h2>
-        {loading ? (
-          <div className="text-white opacity-75">Loading your server permissions...</div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-indigo-600/20 rounded-lg p-4 border border-indigo-400/30">
-                <div className="text-2xl font-bold text-white">{totalGuilds}</div>
-                <div className="text-white opacity-75">Total Servers</div>
-              </div>
-              <div className="bg-emerald-600/20 rounded-lg p-4 border border-emerald-400/30">
-                <div className="text-2xl font-bold text-white">{elevatedGuilds.length}</div>
-                <div className="text-white opacity-75">Elevated Access</div>
-              </div>
-            </div>
-            
-            {elevatedGuilds.length > 0 ? (
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">Servers with Elevated Access:</h3>
-                <div className="grid gap-3">
-                  {elevatedGuilds.slice(0, 5).map((guild) => (
-                    <div key={guild.id} className="flex items-center space-x-3 bg-white/5 rounded-lg p-3">
-                      {guild.icon ? (
-                        <img 
-                          src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=32`}
-                          alt={guild.name}
-                          className="w-8 h-8 rounded-full"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {guild.name.charAt(0)}
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="text-white font-medium">{guild.name}</div>
-                        <div className="text-white opacity-60 text-sm">
-                          {guild.owner ? 'Owner' : 'Administrator'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {elevatedGuilds.length > 5 && (
-                    <div className="text-white opacity-75 text-sm text-center">
-                      +{elevatedGuilds.length - 5} more servers...
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-white opacity-75 text-center py-4">
-                No servers with elevated permissions found
-              </div>
-            )}
-          </div>
-        )}
+      {/* Quick Stats */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
+          <div className="text-4xl mb-3 animate-float">👥</div>
+          <div className="text-3xl font-bold text-white mb-2">1,234</div>
+          <div className="text-white/70">Total Users</div>
+        </div>
+        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
+          <div className="text-4xl mb-3 animate-float" style={{animationDelay: '0.2s'}}>🎵</div>
+          <div className="text-3xl font-bold text-white mb-2">5,678</div>
+          <div className="text-white/70">Songs Played</div>
+        </div>
+        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
+          <div className="text-4xl mb-3 animate-float" style={{animationDelay: '0.4s'}}>⚖️</div>
+          <div className="text-3xl font-bold text-white mb-2">12</div>
+          <div className="text-white/70">Pending Appeals</div>
+        </div>
+        <div className="glass-card card-padding text-center group hover:scale-105 transition-transform duration-300">
+          <div className="text-4xl mb-3 animate-float" style={{animationDelay: '0.6s'}}>🛡️</div>
+          <div className="text-3xl font-bold text-white mb-2">3</div>
+          <div className="text-white/70">Active Guards</div>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon="👥" title="Total Users" value="1,234" />
-        <StatCard icon="🎵" title="Songs Played" value="5,678" />
-        <StatCard icon="⚖️" title="Pending Appeals" value="12" />
-        <StatCard icon="🛡️" title="Active Moderation" value="3" />
+      {/* Quick Actions */}
+      <div className="glass-card card-padding">
+        <h3 className="text-2xl font-bold heading-gradient mb-6 text-center">Quick Actions</h3>
+        <div className="grid md:grid-cols-3 gap-6">
+          <button className="glass-card card-padding card-hover group text-center">
+            <div className="text-5xl mb-4 animate-float group-hover:scale-110 transition-transform duration-300">🎵</div>
+            <h4 className="text-xl font-bold text-white mb-2">Music Controls</h4>
+            <p className="text-white/70">Manage playlists and audio</p>
+          </button>
+          <button className="glass-card card-padding card-hover group text-center">
+            <div className="text-5xl mb-4 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '0.3s'}}>⚙️</div>
+            <h4 className="text-xl font-bold text-white mb-2">Bot Settings</h4>
+            <p className="text-white/70">Configure commands and features</p>
+          </button>
+          <button className="glass-card card-padding card-hover group text-center">
+            <div className="text-5xl mb-4 animate-float group-hover:scale-110 transition-transform duration-300" style={{animationDelay: '0.6s'}}>📊</div>
+            <h4 className="text-xl font-bold text-white mb-2">Server Analytics</h4>
+            <p className="text-white/70">View detailed statistics</p>
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -475,20 +456,6 @@ function MusicTab() {
 
         <div className="glass rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">📊 Stats</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between text-white">
-              <span>Songs Played Today:</span>
-              <span className="font-semibold">42</span>
-            </div>
-            <div className="flex justify-between text-white">
-              <span>Queue Length:</span>
-              <span className="font-semibold">{queue.length}</span>
-            </div>
-            <div className="flex justify-between text-white">
-              <span>Active Listeners:</span>
-              <span className="font-semibold">8</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -497,10 +464,22 @@ function MusicTab() {
 
 function AppealsTab() {
   return (
-    <div className="glass rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-4">⚖️ Skyfall Justice System</h2>
-      <div className="text-white opacity-75">
-        <p>No appeals requiring Skyfall's judgment</p>
+    <div className="space-y-8">
+      <div className="glass-card card-padding text-center">
+        <div className="text-6xl mb-6 animate-float">⚖️</div>
+        <h2 className="text-4xl font-bold heading-gradient mb-4">Justice System</h2>
+        <p className="text-xl text-white/80 mb-8">Automated moderation with intelligent appeal processing</p>
+        
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="bg-blue-500/20 rounded-2xl p-6 border border-blue-400/30">
+            <div className="text-3xl font-bold text-white mb-2">12</div>
+            <div className="text-white/70">Pending Appeals</div>
+          </div>
+          <div className="bg-green-500/20 rounded-2xl p-6 border border-green-400/30">
+            <div className="text-3xl font-bold text-white mb-2">156</div>
+            <div className="text-white/70">Resolved Cases</div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -508,10 +487,29 @@ function AppealsTab() {
 
 function CommandsTab() {
   return (
-    <div className="glass rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-4">⚙️ Skyfall Command Arsenal</h2>
-      <div className="text-white opacity-75">
-        <p>Configure Skyfall's powerful command arsenal</p>
+    <div className="space-y-8">
+      <div className="glass-card card-padding text-center">
+        <div className="text-6xl mb-6 animate-float">⚙️</div>
+        <h2 className="text-4xl font-bold heading-gradient mb-4">Command Arsenal</h2>
+        <p className="text-xl text-white/80 mb-8">Comprehensive toolkit for server management and automation</p>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="bg-purple-500/20 rounded-2xl p-6 border border-purple-400/30">
+            <div className="text-4xl mb-3">🎵</div>
+            <div className="text-xl font-bold text-white mb-2">Music</div>
+            <div className="text-white/70">15 commands</div>
+          </div>
+          <div className="bg-red-500/20 rounded-2xl p-6 border border-red-400/30">
+            <div className="text-4xl mb-3">🛡️</div>
+            <div className="text-xl font-bold text-white mb-2">Moderation</div>
+            <div className="text-white/70">22 commands</div>
+          </div>
+          <div className="bg-blue-500/20 rounded-2xl p-6 border border-blue-400/30">
+            <div className="text-4xl mb-3">🎮</div>
+            <div className="text-xl font-bold text-white mb-2">Fun</div>
+            <div className="text-white/70">8 commands</div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -519,10 +517,26 @@ function CommandsTab() {
 
 function ModerationTab() {
   return (
-    <div className="glass rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-4">🛡️ Skyfall Guardian Systems</h2>
-      <div className="text-white opacity-75">
-        <p>Skyfall's protection protocols and guardian logs</p>
+    <div className="space-y-8">
+      <div className="glass-card card-padding text-center">
+        <div className="text-6xl mb-6 animate-float">🛡️</div>
+        <h2 className="text-4xl font-bold heading-gradient mb-4">Moderation Hub</h2>
+        <p className="text-xl text-white/80 mb-8">Advanced server protection and user management</p>
+        
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="bg-green-500/20 rounded-2xl p-6 border border-green-400/30">
+            <div className="text-3xl font-bold text-white mb-2">98.7%</div>
+            <div className="text-white/70">Server Health</div>
+          </div>
+          <div className="bg-yellow-500/20 rounded-2xl p-6 border border-yellow-400/30">
+            <div className="text-3xl font-bold text-white mb-2">3</div>
+            <div className="text-white/70">Active Warnings</div>
+          </div>
+          <div className="bg-red-500/20 rounded-2xl p-6 border border-red-400/30">
+            <div className="text-3xl font-bold text-white mb-2">0</div>
+            <div className="text-white/70">Security Threats</div>
+          </div>
+        </div>
       </div>
     </div>
   )
