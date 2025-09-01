@@ -7,8 +7,8 @@ export default function Home() {
   const [showDashboard, setShowDashboard] = useState(false)
 
   const handleDiscordLogin = () => {
-    // Discord OAuth URL - replace with your actual Discord app client ID
-    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || 'YOUR_DISCORD_CLIENT_ID'
+    // Discord OAuth URL - you need to set NEXT_PUBLIC_DISCORD_CLIENT_ID in Vercel
+    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1292235331921334324'
     const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback')
     const discordUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20guilds`
     
