@@ -15,7 +15,7 @@ export default function AuthCallback() {
 
   const exchangeCodeForToken = async (code) => {
     try {
-      console.log('Starting Discord auth exchange...')
+      console.log('Starting Discord auth exchange with code:', code)
       const response = await fetch('/api/auth/discord', {
         method: 'POST',
         headers: {
@@ -24,8 +24,11 @@ export default function AuthCallback() {
         body: JSON.stringify({ code }),
       })
 
+      console.log('Response status:', response.status)
+      const data = await response.json()
+      console.log('Response data:', data)
+
       if (response.ok) {
-        const data = await response.json()
         console.log('Auth successful, storing data...')
         localStorage.setItem('discord_token', data.access_token)
         localStorage.setItem('user_data', JSON.stringify(data.user))
@@ -40,11 +43,13 @@ export default function AuthCallback() {
           window.location.replace(window.location.origin + '/')
         }, 200)
       } else {
-        console.error('Auth failed:', response)
+        console.error('Auth failed:', response.status, data)
+        alert('Auth failed: ' + JSON.stringify(data))
         window.location.href = window.location.origin + '/?error=auth_failed'
       }
     } catch (error) {
       console.error('Auth error:', error)
+      alert('Auth error: ' + error.message)
       window.location.href = window.location.origin + '/?error=auth_failed'
     }
   }
