@@ -20,8 +20,15 @@ export default function Home() {
     // Check URL for login success
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('logged_in') === 'true') {
+      const storedUserData = localStorage.getItem('user_data')
+      if (storedUserData) {
+        setUser(JSON.parse(storedUserData))
+      }
       setIsLoggedIn(true)
       setShowDashboard(true)
+      
+      // Clean URL without redirect
+      window.history.replaceState({}, document.title, window.location.pathname)
     }
   }, [])
 
@@ -198,17 +205,76 @@ function OverviewTab() {
 }
 
 function MusicTab() {
+  const [currentSong, setCurrentSong] = useState(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [queue, setQueue] = useState([])
+
   return (
     <div className="space-y-6">
+      {/* Now Playing */}
       <div className="glass rounded-xl p-6">
         <h2 className="text-2xl font-bold text-white mb-4">🌌 Skyfall Music Engine</h2>
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <span className="text-2xl">🎵</span>
+            <span className="text-2xl">{isPlaying ? '▶️' : '🎵'}</span>
           </div>
-          <div>
-            <h3 className="text-white font-semibold">Skyfall is silent</h3>
-            <p className="text-white opacity-75">Music queue awaits your command</p>
+          <div className="flex-1">
+            <h3 className="text-white font-semibold">
+              {currentSong ? currentSong.title : 'Skyfall is silent'}
+            </h3>
+            <p className="text-white opacity-75">
+              {currentSong ? `By ${currentSong.artist}` : 'Music queue awaits your command'}
+            </p>
+          </div>
+          <div className="flex space-x-2">
+            <button className="glass px-4 py-2 rounded-lg text-white hover:bg-white hover:bg-opacity-10">
+              ⏮️
+            </button>
+            <button 
+              className="glass px-4 py-2 rounded-lg text-white hover:bg-white hover:bg-opacity-10"
+              onClick={() => setIsPlaying(!isPlaying)}
+            >
+              {isPlaying ? '⏸️' : '▶️'}
+            </button>
+            <button className="glass px-4 py-2 rounded-lg text-white hover:bg-white hover:bg-opacity-10">
+              ⏭️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Music Controls */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="glass rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">🎶 Quick Actions</h3>
+          <div className="space-y-3">
+            <button className="w-full glass px-4 py-3 rounded-lg text-white hover:bg-white hover:bg-opacity-10 text-left">
+              🔀 Shuffle Queue
+            </button>
+            <button className="w-full glass px-4 py-3 rounded-lg text-white hover:bg-white hover:bg-opacity-10 text-left">
+              🔁 Loop Current
+            </button>
+            <button className="w-full glass px-4 py-3 rounded-lg text-white hover:bg-white hover:bg-opacity-10 text-left">
+              ⏹️ Stop Playback
+            </button>
+          </div>
+        </div>
+
+        <div className="glass rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">📊 Stats</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between text-white">
+              <span>Songs Played Today:</span>
+              <span className="font-semibold">42</span>
+            </div>
+            <div className="flex justify-between text-white">
+              <span>Queue Length:</span>
+              <span className="font-semibold">{queue.length}</span>
+            </div>
+            <div className="flex justify-between text-white">
+              <span>Active Listeners:</span>
+              <span className="font-semibold">8</span>
+            </div>
           </div>
         </div>
       </div>
