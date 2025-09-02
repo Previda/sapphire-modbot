@@ -1,4 +1,25 @@
-// Discord OAuth API endpoint
+// Discord webhook error reporting
+async function sendErrorToDiscord(error, context = {}) {
+  const webhookUrl = process.env.DISCORD_ERROR_WEBHOOK_URL
+  if (!webhookUrl) return
+  
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        embeds: [{
+          title: "🚨 Auth Error",
+          description: `**Error:** ${error.message}\n**Context:** ${JSON.stringify(context)}`,
+          color: 0xff0000,
+          timestamp: new Date().toISOString()
+        }]
+      })
+    })
+  } catch (e) { console.error('Webhook failed:', e) }
+}
+
+// Discord OAuth API route
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -11,35 +32,61 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('🔐 Starting token exchange with Discord API...')
-    
-    // Return mock authentication success for testing
-    const mockUserData = {
-      id: '123456789012345678',
-      username: 'SkyfallCommander',
-      discriminator: '0001',
-      avatar: '85a9f0e7d71aa4a53deef52b58a42c43'
+    const CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID
+    const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET
+    const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://skyfall-omega.vercel.app/auth/callback'
+
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+      throw new Error('Missing Discord OAuth credentials')
     }
-    
-    const mockGuildsData = [
-      {
-        id: '1234567890123456789',
-        name: 'Skyfall Test Server',
-        icon: null,
-        owner: true,
-        permissions: '8'
-      }
-    ]
-    
-    // Return success response immediately
+
+    // Exchange code for access token
+    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        code: code,
+        grant_type: 'authorization_code',
+        redirect_uri: REDIRECT_URI,
+      }),
+    })
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.text()
+      console.error('Token exchange failed:', errorData)
+      throw new Error(`Token exchange failed: ${tokenResponse.status}`)
+    }
+
+    const tokenData = await tokenResponse.json()
+
+    // Get user info
+    const userResponse = await fetch('https://discord.com/api/v10/users/@me', {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+      },
+    })
+
+    if (!userResponse.ok) {
+      throw new Error(`User fetch failed: ${userResponse.status}`)
+    }
+
+    const userData = await userResponse.json()
+
     return res.status(200).json({
-      access_token: 'skyfall_token_' + Date.now(),
-      user: mockUserData,
-      guilds: mockGuildsData,
+      access_token: tokenData.access_token,
+      user: userData,
     })
 
   } catch (error) {
     console.error('Discord OAuth error:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    await sendErrorToDiscord(error, { 
+      endpoint: '/api/auth/discord',
+      code: code?.substring(0, 10) + '...' // Partial code for debugging
+    })
+    res.status(500).json({ error: 'Authentication failed' })
   }
 }

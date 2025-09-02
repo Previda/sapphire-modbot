@@ -6,31 +6,43 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [authenticated, setAuthenticated] = useState(false)
 
   useEffect(() => {
-    // Check authentication status
-    const token = localStorage.getItem('discord_token')
-    const userData = localStorage.getItem('user_data')
-    
-    if (token && userData) {
-      const parsedUser = JSON.parse(userData)
-      setIsLoggedIn(true)
-      setUser(parsedUser)
+    // Check authentication status (client-side only)
+    if (typeof window !== 'undefined') {
+      try {
+        const userDataStr = localStorage.getItem('user_data')
+        const authCompleted = localStorage.getItem('auth_completed')
+        const discordToken = localStorage.getItem('discord_token')
+        
+        if (userDataStr && authCompleted === 'true' && discordToken) {
+          const userData = JSON.parse(userDataStr)
+          setUser(userData)
+          setAuthenticated(true)
+          setIsLoggedIn(true)
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+        // Clear corrupted data and reset auth state
+        localStorage.removeItem('user_data')
+        localStorage.removeItem('auth_completed') 
+        localStorage.removeItem('discord_token')
+        setAuthenticated(false)
+        setUser(null)
+        setIsLoggedIn(false)
+      }
     }
     
     setIsLoading(false)
-    
-    // Clean up URL params
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.toString()) {
-      window.history.replaceState({}, document.title, window.location.pathname)
-    }
   }, [])
 
   const handleDiscordLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222'
+    // Use the latest deployment URL
     const redirectUri = encodeURIComponent('https://skyfall-omega.vercel.app/auth/callback')
-    const discordUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20guilds`
+    // Combined OAuth flow: authenticate user AND invite bot with admin permissions
+    const discordUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+guilds+bot`
     window.location.href = discordUrl
   }
 
