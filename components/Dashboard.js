@@ -4,8 +4,15 @@ export default function Dashboard({ user }) {
   const [activeTab, setActiveTab] = useState('overview')
   const [userGuilds, setUserGuilds] = useState([])
   const [selectedServer, setSelectedServer] = useState(null)
-  const [liveData, setLiveData] = useState({})
+  const [liveData, setLiveData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(false)
+  const [initialLoad, setInitialLoad] = useState(true)
+  const [tickets, setTickets] = useState([])
+  const [showTicketModal, setShowTicketModal] = useState(false)
+  const [commands, setCommands] = useState([])
+  const [editingCommand, setEditingCommand] = useState(null)
+  const [showModerationModal, setShowModerationModal] = useState(null)
 
   useEffect(() => {
     fetchUserGuilds()
@@ -19,19 +26,66 @@ export default function Dashboard({ user }) {
       const token = localStorage.getItem('discord_token')
       if (!token) return
 
+      setDataLoading(true)
       const response = await fetch('/api/discord/guilds', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
-      
+
       if (response.ok) {
-        const guilds = await response.json()
-        setUserGuilds(guilds)
-        if (guilds.length > 0) setSelectedServer(guilds[0])
+        const data = await response.json()
+        setUserGuilds(data.guilds || [])
+        if (data.guilds?.length > 0 && !selectedServer) {
+          setSelectedServer(data.guilds[0])
+          await fetchLiveDataForServer(data.guilds[0])
+        }
+      } else {
+        console.error('Failed to fetch guilds')
       }
     } catch (error) {
-      console.error('Failed to fetch guilds:', error)
+      console.error('Error fetching guilds:', error)
     } finally {
+      setDataLoading(false)
       setLoading(false)
+      setInitialLoad(false)
+    }
+  }
+
+  const fetchLiveDataForServer = async (server) => {
+    if (!server) return
+    
+    try {
+      setDataLoading(true)
+      const [liveResponse, ticketsResponse, commandsResponse] = await Promise.all([
+        fetch(`/api/bot/live/${server.id}`),
+        fetch(`/api/tickets/${server.id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('discord_token')}` }
+        }),
+        fetch(`/api/commands/${server.id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('discord_token')}` }
+        })
+      ])
+      
+      if (liveResponse.ok) {
+        const data = await liveResponse.json()
+        setLiveData(data)
+      }
+      
+      if (ticketsResponse.ok) {
+        const ticketData = await ticketsResponse.json()
+        setTickets(ticketData)
+      }
+      
+      if (commandsResponse.ok) {
+        const commandData = await commandsResponse.json()
+        setCommands(commandData.commands || [])
+      }
+    } catch (error) {
+      console.error('Error fetching live data:', error)
+    } finally {
+      setDataLoading(false)
     }
   }
 
@@ -49,19 +103,79 @@ export default function Dashboard({ user }) {
     }
   }
 
+  if (initialLoad && loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center space-y-8">
+          {/* Logo/Brand */}
+          <div className="mb-8">
+            <div className="w-20 h-20 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-4">
+              <span className="text-4xl">🏰</span>
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-2">Skyfall Dashboard</h1>
+            <p className="text-white/60">Loading your Discord servers...</p>
+          </div>
+
+          {/* Loading Animation */}
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-white/20 rounded-full mx-auto">
+              <div className="w-16 h-16 border-4 border-transparent border-t-blue-400 rounded-full animate-spin"></div>
+            </div>
+            <div className="mt-6 space-y-2">
+              <div className="w-64 h-2 bg-white/10 rounded-full mx-auto overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse" style={{width: dataLoading ? '75%' : '25%'}}></div>
+              </div>
+              <p className="text-white/40 text-sm">
+                {dataLoading ? 'Fetching server data...' : 'Connecting to Discord...'}
+              </p>
+            </div>
+          </div>
+
+          {/* Loading Steps */}
+          <div className="space-y-3 text-left max-w-md mx-auto">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center">
+                <span className="text-white text-xs">✓</span>
+              </div>
+              <span className="text-white/60">Authenticating with Discord</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${dataLoading ? 'bg-blue-400 animate-pulse' : 'bg-white/20'}`}>
+                {dataLoading ? <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div> : <span className="text-white/40 text-xs">2</span>}
+              </div>
+              <span className={dataLoading ? 'text-white' : 'text-white/40'}>Fetching server information</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <span className="text-white/40 text-xs">3</span>
+              </div>
+              <span className="text-white/40">Loading bot data</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <span className="text-white/40 text-xs">4</span>
+              </div>
+              <span className="text-white/40">Initializing dashboard</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
-      <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+      <header className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
-                <span className="text-xl font-bold text-white">S</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <span className="text-xl">🏰</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Skyfall Dashboard</h1>
-                <p className="text-sm text-white/60">Bot Management Console</p>
+                <h1 className="text-xl font-bold text-white">Skyfall Dashboard</h1>
+                <p className="text-white/60 text-sm">Discord Bot Management</p>
               </div>
             </div>
             
@@ -174,14 +288,12 @@ export default function Dashboard({ user }) {
         </div>
 
         {/* Tab Content */}
-        <div className="animate-fade-in">
+        <div className="space-y-6">
           {activeTab === 'overview' && <OverviewTab selectedServer={selectedServer} liveData={liveData} />}
-          {activeTab === 'music' && <MusicTab selectedServer={selectedServer} liveData={liveData} />}
-          {activeTab === 'moderation' && <ModerationTab selectedServer={selectedServer} liveData={liveData} />}
-          {activeTab === 'cases' && <CasesTab selectedServer={selectedServer} liveData={liveData} />}
-          {activeTab === 'tickets' && <TicketsTab selectedServer={selectedServer} liveData={liveData} />}
-          {activeTab === 'logs' && <LogsTab selectedServer={selectedServer} liveData={liveData} />}
-          {activeTab === 'commands' && <CommandsTab selectedServer={selectedServer} liveData={liveData} />}
+          {activeTab === 'moderation' && <ModerationTab selectedServer={selectedServer} liveData={liveData} showModerationModal={showModerationModal} setShowModerationModal={setShowModerationModal} />}
+          {activeTab === 'tickets' && <TicketsTab selectedServer={selectedServer} tickets={tickets} showTicketModal={showTicketModal} setShowTicketModal={setShowTicketModal} />}
+          {activeTab === 'commands' && <CommandsTab selectedServer={selectedServer} commands={commands} editingCommand={editingCommand} setEditingCommand={setEditingCommand} />}
+          {activeTab === 'settings' && <SettingsTab selectedServer={selectedServer} />}
           {activeTab === 'analytics' && <AnalyticsTab selectedServer={selectedServer} liveData={liveData} />}
         </div>
       </div>
@@ -1036,29 +1148,15 @@ function CommandsTab({ selectedServer, liveData }) {
                     
                     <div className="flex items-center space-x-3">
                       {editingCommand?.id === command.id ? (
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="number" 
-                            min="0" 
-                            max="30"
-                            defaultValue={command.cooldown}
-                            className="w-16 px-2 py-1 bg-black/40 text-white rounded border border-white/20 text-sm"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                updateCooldown(command, parseInt(e.target.value))
-                              }
-                              if (e.key === 'Escape') {
-                                setEditingCommand(null)
-                              }
-                            }}
-                          />
-                          <button 
-                            onClick={() => setEditingCommand(null)}
-                            className="px-2 py-1 bg-gray-500/20 text-gray-400 rounded text-sm"
-                          >
-                            ✕
-                          </button>
-                        </div>
+                        <input
+                          type="number"
+                          value={editingCommand.cooldown}
+                          onChange={(e) => setEditingCommand({...editingCommand, cooldown: parseInt(e.target.value)})}
+                          onBlur={() => saveCommand(editingCommand)}
+                          onKeyPress={(e) => e.key === 'Enter' && saveCommand(editingCommand)}
+                          className="w-20 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
+                          autoFocus
+                        />
                       ) : (
                         <button 
                           onClick={() => setEditingCommand(command)}
@@ -1196,6 +1294,305 @@ function StatCard({ title, value, icon, trend, color }) {
       </div>
       <p className="text-3xl font-bold text-white mb-1">{value}</p>
       <p className="text-white/70 font-medium">{title}</p>
+    </div>
+  )
+}
+
+function ModerationTab({ selectedServer, liveData, showModerationModal, setShowModerationModal }) {
+  if (!selectedServer?.hasSkyfall) {
+    return <EmptyState icon="🛡️" title="Moderation Unavailable" message="Add Skyfall to server to use moderation features" />
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Quick Actions */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+        <h3 className="text-xl font-semibold text-white mb-4 flex items-center space-x-2">
+          <span>⚡</span>
+          <span>Quick Actions</span>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { type: 'ban', icon: '🔨', title: 'Ban User', desc: 'Permanently ban a user', color: 'red' },
+            { type: 'kick', icon: '👢', title: 'Kick User', desc: 'Remove user from server', color: 'orange' },
+            { type: 'timeout', icon: '⏰', title: 'Timeout User', desc: 'Temporarily restrict user', color: 'yellow' }
+          ].map(action => (
+            <button 
+              key={action.type}
+              onClick={() => setShowModerationModal(action.type)}
+              className={`bg-${action.color}-500/20 hover:bg-${action.color}-500/30 border border-${action.color}-500/30 rounded-xl p-4 text-center transition-all duration-200`}
+            >
+              <div className="text-2xl mb-2">{action.icon}</div>
+              <div className="text-white font-medium">{action.title}</div>
+              <div className="text-white/60 text-sm">{action.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Actions */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+        <h3 className="text-xl font-semibold text-white mb-4">Recent Moderation Actions</h3>
+        <div className="space-y-3">
+          {liveData?.moderation?.recentActions?.length > 0 ? (
+            liveData.moderation.recentActions.map((action, index) => (
+              <div key={index} className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      action.action === 'Member Ban' ? 'bg-red-400' : 
+                      action.action === 'Member Kick' ? 'bg-orange-400' : 'bg-blue-400'
+                    }`}></div>
+                    <div>
+                      <p className="text-white font-medium">
+                        {action.action} - {action.targetUser || 'Unknown User'}
+                      </p>
+                      <p className="text-white/60 text-sm">
+                        by {action.moderator || 'Unknown Moderator'} • {action.reason || 'No reason provided'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-white/40 text-sm">
+                    {new Date(action.timestamp).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <EmptyState icon="📝" title="No Recent Actions" message="Moderation actions will appear here" />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TicketsTab({ selectedServer, tickets, showTicketModal, setShowTicketModal }) {
+  if (!selectedServer?.hasSkyfall) {
+    return <EmptyState icon="🎫" title="Tickets Unavailable" message="Add Skyfall to server to use ticket system" />
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Ticket Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard title="Total Tickets" value={tickets?.stats?.total || 0} icon="🎫" color="blue" />
+        <StatCard title="Open Tickets" value={tickets?.stats?.open || 0} icon="🔓" color="green" />
+        <StatCard title="Closed Tickets" value={tickets?.stats?.closed || 0} icon="🔒" color="gray" />
+      </div>
+
+      {/* Create Ticket */}
+      <div className="flex justify-end">
+        <button 
+          onClick={() => setShowTicketModal(true)}
+          className="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-white px-6 py-3 rounded-xl transition-all duration-200 flex items-center space-x-2"
+        >
+          <span>➕</span>
+          <span>Create Ticket</span>
+        </button>
+      </div>
+
+      {/* Active Tickets */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+        <h3 className="text-xl font-semibold text-white mb-4">Active Tickets</h3>
+        <div className="space-y-3">
+          {tickets?.tickets?.filter(ticket => ticket.status === 'open')?.length > 0 ? (
+            tickets.tickets.filter(ticket => ticket.status === 'open').map((ticket) => (
+              <div key={ticket.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      ticket.priority === 'High' ? 'bg-red-400' : 
+                      ticket.priority === 'Medium' ? 'bg-yellow-400' : 'bg-green-400'
+                    }`}></div>
+                    <div>
+                      <p className="text-white font-medium">#{ticket.id.slice(-6)} - {ticket.title}</p>
+                      <p className="text-white/60 text-sm">
+                        {ticket.category} • {ticket.messages} messages • {ticket.priority} priority
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
+                    <button className="text-red-400 hover:text-red-300 text-sm">Close</button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <EmptyState icon="🎫" title="No Active Tickets" message="Tickets will appear here when created" />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CommandsTab({ selectedServer, commands, editingCommand, setEditingCommand }) {
+  if (!selectedServer?.hasSkyfall) {
+    return <EmptyState icon="⚙️" title="Commands Unavailable" message="Add Skyfall to server to manage commands" />
+  }
+
+  const categories = ['Music', 'Moderation', 'Tickets', 'Games', 'Utility']
+
+  return (
+    <div className="space-y-6">
+      {categories.map(category => {
+        const categoryCommands = commands.filter(cmd => cmd.category === category)
+        if (categoryCommands.length === 0) return null
+
+        return (
+          <div key={category} className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+            <h3 className="text-xl font-semibold text-white mb-4">{category} Commands</h3>
+            <div className="space-y-3">
+              {categoryCommands.map(command => (
+                <div key={command.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-3 h-3 rounded-full ${command.enabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                      <div>
+                        <h3 className="text-white font-bold text-lg">/{command.name}</h3>
+                        <p className="text-white/60">Used {command.usage || 0} times</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      {editingCommand?.id === command.id ? (
+                        <input
+                          type="number"
+                          value={editingCommand.cooldown}
+                          onChange={(e) => setEditingCommand({...editingCommand, cooldown: parseInt(e.target.value)})}
+                          className="w-20 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
+                          autoFocus
+                        />
+                      ) : (
+                        <button 
+                          onClick={() => setEditingCommand(command)}
+                          className="text-white/60 text-sm hover:text-white cursor-pointer"
+                        >
+                          Cooldown: {command.cooldown}s
+                        </button>
+                      )}
+                      
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer" 
+                          checked={command.enabled}
+                          readOnly
+                        />
+                        <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function SettingsTab({ selectedServer }) {
+  if (!selectedServer?.hasSkyfall) {
+    return <EmptyState icon="⚙️" title="Settings Unavailable" message="Add Skyfall to server to configure settings" />
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Bot Settings */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+        <h3 className="text-xl font-semibold text-white mb-4">🤖 Bot Configuration</h3>
+        <div className="space-y-4">
+          {[
+            { label: 'Bot Prefix', desc: 'Command prefix for the bot', type: 'text', value: '!', width: 'w-16' },
+            { label: 'Auto Moderation', desc: 'Automatically moderate spam and inappropriate content', type: 'toggle', value: true },
+            { label: 'Welcome Messages', desc: 'Send welcome messages to new members', type: 'toggle', value: true },
+            { label: 'Logging Level', desc: 'Detail level for bot logs', type: 'select', value: 'Info', options: ['Debug', 'Info', 'Warn', 'Error'] }
+          ].map(setting => (
+            <div key={setting.label} className="flex items-center justify-between">
+              <div>
+                <p className="text-white font-medium">{setting.label}</p>
+                <p className="text-white/60 text-sm">{setting.desc}</p>
+              </div>
+              {setting.type === 'text' && (
+                <input 
+                  type="text" 
+                  defaultValue={setting.value}
+                  className={`${setting.width} px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-center`}
+                />
+              )}
+              {setting.type === 'toggle' && (
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked={setting.value} />
+                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                </label>
+              )}
+              {setting.type === 'select' && (
+                <select className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white" defaultValue={setting.value}>
+                  {setting.options.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Channel Settings */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+        <h3 className="text-xl font-semibold text-white mb-4">📢 Channel Configuration</h3>
+        <div className="space-y-4">
+          {[
+            { label: 'Log Channel', options: ['Select a channel...', '#logs', '#audit'] },
+            { label: 'Welcome Channel', options: ['Select a channel...', '#welcome', '#general'] },
+            { label: 'Ticket Category', options: ['Select a category...', '🎫 Tickets', '🛠️ Support'] }
+          ].map(setting => (
+            <div key={setting.label}>
+              <label className="block text-white font-medium mb-2">{setting.label}</label>
+              <select className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white">
+                {setting.options.map(option => (
+                  <option key={option} value={option.replace(/[^a-zA-Z0-9]/g, '')}>{option}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Role Settings */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+        <h3 className="text-xl font-semibold text-white mb-4">👥 Role Configuration</h3>
+        <div className="space-y-4">
+          {[
+            { label: 'Moderator Role', options: ['Select a role...', 'Moderator', 'Staff'] },
+            { label: 'Admin Role', options: ['Select a role...', 'Admin', 'Owner'] },
+            { label: 'Muted Role', options: ['Select a role...', 'Muted', 'Restricted'] }
+          ].map(setting => (
+            <div key={setting.label}>
+              <label className="block text-white font-medium mb-2">{setting.label}</label>
+              <select className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white">
+                {setting.options.map(option => (
+                  <option key={option} value={option.replace(/[^a-zA-Z0-9]/g, '')}>{option}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({ icon, title, message }) {
+  return (
+    <div className="text-center py-12">
+      <div className="text-6xl mb-4">{icon}</div>
+      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+      <p className="text-white/60">{message}</p>
     </div>
   )
 }
