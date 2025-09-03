@@ -191,6 +191,7 @@ module.exports = {
             // Create player and audio resource
             const player = createAudioPlayer();
             let resource; // Declare resource variable
+            let audioCreated = false; // Track if audio was successfully created
             
             // Connection cleanup handler
             let isDestroyed = false;
@@ -275,7 +276,6 @@ module.exports = {
             console.log('🔄 Starting Pi-optimized audio extraction...');
             
             // Method 1: Try yt-dlp command line (more reliable on Pi)
-            let audioCreated = false;
             
             try {
                 console.log('🔄 Method 1: Trying yt-dlp extraction...');
@@ -328,31 +328,24 @@ module.exports = {
                 console.log('Method 1 (yt-dlp) failed:', ytDlpError.message);
             }
             
-            // Method 2: ytdl-core with Pi optimizations (if yt-dlp failed)
+            // Method 2: ytdl-core SIMPLE approach (if yt-dlp failed)
             if (!audioCreated) {
                 try {
-                    console.log('🔄 Method 2: Trying optimized ytdl-core...');
+                    console.log('🔄 Method 2: Trying SIMPLE ytdl-core...');
                     
                     const stream = ytdl(songUrl, {
                         filter: 'audioonly',
-                        quality: 'lowestaudio',
-                        highWaterMark: 1 << 18, // Even smaller for Pi
-                        requestOptions: {
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36'
-                            }
-                        }
+                        quality: 'highestaudio'
                     });
                     
                     resource = createAudioResource(stream, {
-                        inlineVolume: true,
-                        inputType: 'arbitrary'
+                        inlineVolume: true
                     });
                     
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('🎵 ytdl-core playback started');
+                    console.log('🎵 Simple ytdl-core playback started');
                     audioCreated = true;
                     
                 } catch (ytdlError) {
@@ -362,27 +355,30 @@ module.exports = {
                 }
             }
             
-            // Method 3: Ultra-basic fallback
+            // Method 3: IMMEDIATE simple stream (skip file extraction)
             if (!audioCreated) {
                 try {
-                    console.log('🔄 Method 3: Ultra-basic fallback...');
+                    console.log('🔄 Method 3: IMMEDIATE stream...');
                     
+                    // Get stream immediately and play
                     const stream = ytdl(songUrl, {
-                        filter: 'audio',
-                        quality: 'lowest'
+                        filter: 'audioonly',
+                        quality: 'lowestaudio'
                     });
                     
-                    resource = createAudioResource(stream);
+                    resource = createAudioResource(stream, {
+                        inlineVolume: true
+                    });
+                    
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('🎵 Basic fallback playback started');
+                    console.log('🎵 IMMEDIATE stream playback started');
                     audioCreated = true;
                     
                 } catch (basicError) {
-                    console.log('Method 3 (basic fallback) full error:', basicError);
-
-                    console.error('❌ All methods failed:', basicError.message, basicError);
+                    console.log('Method 3 (immediate stream) full error:', basicError);
+                    console.error('❌ All methods failed:', basicError.message);
                 }
             }
             
