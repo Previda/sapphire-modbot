@@ -380,37 +380,192 @@ function MusicTab({ selectedServer, liveData }) {
 }
 
 function ModerationTab({ selectedServer, liveData }) {
+  const [showModerationModal, setShowModerationModal] = useState(false)
+  const [moderationAction, setModerationAction] = useState({ type: '', userId: '', reason: '', duration: 10 })
+  
   if (!selectedServer?.hasSkyfall) {
-    return <EmptyState icon="🛡️" title="Moderation Unavailable" message="Add Skyfall to server to use moderation features" />
+    return <EmptyState icon="🛡️" title="Moderation Unavailable" message="Add Skyfall to server to view moderation tools" />
+  }
+
+  const executeModerationAction = async () => {
+    try {
+      const response = await fetch(`/api/moderation/${selectedServer.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: moderationAction.type,
+          userId: moderationAction.userId,
+          reason: moderationAction.reason,
+          duration: moderationAction.duration
+        })
+      })
+      
+      if (response.ok) {
+        setShowModerationModal(false)
+        setModerationAction({ type: '', userId: '', reason: '', duration: 10 })
+        // Refresh data
+        window.location.reload()
+      } else {
+        alert('Failed to execute moderation action')
+      }
+    } catch (error) {
+      console.error('Moderation error:', error)
+      alert('Error executing moderation action')
+    }
   }
 
   return (
     <div className="space-y-6">
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <ActionCard icon="🔨" title="Ban Member" description="Permanently ban a user" />
-        <ActionCard icon="👢" title="Kick Member" description="Remove user from server" />
-        <ActionCard icon="🔇" title="Mute Member" description="Temporarily silence user" />
+      <div className="grid md:grid-cols-4 gap-6">
+        <button 
+          onClick={() => { setModerationAction({...moderationAction, type: 'ban'}); setShowModerationModal(true) }}
+          className="p-6 bg-red-500/20 hover:bg-red-500/30 rounded-2xl border border-red-500/30 transition-all duration-200 group"
+        >
+          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">🔨</div>
+          <h3 className="text-red-400 font-bold text-lg">Ban Member</h3>
+          <p className="text-red-300/70 text-sm">Permanently remove user</p>
+        </button>
+        
+        <button 
+          onClick={() => { setModerationAction({...moderationAction, type: 'kick'}); setShowModerationModal(true) }}
+          className="p-6 bg-orange-500/20 hover:bg-orange-500/30 rounded-2xl border border-orange-500/30 transition-all duration-200 group"
+        >
+          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">👢</div>
+          <h3 className="text-orange-400 font-bold text-lg">Kick Member</h3>
+          <p className="text-orange-300/70 text-sm">Remove from server</p>
+        </button>
+        
+        <button 
+          onClick={() => { setModerationAction({...moderationAction, type: 'timeout'}); setShowModerationModal(true) }}
+          className="p-6 bg-yellow-500/20 hover:bg-yellow-500/30 rounded-2xl border border-yellow-500/30 transition-all duration-200 group"
+        >
+          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">🔇</div>
+          <h3 className="text-yellow-400 font-bold text-lg">Timeout Member</h3>
+          <p className="text-yellow-300/70 text-sm">Temporarily silence</p>
+        </button>
+        
+        <button 
+          onClick={() => window.open(`https://discord.com/channels/${selectedServer.id}`, '_blank')}
+          className="p-6 bg-blue-500/20 hover:bg-blue-500/30 rounded-2xl border border-blue-500/30 transition-all duration-200 group"
+        >
+          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">🔗</div>
+          <h3 className="text-blue-400 font-bold text-lg">Open Discord</h3>
+          <p className="text-blue-300/70 text-sm">View in Discord app</p>
+        </button>
       </div>
 
       {/* Recent Actions */}
       <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-        <h3 className="text-xl font-bold text-white mb-4">Recent Moderation Actions</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-white">Recent Moderation Actions</h3>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl border border-blue-500/30 transition-colors"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+        
         <div className="space-y-3">
           {(liveData.moderation?.recentActions || []).map((action, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-black/20 rounded-xl">
+            <div key={action.id || i} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/10">
               <div className="flex items-center space-x-4">
-                <div className={`w-3 h-3 rounded-full ${action.action === 'Ban' ? 'bg-red-400' : 'bg-yellow-400'}`}></div>
-                <div>
-                  <p className="text-white font-medium">{action.action}: {action.user}</p>
-                  <p className="text-white/60 text-sm">{action.reason} • by {action.moderator}</p>
+                <div className={`w-4 h-4 rounded-full ${
+                  action.action.includes('Ban') ? 'bg-red-400' : 
+                  action.action.includes('Kick') ? 'bg-orange-400' :
+                  action.action.includes('Timeout') || action.action.includes('Disconnect') ? 'bg-yellow-400' :
+                  action.action.includes('Unban') ? 'bg-green-400' : 'bg-gray-400'
+                }`}></div>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-1">
+                    <h4 className="text-white font-bold">{action.action}</h4>
+                    <span className="text-white/60">→</span>
+                    <span className="text-white">{action.user}</span>
+                    <span className="text-white/40">by {action.moderator}</span>
+                  </div>
+                  <p className="text-white/60 text-sm">{action.reason}</p>
                 </div>
               </div>
-              <span className="text-white/60 text-sm">{action.time}</span>
+              <div className="text-right">
+                <span className="text-white/60 text-sm">
+                  {new Date(action.timestamp).toLocaleString()}
+                </span>
+                <p className="text-white/40 text-xs">Case #{action.id?.slice(-6) || i}</p>
+              </div>
             </div>
           ))}
+          
+          {(liveData.moderation?.recentActions || []).length === 0 && (
+            <div className="text-center py-8">
+              <span className="text-white/50 text-lg">No recent moderation actions</span>
+              <p className="text-white/40 mt-2">Moderation activity will appear here</p>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Moderation Modal */}
+      {showModerationModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-2xl p-8 border border-white/20 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold text-white mb-6 capitalize">{moderationAction.type} Member</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-white/70 text-sm block mb-2">User ID</label>
+                <input 
+                  type="text"
+                  placeholder="User ID or @mention"
+                  value={moderationAction.userId}
+                  onChange={(e) => setModerationAction({...moderationAction, userId: e.target.value})}
+                  className="w-full px-4 py-3 bg-black/40 text-white rounded-xl border border-white/20 focus:border-blue-500 outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="text-white/70 text-sm block mb-2">Reason</label>
+                <textarea 
+                  placeholder="Reason for moderation action"
+                  value={moderationAction.reason}
+                  onChange={(e) => setModerationAction({...moderationAction, reason: e.target.value})}
+                  className="w-full px-4 py-3 bg-black/40 text-white rounded-xl border border-white/20 focus:border-blue-500 outline-none h-24 resize-none"
+                />
+              </div>
+              
+              {moderationAction.type === 'timeout' && (
+                <div>
+                  <label className="text-white/70 text-sm block mb-2">Duration (minutes)</label>
+                  <input 
+                    type="number"
+                    min="1"
+                    max="40320"
+                    value={moderationAction.duration}
+                    onChange={(e) => setModerationAction({...moderationAction, duration: parseInt(e.target.value)})}
+                    className="w-full px-4 py-3 bg-black/40 text-white rounded-xl border border-white/20 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex space-x-4 mt-8">
+              <button 
+                onClick={() => setShowModerationModal(false)}
+                className="flex-1 px-6 py-3 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 rounded-xl border border-gray-600/30 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeModerationAction}
+                disabled={!moderationAction.userId || !moderationAction.reason}
+                className="flex-1 px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl border border-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Execute {moderationAction.type}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
