@@ -171,9 +171,6 @@ function getCommandCooldown(commandName) {
   return cooldowns[commandName] || 2
 }
 
-async function sendErrorToDiscord(error, context = {}) {
-  // Error notification implementation
-}
 
 // Function to fetch comprehensive live data from Pi bot
 async function fetchLiveDataFromPi(serverId) {
@@ -237,8 +234,8 @@ async function fetchRealDiscordData(serverId) {
     })
 
     let recentActions = []
-    if (auditLogsResponse.ok) {
-      const auditData = await auditLogsResponse.json()
+    if (auditResponse.ok) {
+      const auditData = await auditResponse.json()
       
       // Get user info for target and executor
       const userIds = new Set()

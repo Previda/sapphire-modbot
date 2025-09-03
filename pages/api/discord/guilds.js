@@ -138,27 +138,29 @@ export default async function handler(req, res) {
 
     // If no manageable guilds found, return helpful fallback
     if (manageableGuilds.length === 0) {
-      return res.status(200).json([
-        {
-          id: 'create-server',
-          name: '➕ Create a New Discord Server',
-          icon: null,
-          owner: true,
-          permissions: '8',
-          permissions_new: '8',
-          hasSkyfall: false,
-          memberCount: 0,
-          onlineMembers: 0,
-          status: 'offline',
-          canManageBot: true,
-          userRole: 'Owner',
-          botJoinedAt: null,
-          isCreateButton: true
-        }
-      ])
+      return res.status(200).json({
+        guilds: [
+          {
+            id: 'create-server',
+            name: '➕ Create a New Discord Server',
+            icon: null,
+            owner: true,
+            permissions: '8',
+            permissions_new: '8',
+            hasSkyfall: false,
+            memberCount: 0,
+            onlineMembers: 0,
+            status: 'offline',
+            canManageBot: true,
+            userRole: 'Owner',
+            botJoinedAt: null,
+            isCreateButton: true
+          }
+        ]
+      })
     }
 
-    res.status(200).json(manageableGuilds)
+    res.status(200).json({ guilds: manageableGuilds })
 
   } catch (error) {
     console.error('Guilds API error:', error)

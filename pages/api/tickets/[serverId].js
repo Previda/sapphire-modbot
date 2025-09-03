@@ -1,4 +1,25 @@
-import { sendErrorToDiscord } from '../../../lib/errorReporting'
+// Error reporting function
+async function sendErrorToDiscord(error, context = {}) {
+  const webhookUrl = process.env.DISCORD_ERROR_WEBHOOK_URL
+  if (!webhookUrl) return
+  
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        embeds: [{
+          title: '🚨 API Error',
+          description: `**Error:** ${error.message}\n**Context:** ${JSON.stringify(context)}`,
+          color: 0xff0000,
+          timestamp: new Date().toISOString()
+        }]
+      })
+    })
+  } catch (webhookError) {
+    console.error('Failed to send error to Discord:', webhookError)
+  }
+}
 
 export default async function handler(req, res) {
   const { serverId } = req.query
