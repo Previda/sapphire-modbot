@@ -357,28 +357,28 @@ function OverviewTab({ selectedServer, liveData }) {
           title="Members Online" 
           value={safeServer.onlineMembers || 0} 
           icon="👥" 
-          trend={(safeServer.onlineMembers || 0) > 0 ? "Live" : "No data"}
+          trend={(safeServer.onlineMembers || 0) > 0 ? "Live" : "Updating..."}
           color="green"
         />
         <StatCard 
           title="Commands Today" 
           value={safeLiveData.stats?.commandsToday || 0} 
           icon="⚡" 
-          trend={(safeLiveData.stats?.commandsToday || 0) > 0 ? "+8" : "No data"}
+          trend={(safeLiveData.stats?.commandsToday || 0) > 0 ? "+8" : "Ready"}
           color="blue"
         />
         <StatCard 
           title="Active Cases" 
           value={safeLiveData.moderation?.cases?.length || 0} 
           icon="📋" 
-          trend={(safeLiveData.moderation?.cases?.length || 0) > 0 ? `${(safeLiveData.moderation.cases || []).filter(c => c?.status === 'pending').length} pending` : "No cases"}
+          trend={(safeLiveData.moderation?.cases?.length || 0) > 0 ? `${(safeLiveData.moderation.cases || []).filter(c => c?.status === 'pending').length} pending` : "All Clear"}
           color="purple"
         />
         <StatCard 
           title="Open Tickets" 
           value={safeLiveData.tickets?.active?.length || 0} 
           icon="🎫" 
-          trend={(safeLiveData.tickets?.active?.length || 0) > 0 ? `${safeLiveData.tickets.active?.length || 0} active` : "No tickets"}
+          trend={(safeLiveData.tickets?.active?.length || 0) > 0 ? `${safeLiveData.tickets.active?.length || 0} active` : "Ready"}
           color="yellow"
         />
       </div>
@@ -388,12 +388,16 @@ function OverviewTab({ selectedServer, liveData }) {
         <h3 className="text-xl font-bold text-white mb-4">Recent Activity</h3>
         <div className="space-y-3">
           {(safeLiveData.logs?.recent?.length || 0) > 0 ? (
-            (safeLiveData.logs.recent || []).map((activity, i) => (
+            (safeLiveData.logs.recent || []).filter(activity => activity?.action && activity?.user).map((activity, i) => (
               <div key={i} className="flex items-center space-x-4 p-3 bg-black/20 rounded-xl">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <div className={`w-2 h-2 rounded-full ${
+                  activity.type === 'moderation' ? 'bg-red-400' :
+                  activity.type === 'command' ? 'bg-blue-400' :
+                  activity.type === 'join' ? 'bg-green-400' : 'bg-purple-400'
+                }`}></div>
                 <div className="flex-1">
-                  <p className="text-white">{activity.action}</p>
-                  <p className="text-white/60 text-sm">{activity.user} • {new Date(activity.timestamp).toLocaleTimeString()}</p>
+                  <p className="text-white">{activity.action || 'Unknown action'}</p>
+                  <p className="text-white/60 text-sm">{activity.user || 'Unknown User'} • {activity.timestamp ? new Date(activity.timestamp).toLocaleTimeString() : 'Recently'}</p>
                 </div>
               </div>
             ))
@@ -913,56 +917,91 @@ function CommandsTab({ selectedServer, liveData }) {
                       {editingCommand === command.id ? (
                         <div className="bg-black/20 rounded-lg p-4 mt-4 border border-white/10">
                           <h4 className="text-white font-medium mb-3">Edit Command: /{command.name}</h4>
-                          <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-4">
+                            {/* Description */}
                             <div>
-                              <label className="block text-white/70 text-sm mb-1">Cooldown (seconds)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                max="300"
-                                defaultValue={command.cooldown}
-                                className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                                placeholder="Cooldown in seconds"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-white/70 text-sm mb-1">Alias</label>
+                              <label className="block text-white/70 text-sm mb-1">Command Description</label>
                               <input
                                 type="text"
-                                defaultValue={command.alias || ''}
+                                defaultValue={command.description || ''}
                                 className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                                placeholder="Alternative command name"
+                                placeholder="What this command does"
+                                id={`desc-${command.id}`}
                               />
                             </div>
-                            <div>
-                              <label className="block text-white/70 text-sm mb-1">Default Reason</label>
-                              <input
-                                type="text"
-                                defaultValue={command.defaultReason || ''}
-                                className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                                placeholder="Default moderation reason"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-white/70 text-sm mb-1">Ban Duration (hours)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                max="168"
-                                defaultValue={command.banDuration || 0}
-                                className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                                placeholder="0 = permanent"
-                              />
+                            
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-white/70 text-sm mb-1">Cooldown (seconds)</label>
+                                <select
+                                  defaultValue={command.cooldown}
+                                  className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                  id={`cooldown-${command.id}`}
+                                >
+                                  <option value="0">No cooldown</option>
+                                  <option value="1">1 second</option>
+                                  <option value="3">3 seconds</option>
+                                  <option value="5">5 seconds</option>
+                                  <option value="10">10 seconds</option>
+                                  <option value="30">30 seconds</option>
+                                  <option value="60">1 minute</option>
+                                  <option value="300">5 minutes</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-white/70 text-sm mb-1">Command Alias</label>
+                                <input
+                                  type="text"
+                                  defaultValue={command.alias || ''}
+                                  className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                  placeholder="Alternative name (optional)"
+                                  id={`alias-${command.id}`}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-white/70 text-sm mb-1">Default Reason</label>
+                                <input
+                                  type="text"
+                                  defaultValue={command.defaultReason || ''}
+                                  className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                  placeholder="Default moderation reason"
+                                  id={`reason-${command.id}`}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-white/70 text-sm mb-1">Ban Duration</label>
+                                <select
+                                  defaultValue={command.banDuration || 0}
+                                  className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                  id={`duration-${command.id}`}
+                                >
+                                  <option value="0">Permanent</option>
+                                  <option value="1">1 hour</option>
+                                  <option value="6">6 hours</option>
+                                  <option value="12">12 hours</option>
+                                  <option value="24">1 day</option>
+                                  <option value="72">3 days</option>
+                                  <option value="168">1 week</option>
+                                  <option value="720">30 days</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center space-x-3 mt-4">
                             <button
                               onClick={() => {
-                                const cooldown = document.querySelector(`input[placeholder="Cooldown in seconds"]`).value
-                                const alias = document.querySelector(`input[placeholder="Alternative command name"]`).value
-                                const defaultReason = document.querySelector(`input[placeholder="Default moderation reason"]`).value
-                                const banDuration = document.querySelector(`input[placeholder="0 = permanent"]`).value
-                                updateCommand(command, { cooldown: parseInt(cooldown), alias, defaultReason, banDuration: parseInt(banDuration) })
+                                const description = document.getElementById(`desc-${command.id}`).value
+                                const cooldown = document.getElementById(`cooldown-${command.id}`).value
+                                const alias = document.getElementById(`alias-${command.id}`).value
+                                const defaultReason = document.getElementById(`reason-${command.id}`).value
+                                const banDuration = document.getElementById(`duration-${command.id}`).value
+                                updateCommand(command, { 
+                                  description,
+                                  cooldown: parseInt(cooldown), 
+                                  alias, 
+                                  defaultReason, 
+                                  banDuration: parseInt(banDuration) 
+                                })
                               }}
                               className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30 border border-green-500/30 transition-all duration-200"
                             >
@@ -1091,17 +1130,12 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
   }
 
   const safeLiveData = liveData || { recentActions: [], moderation: { cases: [] } }
-  // Ensure recentActions is always an array
-  const recentActions = Array.isArray(safeLiveData.recentActions) ? safeLiveData.recentActions : [
-    { type: 'ban', moderator: 'ModeratorBot', action: 'banned', target: 'SpamUser#1234', targetId: '123456789', reason: 'Excessive spam', timestamp: '2 minutes ago' },
-    { type: 'timeout', moderator: 'AdminUser', action: 'timed out', target: 'ToxicUser#5678', targetId: '987654321', reason: 'Inappropriate language', timestamp: '5 minutes ago' },
-    { type: 'kick', moderator: 'ModeratorBot', action: 'kicked', target: 'TrollUser#9012', targetId: '555666777', reason: 'Disruptive behavior', timestamp: '10 minutes ago' }
-  ]
+  // Show actual recent actions data
+  const recentActions = Array.isArray(safeLiveData.recentActions) ? safeLiveData.recentActions : []
   
   const executeModeration = async () => {
-    if (!selectedUser || !moderationAction) {
-      alert('Please select a user and action')
-      return
+    if (!selectedUser?.trim() || !moderationAction) {
+      return // Remove alert, just return silently
     }
     
     const newAction = {
@@ -1244,7 +1278,11 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
               </div>
             ))
           ) : (
-            <EmptyState icon="📋" title="No Recent Actions" message="Moderation actions will appear here" />
+            <div className="text-center py-8">
+              <div className="text-4xl mb-3">📊</div>
+              <h3 className="text-white/80 font-medium mb-2">Monitoring Server Activity</h3>
+              <p className="text-white/60">Live updates will appear here as members interact with your server</p>
+            </div>
           )}
         </div>
       </div>
@@ -1362,41 +1400,10 @@ function TicketsTab({ selectedServer, tickets, showTicketModal, setShowTicketMod
     return <EmptyState icon="🎫" title="Tickets Unavailable" message="Add Skyfall to server to use ticket system" />
   }
 
-  // Provide safe defaults for tickets data with sample live data
+  // Use actual tickets data from API
   const safeTickets = tickets || { 
-    stats: { total: 9, open: 9, closed: 0 }, 
-    tickets: [
-      { 
-        id: '191698', 
-        title: 'Text Channels', 
-        category: 'General', 
-        messages: 0, 
-        priority: 'Medium', 
-        status: 'open',
-        user: { username: 'JohnDoe#1234', id: '123456789' }, 
-        createdAt: '2 hours ago' 
-      },
-      { 
-        id: '191699', 
-        title: 'Voice Channels', 
-        category: 'General', 
-        messages: 0, 
-        priority: 'Medium', 
-        status: 'open',
-        user: { username: 'JaneSmith#5678', id: '987654321' }, 
-        createdAt: '5 hours ago' 
-      },
-      { 
-        id: '191700', 
-        title: 'Bot Issues', 
-        category: 'Technical', 
-        messages: 3, 
-        priority: 'High', 
-        status: 'open',
-        user: { username: 'TechUser#9999', id: '555666777' }, 
-        createdAt: '1 day ago' 
-      }
-    ] 
+    stats: { total: 0, open: 0, closed: 0 }, 
+    tickets: []
   }
 
   return (
@@ -1404,8 +1411,8 @@ function TicketsTab({ selectedServer, tickets, showTicketModal, setShowTicketMod
       {/* Ticket Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard title="Total Tickets" value={safeTickets.stats?.total || 0} icon="🎫" color="blue" />
-        <StatCard title="Open Tickets" value={safeTickets.stats?.open || 0} icon="🔓" color="green" />
-        <StatCard title="Closed Tickets" value={safeTickets.stats?.closed || 0} icon="🔒" color="gray" />
+        <StatCard title="Open Tickets" value={safeTickets.stats?.open || 0} icon="🔓" color="yellow" />
+        <StatCard title="Closed Tickets" value={safeTickets.stats?.closed || 0} icon="🔒" color="purple" />
       </div>
 
       {/* Create Ticket */}
