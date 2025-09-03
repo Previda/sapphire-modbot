@@ -241,24 +241,11 @@ module.exports = {
                     });
                     
                     player.play(recoveryResource);
-                    console.log('🔄 Recovery attempt started');
-                    
-                    interaction.followUp({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xffaa00)
-                            .setTitle('🔄 Audio Recovery')
-                            .setDescription('Playback failed, attempting recovery with different stream method...')]
-                    }).catch(console.error);
+                    console.log('🔄 Recovery attempt started - silent mode');
                     
                 } catch (recoveryError) {
                     console.error('❌ Recovery failed:', recoveryError);
-                    
-                    interaction.followUp({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle('❌ Playback Error')
-                            .setDescription(`Audio playback failed during stream. Bot will stay connected for next song.\n\n**Error:** ${error.message}\n\n**Suggestion:** Try a different song or use \`/play <song name>\` with a popular song.`)]
-                    }).catch(console.error);
+                    // Removed spam message - recovery handled silently
                 }
             });
 
