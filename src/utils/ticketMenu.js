@@ -717,7 +717,11 @@ async function handleTicketClose(interaction, caseId) {
 // Handle ticket transcript button
 async function handleTicketTranscript(interaction, caseId) {
     try {
-        await interaction.deferReply({ ephemeral: true });
+        // Respond immediately to avoid timeout
+        await interaction.reply({
+            content: '📄 Generating transcript... This may take a few moments.',
+            ephemeral: true
+        });
         
         const channel = interaction.channel;
         const ticket = await getTicketByChannel(channel.id);
@@ -727,30 +731,57 @@ async function handleTicketTranscript(interaction, caseId) {
                 content: '❌ This channel is not a ticket.'
             });
         }
+
+        // Update status
+        await interaction.editReply({
+            content: '📄 Fetching messages... Please wait.'
+        });
         
-        // Fetch messages in batches to get full history
+        // Fetch messages in smaller batches to avoid timeouts
         let allMessages = [];
         let lastMessageId = null;
+        let fetchCount = 0;
+        const maxFetches = 20; // Limit to prevent infinite loops
         
-        while (true) {
-            const options = { limit: 100 };
-            if (lastMessageId) {
-                options.before = lastMessageId;
+        try {
+            while (fetchCount < maxFetches) {
+                const options = { limit: 50 }; // Smaller batch size
+                if (lastMessageId) {
+                    options.before = lastMessageId;
+                }
+                
+                const messages = await channel.messages.fetch(options);
+                if (messages.size === 0) break;
+                
+                allMessages = allMessages.concat(Array.from(messages.values()));
+                lastMessageId = messages.last().id;
+                fetchCount++;
+                
+                // Update progress every few batches
+                if (fetchCount % 5 === 0) {
+                    await interaction.editReply({
+                        content: `📄 Fetched ${allMessages.length} messages... Continue processing.`
+                    });
+                }
+                
+                if (messages.size < 50) break; // No more messages
             }
-            
-            const messages = await channel.messages.fetch(options);
-            if (messages.size === 0) break;
-            
-            allMessages = allMessages.concat(Array.from(messages.values()));
-            lastMessageId = messages.last().id;
-            
-            if (messages.size < 100) break; // No more messages
+        } catch (fetchError) {
+            console.error('Error fetching messages:', fetchError);
+            return await interaction.editReply({
+                content: '❌ Failed to fetch channel messages. Please try again.'
+            });
         }
+        
+        // Update status
+        await interaction.editReply({
+            content: `📄 Processing ${allMessages.length} messages...`
+        });
         
         // Sort messages by creation date (oldest first)
         allMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
         
-        // Generate transcript
+        // Generate transcript with better error handling
         const transcriptId = `${ticket.ticketID}_${Date.now()}`;
         let transcript = `=== TICKET TRANSCRIPT ===\n`;
         transcript += `Ticket ID: ${ticket.ticketID}\n`;
@@ -762,54 +793,71 @@ async function handleTicketTranscript(interaction, caseId) {
         transcript += `Total Messages: ${allMessages.length}\n\n`;
         transcript += `==========================================\n\n`;
         
-        for (const msg of allMessages) {
-            const timestamp = msg.createdAt.toISOString();
-            const author = msg.author.tag;
-            const content = msg.content || '[No text content]';
-            
-            transcript += `[${timestamp}] ${author}: ${content}\n`;
-            
-            // Include attachments
-            if (msg.attachments.size > 0) {
-                msg.attachments.forEach(attachment => {
-                    transcript += `    📎 Attachment: ${attachment.name} (${attachment.url})\n`;
-                });
+        try {
+            for (const msg of allMessages) {
+                const timestamp = msg.createdAt.toISOString();
+                const author = msg.author?.tag || 'Unknown User';
+                const content = (msg.content || '[No text content]').replace(/\n/g, ' ');
+                
+                transcript += `[${timestamp}] ${author}: ${content}\n`;
+                
+                // Include attachments safely
+                if (msg.attachments && msg.attachments.size > 0) {
+                    msg.attachments.forEach(attachment => {
+                        transcript += `    📎 Attachment: ${attachment.name || 'unknown'} (${attachment.url})\n`;
+                    });
+                }
+                
+                // Include embeds safely
+                if (msg.embeds && msg.embeds.length > 0) {
+                    msg.embeds.forEach((embed, index) => {
+                        transcript += `    📋 Embed ${index + 1}: ${embed.title || 'No Title'}\n`;
+                        if (embed.description) {
+                            const desc = embed.description.replace(/\n/g, ' ').substring(0, 200);
+                            transcript += `        Description: ${desc}...\n`;
+                        }
+                    });
+                }
             }
+        } catch (processError) {
+            console.error('Error processing messages:', processError);
+            transcript += '\n[ERROR: Some messages could not be processed]\n';
+        }
+
+        // Update status
+        await interaction.editReply({
+            content: '📄 Saving transcript...'
+        });
+        
+        // Save transcript to file with better error handling
+        try {
+            const fs = require('fs').promises;
+            const path = require('path');
+            const transcriptDir = path.join(process.cwd(), 'data', 'transcripts');
+            const transcriptPath = path.join(transcriptDir, `${transcriptId}.txt`);
             
-            // Include embeds
-            if (msg.embeds.length > 0) {
-                msg.embeds.forEach((embed, index) => {
-                    transcript += `    📋 Embed ${index + 1}: ${embed.title || 'No Title'}\n`;
-                    if (embed.description) {
-                        transcript += `        Description: ${embed.description.substring(0, 200)}...\n`;
+            await fs.mkdir(transcriptDir, { recursive: true });
+            await fs.writeFile(transcriptPath, transcript, 'utf8');
+            
+            // Update ticket with transcript info
+            try {
+                const ticketsData = await loadTicketsData();
+                for (const guildId in ticketsData) {
+                    const tickets = ticketsData[guildId];
+                    const ticketIndex = tickets.findIndex(t => t.channelID === channel.id);
+                    
+                    if (ticketIndex !== -1) {
+                        ticketsData[guildId][ticketIndex].transcriptId = transcriptId;
+                        ticketsData[guildId][ticketIndex].transcriptPath = transcriptPath;
+                        ticketsData[guildId][ticketIndex].transcriptGeneratedAt = new Date().toISOString();
+                        await saveTicketsData(ticketsData);
+                        break;
                     }
-                });
+                }
+            } catch (saveError) {
+                console.error('Error updating ticket data:', saveError);
+                // Continue anyway - transcript was generated
             }
-        }
-        
-        // Save transcript to file
-        const fs = require('fs').promises;
-        const path = require('path');
-        const transcriptDir = path.join(process.cwd(), 'data', 'transcripts');
-        const transcriptPath = path.join(transcriptDir, `${transcriptId}.txt`);
-        
-        await fs.mkdir(transcriptDir, { recursive: true });
-        await fs.writeFile(transcriptPath, transcript);
-        
-        // Update ticket with transcript info
-        const ticketsData = await loadTicketsData();
-        for (const guildId in ticketsData) {
-            const tickets = ticketsData[guildId];
-            const ticketIndex = tickets.findIndex(t => t.channelID === channel.id);
-            
-            if (ticketIndex !== -1) {
-                ticketsData[guildId][ticketIndex].transcriptId = transcriptId;
-                ticketsData[guildId][ticketIndex].transcriptPath = transcriptPath;
-                ticketsData[guildId][ticketIndex].transcriptGeneratedAt = new Date().toISOString();
-                await saveTicketsData(ticketsData);
-                break;
-            }
-        }
         
         // Create transcript embed for sharing
         const transcriptEmbed = new EmbedBuilder()
@@ -859,15 +907,27 @@ async function handleTicketTranscript(interaction, caseId) {
             console.log('Could not send transcript to logs channel:', channelError.message);
         }
 
-        await interaction.editReply({
-            content: `✅ **Transcript Generated Successfully**\n📄 File: \`${transcriptId}.txt\`\n📊 Messages captured: ${allMessages.length}\n💾 Saved to: \`/data/transcripts/\`\n📤 **Sent to:**\n• 💌 DMed to ticket creator\n• 📋 Posted to logs channel (if available)`,
-        });
+            await interaction.editReply({
+                content: `✅ **Transcript Generated Successfully**\n📄 File: \`${transcriptId}.txt\`\n📊 Messages captured: ${allMessages.length}\n💾 Saved to: \`/data/transcripts/\`\n📤 **Sent to:**\n• 💌 DMed to ticket creator\n• 📋 Posted to logs channel (if available)`,
+            });
+
+        } catch (fileError) {
+            console.error('Error saving transcript:', fileError);
+            await interaction.editReply({
+                content: '❌ Failed to save transcript file. Please check bot permissions.'
+            });
+            return;
+        }
         
     } catch (error) {
         console.error('Error generating transcript:', error);
-        await interaction.editReply({
-            content: '❌ Failed to generate transcript. Check logs for details.'
-        });
+        try {
+            await interaction.editReply({
+                content: `❌ Failed to generate transcript: ${error.message || 'Unknown error'}`
+            });
+        } catch (replyError) {
+            console.error('Failed to send error reply:', replyError);
+        }
     }
 }
 
