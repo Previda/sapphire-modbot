@@ -17,21 +17,75 @@ export default async function handler(req, res) {
       // Extract user ID from formats like "Username (user#1234)" or raw ID
       if (user.includes('(') && user.includes('#')) {
         // Format: "DisplayName (username#1234)"
-        const match = user.match(/\(.*#(\d{4})\)/)
-        if (match) {
-          // This is a username format, we need the actual user ID
-          // For now, return error asking for user ID
+        // Try to find a user ID in the server members first
+        try {
+          const membersResponse = await fetch(`https://discord.com/api/v10/guilds/${serverId}/members?limit=1000`, {
+            headers: {
+              'Authorization': `Bot ${BOT_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          if (membersResponse.ok) {
+            const members = await membersResponse.json()
+            const searchTerm = user.toLowerCase()
+            const member = members.find(m => {
+              const displayName = m.nick || m.user.global_name || m.user.username
+              const username = m.user.username
+              const fullFormat = `${displayName} (${username}#${m.user.discriminator})`.toLowerCase()
+              return fullFormat === searchTerm || 
+                     displayName.toLowerCase() === searchTerm ||
+                     username.toLowerCase() === searchTerm ||
+                     searchTerm.includes(m.user.id)
+            })
+            
+            if (member) {
+              targetUserId = member.user.id
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch members for user lookup:', error)
+        }
+        
+        if (!targetUserId) {
           return res.status(400).json({ 
-            error: 'Please provide user ID instead of username. Use Discord user ID (18-digit number).' 
+            error: 'User not found. Please select a user from the dropdown or provide Discord user ID.' 
           })
         }
       } else if (/^\d{17,19}$/.test(user.trim())) {
         // Raw Discord ID format
         targetUserId = user.trim()
       } else {
-        return res.status(400).json({ 
-          error: 'Invalid user format. Please provide Discord user ID (18-digit number).' 
-        })
+        // Try to find by username
+        try {
+          const membersResponse = await fetch(`https://discord.com/api/v10/guilds/${serverId}/members?limit=1000`, {
+            headers: {
+              'Authorization': `Bot ${BOT_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          if (membersResponse.ok) {
+            const members = await membersResponse.json()
+            const member = members.find(m => {
+              const displayName = (m.nick || m.user.global_name || m.user.username).toLowerCase()
+              const username = m.user.username.toLowerCase()
+              return displayName === user.toLowerCase() || username === user.toLowerCase()
+            })
+            
+            if (member) {
+              targetUserId = member.user.id
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch members for username lookup:', error)
+        }
+        
+        if (!targetUserId) {
+          return res.status(400).json({ 
+            error: 'User not found. Please select a user from the dropdown or provide Discord user ID.' 
+          })
+        }
       }
     }
     
