@@ -419,20 +419,69 @@ function MusicTab({ selectedServer, liveData }) {
     return <EmptyState icon="🎵" title="Music Unavailable" message="Add Skyfall to server to use music features" />
   }
 
-  const safeLiveData = liveData || {}
-  const currentSong = safeLiveData.currentSong || {
-    title: 'Epic Orchestral Music',
-    artist: 'Background Music Pro',
-    position: '2:15',
-    duration: '4:46',
-    thumbnail: null
+  const [musicData, setMusicData] = React.useState(null)
+  const [loading, setLoading] = React.useState(true)
+  
+  React.useEffect(() => {
+    const fetchMusicData = async () => {
+      if (!selectedServer?.id) {
+        setLoading(false)
+        return
+      }
+      
+      try {
+        const response = await fetch(`/api/music/${selectedServer.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setMusicData(data)
+        } else {
+          setMusicData(null)
+        }
+      } catch (error) {
+        console.error('Failed to fetch music data:', error)
+        setMusicData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchMusicData()
+    // Refresh music data every 5 seconds
+    const interval = setInterval(fetchMusicData, 5000)
+    return () => clearInterval(interval)
+  }, [selectedServer?.id])
+  
+  const currentSong = musicData?.currentSong
+  const isPlaying = musicData?.isPlaying || false
+  const queue = musicData?.queue || []
+  const volume = musicData?.volume || 0
+  const isConnected = musicData?.connected || false
+  
+  const controlMusic = async (action) => {
+    if (!selectedServer?.id) return
+    
+    try {
+      await fetch(`/api/music/${selectedServer.id}/control`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      })
+    } catch (error) {
+      console.error('Failed to control music:', error)
+    }
   }
-  const isPlaying = safeLiveData.isPlaying || true
-  const queue = safeLiveData.queue || [
-    { title: 'Lofi Hip Hop Beat', artist: 'ChillVibes', duration: '3:22' },
-    { title: 'Synthwave Dreams', artist: 'RetroFuture', duration: '4:15' },
-    { title: 'Ambient Space', artist: 'CosmicSounds', duration: '5:08' }
-  ]
+  
+  const removeFromQueue = async (index) => {
+    if (!selectedServer?.id) return
+    
+    try {
+      await fetch(`/api/music/${selectedServer.id}/queue/${index}`, {
+        method: 'DELETE'
+      })
+    } catch (error) {
+      console.error('Failed to remove from queue:', error)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -440,74 +489,144 @@ function MusicTab({ selectedServer, liveData }) {
       <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
         <h2 className="text-2xl font-bold text-white mb-6">Now Playing</h2>
         
-        <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl p-8 text-center">
-          {currentSong ? (
-            <>
-              <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                <span className="text-4xl">🎵</span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">{currentSong.title}</h3>
-              <p className="text-white/70 text-lg mb-6">{currentSong.artist}</p>
-              
-              {/* Progress Bar */}
-              <div className="bg-white/10 rounded-full h-2 mb-4 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-purple-400 to-blue-400 h-2 rounded-full transition-all duration-1000"
-                  style={{ width: '45%' }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-white/60 text-sm mb-6">
-                <span>{currentSong.position || '2:15'}</span>
-                <span>{currentSong.duration || '4:46'}</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-32 h-32 bg-white/10 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                <span className="text-4xl text-white/50">🎵</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white/70">No music playing</h3>
-              <p className="text-white/50 mt-2">Queue is empty</p>
-            </>
-          )}
+        {loading ? (
+          <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl p-8 text-center">
+            <div className="w-32 h-32 bg-white/5 rounded-2xl mx-auto mb-6 flex items-center justify-center animate-pulse">
+              <span className="text-4xl">🎵</span>
+            </div>
+            <h3 className="text-xl font-semibold text-white/70">Loading music data...</h3>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl p-8 text-center">
+            {!isConnected ? (
+              <>
+                <div className="w-32 h-32 bg-red-500/20 rounded-2xl mx-auto mb-6 flex items-center justify-center border border-red-500/30">
+                  <span className="text-4xl">🔌</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white/70 mb-2">Voice Channel Disconnected</h3>
+                <p className="text-white/50">Bot is not connected to any voice channel</p>
+                <button 
+                  className="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh Status
+                </button>
+              </>
+            ) : currentSong ? (
+              <>
+                <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mx-auto mb-6 flex items-center justify-center relative overflow-hidden">
+                  {currentSong.thumbnail ? (
+                    <img src={currentSong.thumbnail} alt="Album art" className="w-full h-full object-cover rounded-2xl" />
+                  ) : (
+                    <span className="text-4xl">🎵</span>
+                  )}
+                  {isPlaying && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 animate-pulse rounded-2xl"></div>
+                  )}
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2 truncate">{currentSong.title}</h3>
+                <p className="text-white/70 text-lg mb-6 truncate">{currentSong.artist || 'Unknown Artist'}</p>
+                
+                {/* Progress Bar */}
+                <div className="bg-white/10 rounded-full h-2 mb-4 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-purple-400 to-blue-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${currentSong.progress || 0}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-white/60 text-sm mb-6">
+                  <span>{currentSong.currentTime || '0:00'}</span>
+                  <span>{currentSong.duration || '0:00'}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-32 h-32 bg-white/5 rounded-2xl mx-auto mb-6 flex items-center justify-center border border-white/10">
+                  <span className="text-4xl text-white/30">🎵</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white/50 mb-2">No music playing</h3>
+                <p className="text-white/30">Use /play command to start music</p>
+              </>
+            )}
+          </div>
+        )}
           
           {/* Controls */}
-          <div className="flex justify-center space-x-4">
-            <button className="w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110">
-              ⏮️
-            </button>
-            <button className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110">
-              {isPlaying ? '⏸️' : '▶️'}
-            </button>
-            <button className="w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110">
-              ⏭️
-            </button>
-          </div>
-        </div>
+          {!loading && (
+            <div className="flex justify-center space-x-4">
+              <button 
+                className="w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isConnected || queue.length === 0}
+                onClick={() => controlMusic('previous')}
+                title="Previous track"
+              >
+                ⏮️
+              </button>
+              <button 
+                className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isConnected}
+                onClick={() => controlMusic(isPlaying ? 'pause' : 'resume')}
+                title={isPlaying ? 'Pause' : 'Resume'}
+              >
+                {isPlaying ? '⏸️' : '▶️'}
+              </button>
+              <button 
+                className="w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isConnected || queue.length === 0}
+                onClick={() => controlMusic('skip')}
+                title="Skip track"
+              >
+                ⏭️
+              </button>
+            </div>
+          )}
       </div>
 
       {/* Queue & Stats */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-          <h3 className="text-lg font-bold text-white mb-4">Queue ({queue.length})</h3>
-          <div className="space-y-3">
-            {queue.length > 0 ? queue.map((song, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-black/20 rounded-xl hover:bg-black/30 transition-all duration-200">
-                <div className="flex items-center space-x-3">
-                  <span className="text-white/60 font-mono w-6">{i + 1}</span>
-                  <div className="flex-1">
-                    <p className="text-white font-medium">{song.title}</p>
-                    <p className="text-white/60 text-sm">{song.artist}</p>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white">Queue ({queue.length})</h3>
+            {queue.length > 0 && (
+              <button 
+                className="text-red-400 hover:text-red-300 text-sm px-3 py-1 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-all"
+                onClick={() => controlMusic('clear')}
+              >
+                Clear Queue
+              </button>
+            )}
+          </div>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-2"></div>
+                <span className="text-white/50">Loading queue...</span>
+              </div>
+            ) : queue.length > 0 ? queue.map((song, i) => (
+              <div key={song.id || i} className="flex items-center justify-between p-3 bg-black/20 rounded-xl hover:bg-black/30 transition-all duration-200 group">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <span className="text-white/60 font-mono w-6 flex-shrink-0">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-medium truncate">{song.title}</p>
+                    <p className="text-white/60 text-sm truncate">{song.artist || song.requestedBy || 'Unknown'}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-white/50 text-sm">{song.duration}</span>
-                  <button className="text-red-400 hover:text-red-300 text-sm">Remove</button>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <span className="text-white/50 text-sm">{song.duration || '0:00'}</span>
+                  <button 
+                    className="text-red-400 hover:text-red-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeFromQueue(i)}
+                    title="Remove from queue"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             )) : (
-              <div className="text-center py-8">
-                <span className="text-white/50">Queue is empty</span>
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">🎶</div>
+                <h4 className="text-white/70 font-medium mb-2">Queue is empty</h4>
+                <p className="text-white/50 text-sm">Use /play command to add songs</p>
               </div>
             )}
           </div>
@@ -517,16 +636,37 @@ function MusicTab({ selectedServer, liveData }) {
           <h3 className="text-lg font-bold text-white mb-4">Music Stats</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-white/70">Total Played Today</span>
-              <span className="text-white font-bold">{safeLiveData.songsToday || 12}</span>
+              <span className="text-white/70">Connection Status</span>
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
+                <span className={`font-bold ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                  {isConnected ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Songs Played Today</span>
+              <span className="text-white font-bold">{musicData?.stats?.songsToday || 0}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-white/70">Queue Length</span>
-              <span className="text-white font-bold">{safeLiveData.queueLength || 0}</span>
+              <span className="text-white font-bold">{queue.length}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-white/70">Volume</span>
-              <span className="text-white font-bold">{safeLiveData.volume || 75}%</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-white font-bold">{volume}%</span>
+                <div className="w-20 bg-white/10 h-1 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-purple-400 to-blue-400 h-1 rounded-full"
+                    style={{ width: `${volume}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Loop Mode</span>
+              <span className="text-white font-bold">{musicData?.loopMode || 'Off'}</span>
             </div>
           </div>
         </div>
