@@ -9,24 +9,54 @@ export default async function handler(req, res) {
 
   if (method === 'POST') {
     // Execute moderation action from dashboard
-    const { action, userId, reason, duration } = req.body
+    const { action, user, userId, reason, duration } = req.body
+    
+    // Handle user field - extract ID from various formats
+    let targetUserId = userId
+    if (!targetUserId && user) {
+      // Extract user ID from formats like "Username (user#1234)" or raw ID
+      if (user.includes('(') && user.includes('#')) {
+        // Format: "DisplayName (username#1234)"
+        const match = user.match(/\(.*#(\d{4})\)/)
+        if (match) {
+          // This is a username format, we need the actual user ID
+          // For now, return error asking for user ID
+          return res.status(400).json({ 
+            error: 'Please provide user ID instead of username. Use Discord user ID (18-digit number).' 
+          })
+        }
+      } else if (/^\d{17,19}$/.test(user.trim())) {
+        // Raw Discord ID format
+        targetUserId = user.trim()
+      } else {
+        return res.status(400).json({ 
+          error: 'Invalid user format. Please provide Discord user ID (18-digit number).' 
+        })
+      }
+    }
+    
+    if (!targetUserId || !action || !reason) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: action, user ID, and reason are required' 
+      })
+    }
     
     try {
       let endpoint, payload
       
       switch (action) {
         case 'ban':
-          endpoint = `https://discord.com/api/v10/guilds/${serverId}/bans/${userId}`
+          endpoint = `https://discord.com/api/v10/guilds/${serverId}/bans/${targetUserId}`
           payload = { delete_message_days: 1, reason }
           break
           
         case 'kick':
-          endpoint = `https://discord.com/api/v10/guilds/${serverId}/members/${userId}`
+          endpoint = `https://discord.com/api/v10/guilds/${serverId}/members/${targetUserId}`
           payload = { reason }
           break
           
         case 'timeout':
-          endpoint = `https://discord.com/api/v10/guilds/${serverId}/members/${userId}`
+          endpoint = `https://discord.com/api/v10/guilds/${serverId}/members/${targetUserId}`
           payload = { 
             communication_disabled_until: new Date(Date.now() + (duration * 60 * 1000)).toISOString(),
             reason 
@@ -48,7 +78,7 @@ export default async function handler(req, res) {
       
       if (response.ok) {
         // Log the action
-        await logModerationAction(serverId, action, userId, reason)
+        await logModerationAction(serverId, action, targetUserId, reason)
         
         res.status(200).json({ 
           success: true, 
