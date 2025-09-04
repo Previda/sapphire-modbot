@@ -930,7 +930,9 @@ function CommandsTab({ selectedServer, liveData }) {
                               />
                             </div>
                             
+                            {/* Dynamic fields based on command type */}
                             <div className="grid md:grid-cols-2 gap-4">
+                              {/* Cooldown - for all commands */}
                               <div>
                                 <label className="block text-white/70 text-sm mb-1">Cooldown (seconds)</label>
                                 <select
@@ -948,6 +950,8 @@ function CommandsTab({ selectedServer, liveData }) {
                                   <option value="300">5 minutes</option>
                                 </select>
                               </div>
+                              
+                              {/* Alias - for all commands */}
                               <div>
                                 <label className="block text-white/70 text-sm mb-1">Command Alias</label>
                                 <input
@@ -958,33 +962,87 @@ function CommandsTab({ selectedServer, liveData }) {
                                   id={`alias-${command.id}`}
                                 />
                               </div>
-                              <div>
-                                <label className="block text-white/70 text-sm mb-1">Default Reason</label>
-                                <input
-                                  type="text"
-                                  defaultValue={command.defaultReason || ''}
-                                  className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                                  placeholder="Default moderation reason"
-                                  id={`reason-${command.id}`}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-white/70 text-sm mb-1">Ban Duration</label>
-                                <select
-                                  defaultValue={command.banDuration || 0}
-                                  className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                                  id={`duration-${command.id}`}
-                                >
-                                  <option value="0">Permanent</option>
-                                  <option value="1">1 hour</option>
-                                  <option value="6">6 hours</option>
-                                  <option value="12">12 hours</option>
-                                  <option value="24">1 day</option>
-                                  <option value="72">3 days</option>
-                                  <option value="168">1 week</option>
-                                  <option value="720">30 days</option>
-                                </select>
-                              </div>
+                              
+                              {/* Moderation-specific fields */}
+                              {(['ban', 'kick', 'mute', 'warn', 'timeout'].includes(command.name.toLowerCase()) || command.category === 'moderation') && (
+                                <>
+                                  <div>
+                                    <label className="block text-white/70 text-sm mb-1">Default Reason</label>
+                                    <input
+                                      type="text"
+                                      defaultValue={command.defaultReason || ''}
+                                      className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                      placeholder="Default moderation reason"
+                                      id={`reason-${command.id}`}
+                                    />
+                                  </div>
+                                  
+                                  {/* Ban duration only for ban/timeout commands */}
+                                  {(['ban', 'timeout'].includes(command.name.toLowerCase())) && (
+                                    <div>
+                                      <label className="block text-white/70 text-sm mb-1">Ban Duration</label>
+                                      <select
+                                        defaultValue={command.banDuration || 0}
+                                        className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                        id={`duration-${command.id}`}
+                                      >
+                                        <option value="0">Permanent</option>
+                                        <option value="1">1 hour</option>
+                                        <option value="6">6 hours</option>
+                                        <option value="12">12 hours</option>
+                                        <option value="24">1 day</option>
+                                        <option value="72">3 days</option>
+                                        <option value="168">1 week</option>
+                                        <option value="720">30 days</option>
+                                      </select>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              
+                              {/* Music-specific fields */}
+                              {(command.category === 'music' || ['play', 'skip', 'queue', 'stop'].includes(command.name.toLowerCase())) && (
+                                <>
+                                  <div>
+                                    <label className="block text-white/70 text-sm mb-1">Max Queue Size</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      max="100"
+                                      defaultValue={command.maxQueue || 50}
+                                      className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                      placeholder="Maximum songs in queue"
+                                      id={`maxqueue-${command.id}`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-white/70 text-sm mb-1">DJ Role Required</label>
+                                    <select
+                                      defaultValue={command.djOnly || false}
+                                      className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                      id={`djonly-${command.id}`}
+                                    >
+                                      <option value="false">Anyone can use</option>
+                                      <option value="true">DJ role required</option>
+                                    </select>
+                                  </div>
+                                </>
+                              )}
+                              
+                              {/* Utility commands */}
+                              {(command.category === 'utility' || ['help', 'ping', 'info', 'avatar'].includes(command.name.toLowerCase())) && (
+                                <div>
+                                  <label className="block text-white/70 text-sm mb-1">Show in Help</label>
+                                  <select
+                                    defaultValue={command.showInHelp !== false}
+                                    className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
+                                    id={`help-${command.id}`}
+                                  >
+                                    <option value="true">Show in help menu</option>
+                                    <option value="false">Hide from help</option>
+                                  </select>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center space-x-3 mt-4">
@@ -993,15 +1051,39 @@ function CommandsTab({ selectedServer, liveData }) {
                                 const description = document.getElementById(`desc-${command.id}`).value
                                 const cooldown = document.getElementById(`cooldown-${command.id}`).value
                                 const alias = document.getElementById(`alias-${command.id}`).value
-                                const defaultReason = document.getElementById(`reason-${command.id}`).value
-                                const banDuration = document.getElementById(`duration-${command.id}`).value
-                                updateCommand(command, { 
+                                
+                                let updates = {
                                   description,
                                   cooldown: parseInt(cooldown), 
-                                  alias, 
-                                  defaultReason, 
-                                  banDuration: parseInt(banDuration) 
-                                })
+                                  alias
+                                }
+                                
+                                // Add moderation-specific fields
+                                if (['ban', 'kick', 'mute', 'warn', 'timeout'].includes(command.name.toLowerCase()) || command.category === 'moderation') {
+                                  const reasonEl = document.getElementById(`reason-${command.id}`)
+                                  if (reasonEl) updates.defaultReason = reasonEl.value
+                                  
+                                  if (['ban', 'timeout'].includes(command.name.toLowerCase())) {
+                                    const durationEl = document.getElementById(`duration-${command.id}`)
+                                    if (durationEl) updates.banDuration = parseInt(durationEl.value)
+                                  }
+                                }
+                                
+                                // Add music-specific fields
+                                if (command.category === 'music' || ['play', 'skip', 'queue', 'stop'].includes(command.name.toLowerCase())) {
+                                  const maxQueueEl = document.getElementById(`maxqueue-${command.id}`)
+                                  const djOnlyEl = document.getElementById(`djonly-${command.id}`)
+                                  if (maxQueueEl) updates.maxQueue = parseInt(maxQueueEl.value)
+                                  if (djOnlyEl) updates.djOnly = djOnlyEl.value === 'true'
+                                }
+                                
+                                // Add utility-specific fields
+                                if (command.category === 'utility' || ['help', 'ping', 'info', 'avatar'].includes(command.name.toLowerCase())) {
+                                  const helpEl = document.getElementById(`help-${command.id}`)
+                                  if (helpEl) updates.showInHelp = helpEl.value === 'true'
+                                }
+                                
+                                updateCommand(command, updates)
                               }}
                               className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm hover:bg-green-500/30 border border-green-500/30 transition-all duration-200"
                             >
