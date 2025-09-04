@@ -1126,10 +1126,14 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
           <p className="text-white/60">Manage server discipline and member actions</p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 px-4 py-2 rounded-xl text-yellow-400 font-medium transition-all">
+          <button 
+            onClick={() => window.open(`/logs/${selectedServer.id}`, '_blank')}
+            className="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 px-4 py-2 rounded-xl text-yellow-400 font-medium transition-all">
             📊 View Logs
           </button>
-          <button className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 px-4 py-2 rounded-xl text-red-400 font-medium transition-all">
+          <button 
+            onClick={() => setShowModerationModal(true)}
+            className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 px-4 py-2 rounded-xl text-red-400 font-medium transition-all">
             🚨 Emergency
           </button>
         </div>
@@ -1262,9 +1266,12 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
           <button 
             onClick={executeModerationAction}
             disabled={!selectedUser || !moderationAction || !actionReason}
-            className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50 px-8 py-3 rounded-xl text-white font-bold transition-all transform hover:scale-105 disabled:hover:scale-100"
+            className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 rounded-xl text-white font-bold transition-all transform hover:scale-105 disabled:hover:scale-100"
           >
-            Execute {moderationAction ? moderationAction.charAt(0).toUpperCase() + moderationAction.slice(1) : 'Action'}
+            {!selectedUser || !moderationAction || !actionReason 
+              ? 'Fill Required Fields' 
+              : `Execute ${moderationAction ? moderationAction.charAt(0).toUpperCase() + moderationAction.slice(1) : 'Action'}`
+            }
           </button>
         </div>
       </div>

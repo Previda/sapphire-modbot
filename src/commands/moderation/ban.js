@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, B
 const appealLibrary = require('../../utils/appealLibrary');
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
+const dashboardLogger = require('../../utils/dashboardLogger');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -69,6 +70,13 @@ module.exports = {
         await interaction.deferReply({ flags: silent ? 64 : 0 });
 
         try {
+            // Log command usage to dashboard
+            await dashboardLogger.logCommand('ban', interaction.user, guild, {
+                target: `${targetUser.tag} (${targetUser.id})`,
+                reason: reason,
+                deletedays: deletedays,
+                silent: silent
+            });
             const member = await guild.members.fetch(targetUser.id).catch(() => null);
             
             // Permission checks (skip hierarchy check in DMs)
@@ -161,6 +169,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Ban command error:', error);
+            await dashboardLogger.logError(error, interaction);
             await interaction.editReply({ 
                 content: '❌ Failed to ban the user. Please check my permissions.'
             });

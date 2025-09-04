@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, B
 const appealLibrary = require('../../utils/appealLibrary');
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
+const dashboardLogger = require('../../utils/dashboardLogger');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -62,6 +63,12 @@ module.exports = {
         await interaction.deferReply({ flags: silent ? 64 : 0 });
 
         try {
+            // Log command usage to dashboard
+            await dashboardLogger.logCommand('kick', interaction.user, guild, {
+                target: `${targetUser.tag} (${targetUser.id})`,
+                reason: reason,
+                silent: silent
+            });
             const member = await guild.members.fetch(targetUser.id).catch(() => null);
             
             if (!member) {
@@ -205,6 +212,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Kick command error:', error);
+            await dashboardLogger.logError(error, interaction);
             await interaction.reply({
                 content: '❌ Failed to kick the user. Please check my permissions.',
                 ephemeral: true
