@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useToast } from './Toast'
 
-export default function Dashboard({ user }) {
+const Dashboard = ({ user }) => {
+  const { showToast, ToastContainer } = useToast()
+
   const [activeTab, setActiveTab] = useState('overview')
   const [userGuilds, setUserGuilds] = useState([])
   const [selectedServer, setSelectedServer] = useState(null)
@@ -311,6 +314,7 @@ export default function Dashboard({ user }) {
           {activeTab === 'analytics' && <AnalyticsTab selectedServer={selectedServer} liveData={liveData} />}
         </div>
       </div>
+      <ToastContainer />
     </div>
   )
 }
@@ -414,469 +418,60 @@ function OverviewTab({ selectedServer, liveData }) {
   )
 }
 
-function MusicTab({ selectedServer, liveData }) {
-  if (!selectedServer?.hasSkyfall) {
-    return <EmptyState icon="🎵" title="Music Unavailable" message="Add Skyfall to server to use music features" />
-  }
-
-  const [musicData, setMusicData] = React.useState(null)
-  const [loading, setLoading] = React.useState(true)
+function CommandsTab({ selectedServer, commands, editingCommand, setEditingCommand }) {
+  const { showToast } = useToast()
   
-  React.useEffect(() => {
-    const fetchMusicData = async () => {
-      if (!selectedServer?.id) {
-        setLoading(false)
-        return
-      }
-      
-      try {
-        const response = await fetch(`/api/music/${selectedServer.id}`)
-        if (response.ok) {
-          const data = await response.json()
-          setMusicData(data)
-        } else {
-          setMusicData(null)
-        }
-      } catch (error) {
-        console.error('Failed to fetch music data:', error)
-        setMusicData(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    fetchMusicData()
-    // Refresh music data every 5 seconds
-    const interval = setInterval(fetchMusicData, 5000)
-    return () => clearInterval(interval)
-  }, [selectedServer?.id])
-  
-  const currentSong = musicData?.currentSong
-  const isPlaying = musicData?.isPlaying || false
-  const queue = musicData?.queue || []
-  const volume = musicData?.volume || 0
-  const isConnected = musicData?.connected || false
-  
-  const controlMusic = async (action) => {
-    if (!selectedServer?.id) return
-    
-    try {
-      await fetch(`/api/music/${selectedServer.id}/control`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action })
-      })
-    } catch (error) {
-      console.error('Failed to control music:', error)
-    }
-  }
-  
-  const removeFromQueue = async (index) => {
-    if (!selectedServer?.id) return
-    
-    try {
-      await fetch(`/api/music/${selectedServer.id}/queue/${index}`, {
-        method: 'DELETE'
-      })
-    } catch (error) {
-      console.error('Failed to remove from queue:', error)
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Now Playing */}
-      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-        <h2 className="text-2xl font-bold text-white mb-6">Now Playing</h2>
-        
-        {loading ? (
-          <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl p-8 text-center">
-            <div className="w-32 h-32 bg-white/5 rounded-2xl mx-auto mb-6 flex items-center justify-center animate-pulse">
-              <span className="text-4xl">🎵</span>
-            </div>
-            <h3 className="text-xl font-semibold text-white/70">Loading music data...</h3>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-2xl p-8 text-center">
-            {!isConnected ? (
-              <>
-                <div className="w-32 h-32 bg-red-500/20 rounded-2xl mx-auto mb-6 flex items-center justify-center border border-red-500/30">
-                  <span className="text-4xl">🔌</span>
-                </div>
-                <h3 className="text-xl font-semibold text-white/70 mb-2">Voice Channel Disconnected</h3>
-                <p className="text-white/50">Bot is not connected to any voice channel</p>
-                <button 
-                  className="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all"
-                  onClick={() => window.location.reload()}
-                >
-                  Refresh Status
-                </button>
-              </>
-            ) : currentSong ? (
-              <>
-                <div className="w-32 h-32 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mx-auto mb-6 flex items-center justify-center relative overflow-hidden">
-                  {currentSong.thumbnail ? (
-                    <img src={currentSong.thumbnail} alt="Album art" className="w-full h-full object-cover rounded-2xl" />
-                  ) : (
-                    <span className="text-4xl">🎵</span>
-                  )}
-                  {isPlaying && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 animate-pulse rounded-2xl"></div>
-                  )}
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2 truncate">{currentSong.title}</h3>
-                <p className="text-white/70 text-lg mb-6 truncate">{currentSong.artist || 'Unknown Artist'}</p>
-                
-                {/* Progress Bar */}
-                <div className="bg-white/10 rounded-full h-2 mb-4 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-purple-400 to-blue-400 h-2 rounded-full transition-all duration-1000"
-                    style={{ width: `${currentSong.progress || 0}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-white/60 text-sm mb-6">
-                  <span>{currentSong.currentTime || '0:00'}</span>
-                  <span>{currentSong.duration || '0:00'}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-32 h-32 bg-white/5 rounded-2xl mx-auto mb-6 flex items-center justify-center border border-white/10">
-                  <span className="text-4xl text-white/30">🎵</span>
-                </div>
-                <h3 className="text-xl font-semibold text-white/50 mb-2">No music playing</h3>
-                <p className="text-white/30">Use /play command to start music</p>
-              </>
-            )}
-          </div>
-        )}
-          
-          {/* Controls */}
-          {!loading && (
-            <div className="flex justify-center space-x-4">
-              <button 
-                className="w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isConnected || queue.length === 0}
-                onClick={() => controlMusic('previous')}
-                title="Previous track"
-              >
-                ⏮️
-              </button>
-              <button 
-                className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isConnected}
-                onClick={() => controlMusic(isPlaying ? 'pause' : 'resume')}
-                title={isPlaying ? 'Pause' : 'Resume'}
-              >
-                {isPlaying ? '⏸️' : '▶️'}
-              </button>
-              <button 
-                className="w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isConnected || queue.length === 0}
-                onClick={() => controlMusic('skip')}
-                title="Skip track"
-              >
-                ⏭️
-              </button>
-            </div>
-          )}
-      </div>
-
-      {/* Queue & Stats */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-white">Queue ({queue.length})</h3>
-            {queue.length > 0 && (
-              <button 
-                className="text-red-400 hover:text-red-300 text-sm px-3 py-1 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-all"
-                onClick={() => controlMusic('clear')}
-              >
-                Clear Queue
-              </button>
-            )}
-          </div>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full mx-auto mb-2"></div>
-                <span className="text-white/50">Loading queue...</span>
-              </div>
-            ) : queue.length > 0 ? queue.map((song, i) => (
-              <div key={song.id || i} className="flex items-center justify-between p-3 bg-black/20 rounded-xl hover:bg-black/30 transition-all duration-200 group">
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <span className="text-white/60 font-mono w-6 flex-shrink-0">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium truncate">{song.title}</p>
-                    <p className="text-white/60 text-sm truncate">{song.artist || song.requestedBy || 'Unknown'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <span className="text-white/50 text-sm">{song.duration || '0:00'}</span>
-                  <button 
-                    className="text-red-400 hover:text-red-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => removeFromQueue(i)}
-                    title="Remove from queue"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            )) : (
-              <div className="text-center py-12">
-                <div className="text-4xl mb-3">🎶</div>
-                <h4 className="text-white/70 font-medium mb-2">Queue is empty</h4>
-                <p className="text-white/50 text-sm">Use /play command to add songs</p>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-          <h3 className="text-lg font-bold text-white mb-4">Music Stats</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-white/70">Connection Status</span>
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-                <span className={`font-bold ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-                  {isConnected ? 'Connected' : 'Disconnected'}
-                </span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/70">Songs Played Today</span>
-              <span className="text-white font-bold">{musicData?.stats?.songsToday || 0}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/70">Queue Length</span>
-              <span className="text-white font-bold">{queue.length}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/70">Volume</span>
-              <div className="flex items-center space-x-2">
-                <span className="text-white font-bold">{volume}%</span>
-                <div className="w-20 bg-white/10 h-1 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-purple-400 to-blue-400 h-1 rounded-full"
-                    style={{ width: `${volume}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/70">Loop Mode</span>
-              <span className="text-white font-bold">{musicData?.loopMode || 'Off'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
-
-function CasesTab({ selectedServer, liveData }) {
-  if (!selectedServer?.hasSkyfall) {
-    return <EmptyState icon="📋" title="Cases Unavailable" message="Add Skyfall to server to view moderation cases" />
-  }
-
-  const safeLiveData = liveData || { moderation: { cases: [] } }
-  const cases = safeLiveData.moderation?.cases || []
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Moderation Cases</h2>
-          <div className="flex items-center space-x-3">
-            <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm font-medium">
-              {cases.filter(c => c.status === 'pending').length} Pending
-            </span>
-            <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm font-medium">
-              {cases.filter(c => c.status === 'investigating').length} Active
-            </span>
-          </div>
-        </div>
-        
-        <div className="grid gap-4">
-          {cases.map((modCase, i) => (
-            <div key={i} className="bg-black/20 rounded-xl p-6 border border-white/10">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    modCase.status === 'pending' ? 'bg-yellow-400' : 
-                    modCase.status === 'investigating' ? 'bg-blue-400' : 'bg-green-400'
-                  }`}></div>
-                  <div>
-                    <h3 className="text-white font-bold">{modCase.caseId}</h3>
-                    <p className="text-white/60 text-sm">{modCase.type} • {modCase.priority} priority</p>
-                  </div>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  modCase.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                  modCase.status === 'investigating' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-                }`}>
-                  {modCase.status}
-                </span>
-              </div>
-              <p className="text-white mb-3">{modCase.reason}</p>
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-4">
-                  <span className="text-white/60">User: <span className="text-white">{modCase.user}</span></span>
-                  <span className="text-white/60">Assigned: <span className="text-white">{modCase.assignedTo}</span></span>
-                </div>
-                <span className="text-white/60">{new Date(modCase.createdAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-          ))}
-          {cases.length === 0 && (
-            <div className="text-center py-8">
-              <span className="text-white/50 text-lg">No active cases</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
-function LogsTab({ selectedServer, liveData }) {
-  if (!selectedServer?.hasSkyfall) {
-    return <EmptyState icon="📜" title="Logs Unavailable" message="Add Skyfall to server to view activity logs" />
-  }
-
-  const safeLiveData = liveData || { logs: { recent: [], totalToday: 0, errorCount: 0, warningCount: 0 } }
-  const logs = safeLiveData.logs?.recent || []
-
-  return (
-    <div className="space-y-6">
-      {/* Log Stats */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <StatCard 
-          title="Events Today" 
-          value={safeLiveData.logs?.totalToday || 0} 
-          icon="📊" 
-          color="blue"
-        />
-        <StatCard 
-          title="Errors" 
-          value={safeLiveData.logs?.errorCount || 0} 
-          icon="🚨" 
-          color="red"
-        />
-        <StatCard 
-          title="Warnings" 
-          value={safeLiveData.logs?.warningCount || 0} 
-          icon="⚠️" 
-          color="yellow"
-        />
-      </div>
-
-      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-        <h2 className="text-2xl font-bold text-white mb-6">Activity Logs</h2>
-        
-        <div className="space-y-3">
-          {logs.map((log, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-black/20 rounded-xl">
-              <div className="flex items-center space-x-4">
-                <div className={`w-3 h-3 rounded-full ${
-                  log.type === 'command' ? 'bg-blue-400' :
-                  log.type === 'moderation' ? 'bg-red-400' :
-                  log.type === 'join' ? 'bg-green-400' : 'bg-gray-400'
-                }`}></div>
-                <div>
-                  <p className="text-white font-medium">{log.action}</p>
-                  <div className="flex items-center space-x-4 text-sm">
-                    <span className="text-white/60">User: <span className="text-white">{log.user}</span></span>
-                    <span className="text-white/60">Channel: <span className="text-white">{log.channel}</span></span>
-                    {log.details && <span className="text-white/60">Details: <span className="text-white">{log.details}</span></span>}
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-white/60 text-sm">
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </span>
-                <p className="text-white/40 text-xs capitalize">{log.type}</p>
-              </div>
-            </div>
-          ))}
-          {logs.length === 0 && (
-            <div className="text-center py-8">
-              <span className="text-white/50 text-lg">No recent activity</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CommandsTab({ selectedServer, liveData }) {
-  const [editingCommand, setEditingCommand] = useState(null)
-  const [commands, setCommands] = useState([])
-  const [loading, setLoading] = useState(true)
-  
-  // Safe defaults
-  const safeServer = selectedServer || {}
-  
-  // Fetch real commands from Discord API
-  useEffect(() => {
-    if (safeServer?.hasSkyfall && safeServer.id) {
-      fetchCommands()
-    } else {
-      // Set demo commands for display
-      setCommands([
-        { id: '1', name: 'ban', description: 'Ban a user from the server', category: 'moderation', enabled: true, cooldown: 5, usage: 23 },
-        { id: '2', name: 'kick', description: 'Kick a user from the server', category: 'moderation', enabled: true, cooldown: 3, usage: 15 },
-        { id: '3', name: 'timeout', description: 'Timeout a user', category: 'moderation', enabled: true, cooldown: 2, usage: 8 },
-        { id: '4', name: 'play', description: 'Play music from YouTube', category: 'music', enabled: true, cooldown: 1, usage: 45 },
-        { id: '5', name: 'skip', description: 'Skip the current song', category: 'music', enabled: true, cooldown: 0, usage: 12 },
-        { id: '6', name: 'queue', description: 'Show the music queue', category: 'music', enabled: true, cooldown: 0, usage: 8 },
-        { id: '7', name: 'help', description: 'Show available commands', category: 'utility', enabled: true, cooldown: 5, usage: 67 },
-        { id: '8', name: 'ping', description: 'Check bot latency', category: 'utility', enabled: true, cooldown: 3, usage: 34 },
-        { id: '9', name: 'avatar', description: 'Show user avatar', category: 'utility', enabled: false, cooldown: 2, usage: 5 }
-      ])
-      setLoading(false)
-    }
-  }, [safeServer])
-
-  const fetchCommands = async () => {
-    try {
-      const response = await fetch(`/api/commands/${safeServer.id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setCommands(data.commands || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch commands:', error)
-      // Fallback to demo commands on error
-      setCommands([
-        { id: '1', name: 'ban', description: 'Ban a user from the server', category: 'moderation', enabled: true, cooldown: 5, usage: 23 },
-        { id: '2', name: 'kick', description: 'Kick a user from the server', category: 'moderation', enabled: true, cooldown: 3, usage: 15 },
-        { id: '3', name: 'play', description: 'Play music from YouTube', category: 'music', enabled: true, cooldown: 1, usage: 45 },
-        { id: '4', name: 'help', description: 'Show available commands', category: 'utility', enabled: true, cooldown: 5, usage: 67 }
-      ])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const toggleCommand = async (command) => {
+  const updateCommand = async (command, updates) => {
+    const safeServer = selectedServer || {}
     if (!safeServer.canManageBot && safeServer.id) {
-      alert('You do not have permission to manage commands on this server.')
+      showToast('You do not have permission to manage commands on this server.', 'error')
       return
     }
     
     // Optimistic update for smooth UX
-    setCommands(commands.map(cmd => 
-      cmd.id === command.id ? {...cmd, enabled: !cmd.enabled} : cmd
-    ))
+    const updatedCommands = commands.map(cmd => 
+      cmd.id === command.id ? {...cmd, ...updates} : cmd
+    )
     
-    if (!safeServer.id) return // Demo mode - just toggle locally
+    setEditingCommand(null)
+    
+    if (!safeServer.id) {
+      showToast('Command updated successfully!', 'success')
+      return // Demo mode - just update locally
+    }
+    
+    try {
+      const response = await fetch(`/api/commands/${safeServer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commandId: command.id,
+          updates
+        })
+      })
+      
+      if (response.ok) {
+        showToast('Command updated successfully!', 'success')
+      } else {
+        showToast('Failed to update command. Please try again.', 'error')
+      }
+    } catch (error) {
+      console.error('Failed to update command:', error)
+      showToast('Network error. Please check your connection.', 'error')
+    }
+  }
+
+  const toggleCommand = async (command) => {
+    const safeServer = selectedServer || {}
+    if (!safeServer.canManageBot && safeServer.id) {
+      showToast('You do not have permission to manage commands on this server.', 'error')
+      return
+    }
+    
+    if (!safeServer.id) {
+      showToast(`Command ${!command.enabled ? 'enabled' : 'disabled'} successfully!`, 'success')
+      return // Demo mode - just toggle locally
+    }
     
     try {
       const response = await fetch(`/api/commands/${safeServer.id}`, {
@@ -888,71 +483,26 @@ function CommandsTab({ selectedServer, liveData }) {
         })
       })
       
-      if (!response.ok) {
-        // Revert on failure
-        setCommands(commands.map(cmd => 
-          cmd.id === command.id ? {...cmd, enabled: command.enabled} : cmd
-        ))
-        alert('Failed to update command. Please try again.')
+      if (response.ok) {
+        showToast(`Command ${!command.enabled ? 'enabled' : 'disabled'} successfully!`, 'success')
+      } else {
+        showToast('Failed to update command. Please try again.', 'error')
       }
     } catch (error) {
       console.error('Failed to toggle command:', error)
-      // Revert on error
-      setCommands(commands.map(cmd => 
-        cmd.id === command.id ? {...cmd, enabled: command.enabled} : cmd
-      ))
-      alert('Network error. Please check your connection.')
+      showToast('Network error. Please check your connection.', 'error')
     }
   }
 
-  const updateCommand = async (command, updates) => {
-    if (!safeServer.canManageBot && safeServer.id) {
-      alert('You do not have permission to edit commands on this server.')
-      return
-    }
-    
-    // Optimistic update
-    setCommands(commands.map(cmd => 
-      cmd.id === command.id ? {...cmd, ...updates} : cmd
-    ))
-    setEditingCommand(null)
-    
-    if (!safeServer.id) return // Demo mode - just update locally
-    
-    try {
-      const response = await fetch(`/api/commands/${safeServer.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          commandId: command.id,
-          ...updates
-        })
-      })
-      
-      if (!response.ok) {
-        // Revert on failure
-        setCommands(commands.map(cmd => 
-          cmd.id === command.id ? command : cmd
-        ))
-        alert('Failed to update command. Please try again.')
-      }
-    } catch (error) {
-      console.error('Failed to update command:', error)
-      // Revert on error
-      setCommands(commands.map(cmd => 
-        cmd.id === command.id ? command : cmd
-      ))
-    }
-  }
-  
-  if (!safeServer?.hasSkyfall) {
+  if (!selectedServer?.hasSkyfall) {
     return <EmptyState icon="⚙️" title="Commands Unavailable" message="Add Skyfall to server to manage commands" />
   }
 
-  if (loading) {
+  if (!commands || commands.length === 0) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+      <div className="text-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+        <span className="text-white/50 text-xl">Loading commands...</span>
       </div>
     )
   }
@@ -1275,36 +825,177 @@ function CommandsTab({ selectedServer, liveData }) {
 }
 
 function AnalyticsTab({ selectedServer, liveData }) {
+  const { showToast } = useToast()
+  const [analyticsData, setAnalyticsData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      if (!selectedServer?.id) {
+        setLoading(false)
+        return
+      }
+      
+      try {
+        const response = await fetch(`/api/analytics/${selectedServer.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setAnalyticsData(data)
+        } else {
+          setAnalyticsData(null)
+        }
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error)
+        setAnalyticsData(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchAnalyticsData()
+    // Refresh analytics every 60 seconds
+    const interval = setInterval(fetchAnalyticsData, 60000)
+    return () => clearInterval(interval)
+  }, [selectedServer?.id])
+
   if (!selectedServer?.hasSkyfall) {
     return <EmptyState icon="📈" title="Analytics Unavailable" message="Add Skyfall to server to view analytics" />
   }
 
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+        <span className="text-white/50 text-xl">Loading analytics...</span>
+      </div>
+    )
+  }
+
+  const stats = analyticsData || {}
+  
   return (
     <div className="space-y-6">
+      {/* Performance Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Bot Uptime" 
+          value={stats.uptime || '0%'} 
+          icon="⏰" 
+          color="green"
+          trend={stats.uptimeStatus || 'Unknown'}
+        />
+        <StatCard 
+          title="Response Time" 
+          value={stats.responseTime || '0ms'} 
+          icon="⚡" 
+          color="blue"
+          trend={stats.responseStatus || 'Unknown'}
+        />
+        <StatCard 
+          title="Memory Usage" 
+          value={stats.memoryUsage || '0MB'} 
+          icon="💾" 
+          color="purple"
+          trend={stats.memoryPercent || '0%'}
+        />
+        <StatCard 
+          title="CPU Usage" 
+          value={stats.cpuUsage || '0%'} 
+          icon="📊" 
+          color="yellow"
+          trend={stats.cpuStatus || 'Unknown'}
+        />
+      </div>
+
+      {/* Command Usage Analytics */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-          <h3 className="text-lg font-bold text-white mb-4">Usage Trends</h3>
-          <div className="h-32 bg-black/20 rounded-xl flex items-center justify-center">
-            <span className="text-white/60">Chart placeholder - Connect to Pi for live data</span>
+          <h3 className="text-lg font-bold text-white mb-4">Command Usage Today</h3>
+          <div className="space-y-3">
+            {stats.topCommands?.length > 0 ? stats.topCommands.map((cmd, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-black/20 rounded-xl">
+                <div className="flex items-center space-x-3">
+                  <span className="text-white/60 font-mono w-6">{i + 1}</span>
+                  <span className="text-white font-medium">/{cmd.name}</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className="text-white/70">{cmd.uses} uses</span>
+                  <div className="w-16 bg-white/10 h-1 rounded-full">
+                    <div 
+                      className="bg-blue-400 h-1 rounded-full"
+                      style={{ width: `${(cmd.uses / (stats.topCommands[0]?.uses || 1)) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-3">📊</div>
+                <p className="text-white/60">No command usage data available</p>
+                <p className="text-white/40 text-sm">Data will appear once commands are used</p>
+              </div>
+            )}
           </div>
         </div>
         
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-          <h3 className="text-lg font-bold text-white mb-4">Performance</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-white/70">Response Time</span>
-              <span className="text-green-400 font-bold">{liveData?.responseTime || '45ms'}</span>
+          <h3 className="text-lg font-bold text-white mb-4">Server Activity</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Messages Today</span>
+              <span className="text-white font-bold">{stats.messagesPerDay || 0}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-white/70">Uptime</span>
-              <span className="text-green-400 font-bold">{liveData?.uptime || '99.9%'}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Active Users</span>
+              <span className="text-white font-bold">{stats.activeUsers || 0}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-white/70">Memory Usage</span>
-              <span className="text-blue-400 font-bold">{liveData?.memoryUsage || '234MB'}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Voice Sessions</span>
+              <span className="text-white font-bold">{stats.voiceSessions || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Moderation Actions</span>
+              <span className="text-white font-bold">{stats.modActions || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-white/70">Tickets Created</span>
+              <span className="text-white font-bold">{stats.ticketsCreated || 0}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Error Logs */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-white">Recent Error Logs</h3>
+          <button 
+            className="text-blue-400 hover:text-blue-300 text-sm px-3 py-1 bg-blue-500/10 rounded hover:bg-blue-500/20 transition-all"
+            onClick={() => window.location.reload()}
+          >
+            Refresh
+          </button>
+        </div>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {stats.errorLogs?.length > 0 ? stats.errorLogs.slice(0, 10).map((log, i) => (
+            <div key={i} className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-red-400 font-medium">{log.error}</p>
+                  <p className="text-white/60 text-sm">{log.command || 'System'} • {log.timestamp || 'Recently'}</p>
+                </div>
+                <span className="text-red-400/70 text-xs bg-red-500/20 px-2 py-1 rounded">
+                  {log.level || 'ERROR'}
+                </span>
+              </div>
+            </div>
+          )) : (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-3">✅</div>
+              <h4 className="text-white/70 font-medium mb-2">No Recent Errors</h4>
+              <p className="text-white/50 text-sm">Your bot is running smoothly!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1342,133 +1033,239 @@ function StatCard({ title, value, icon, trend, color }) {
 }
 
 function ModerationTab({ selectedServer, liveData, showModerationModal, setShowModerationModal }) {
+  const { showToast } = useToast()
   const [selectedUser, setSelectedUser] = useState('')
   const [moderationAction, setModerationAction] = useState('')
   const [actionReason, setActionReason] = useState('')
   const [actionDuration, setActionDuration] = useState('')
+  const [serverMembers, setServerMembers] = useState([])
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [filteredMembers, setFilteredMembers] = useState([])
+  
+  useEffect(() => {
+    if (selectedServer?.id) {
+      fetchServerMembers()
+    }
+  }, [selectedServer?.id])
+  
+  useEffect(() => {
+    if (selectedUser && serverMembers.length > 0) {
+      const filtered = serverMembers.filter(member => 
+        member.displayName.toLowerCase().includes(selectedUser.toLowerCase()) ||
+        member.username.toLowerCase().includes(selectedUser.toLowerCase())
+      ).slice(0, 5)
+      setFilteredMembers(filtered)
+      setShowUserDropdown(filtered.length > 0 && selectedUser.length > 0)
+    } else {
+      setShowUserDropdown(false)
+    }
+  }, [selectedUser, serverMembers])
+  
+  const fetchServerMembers = async () => {
+    if (!selectedServer?.id) return
+    
+    try {
+      const response = await fetch(`/api/members/${selectedServer.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setServerMembers(data.members || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch server members:', error)
+    }
+  }
+  
+  const handleMemberSelect = (member) => {
+    setSelectedUser(`${member.displayName} (${member.username}#${member.discriminator})`)
+    setShowUserDropdown(false)
+  }
+  
+  const executeModerationAction = async () => {
+    if (!selectedUser || !moderationAction || !actionReason) {
+      showToast('Please fill in all required fields', 'error')
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/moderation/${selectedServer.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: selectedUser,
+          action: moderationAction,
+          reason: actionReason,
+          duration: actionDuration
+        })
+      })
+      
+      if (response.ok) {
+        showToast(`${moderationAction} action executed successfully`, 'success')
+        setSelectedUser('')
+        setModerationAction('')
+        setActionReason('')
+        setActionDuration('')
+      } else {
+        showToast('Failed to execute moderation action', 'error')
+      }
+    } catch (error) {
+      console.error('Moderation action failed:', error)
+      showToast('Network error occurred', 'error')
+    }
+  }
   
   if (!selectedServer?.hasSkyfall) {
     return <EmptyState icon="🛡️" title="Moderation Unavailable" message="Add Skyfall to server to use moderation features" />
   }
 
-  const safeLiveData = liveData || { recentActions: [], moderation: { cases: [] } }
-  // Show actual recent actions data
-  const recentActions = Array.isArray(safeLiveData.recentActions) ? safeLiveData.recentActions : []
-  
-  const executeModeration = async () => {
-    if (!selectedUser?.trim() || !moderationAction) {
-      return // Remove alert, just return silently
-    }
-    
-    const newAction = {
-      type: moderationAction,
-      moderator: 'Dashboard User',
-      action: moderationAction + 'ed',
-      target: selectedUser.includes('#') ? selectedUser : `User#${selectedUser}`,
-      targetId: selectedUser.includes('#') ? selectedUser.split('#')[1] : selectedUser,
-      reason: actionReason || 'No reason provided',
-      timestamp: 'Just now',
-      duration: actionDuration
-    }
-    
-    // Add to recent actions immediately for UI feedback
-    safeLiveData.recentActions = [newAction, ...safeLiveData.recentActions]
-    
-    // Here you would make API call to execute the moderation action
-    console.log('Executing moderation:', newAction)
-    
-    // Reset form
-    setSelectedUser('')
-    setModerationAction('')
-    setActionReason('')
-    setActionDuration('')
-  }
-
   return (
-    <div className="space-y-6">
-      {/* User Targeting & Quick Actions */}
-      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-        <h3 className="text-xl font-semibold text-white mb-4 flex items-center space-x-2">
-          <span>⚡</span>
-          <span>Moderation Actions</span>
-        </h3>
-        
-        {/* User Selection */}
-        <div className="mb-6 p-4 bg-black/20 rounded-xl border border-white/10">
-          <h4 className="text-white font-medium mb-3">Target User</h4>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-white/70 text-sm mb-1">Username or User ID</label>
-              <input
-                type="text"
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                placeholder="@username#1234 or 123456789"
-              />
-            </div>
-            <div>
-              <label className="block text-white/70 text-sm mb-1">Action</label>
-              <select
-                value={moderationAction}
-                onChange={(e) => setModerationAction(e.target.value)}
-                className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-              >
-                <option value="">Select action...</option>
-                <option value="ban">Ban User</option>
-                <option value="kick">Kick User</option>
-                <option value="timeout">Timeout User</option>
-                <option value="warn">Warn User</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-white/70 text-sm mb-1">Reason</label>
-              <input
-                type="text"
-                value={actionReason}
-                onChange={(e) => setActionReason(e.target.value)}
-                className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                placeholder="Reason for moderation action"
-              />
-            </div>
-            <div>
-              <label className="block text-white/70 text-sm mb-1">Duration (for timeout/ban)</label>
-              <input
-                type="text"
-                value={actionDuration}
-                onChange={(e) => setActionDuration(e.target.value)}
-                className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
-                placeholder="1h, 1d, permanent"
-              />
-            </div>
-          </div>
-          <button
-            onClick={executeModeration}
-            className="mt-4 px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 transition-all duration-200"
-          >
-            🔨 Execute Action
+    <div className="space-y-8">
+      {/* Quick Actions Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Moderation Control</h2>
+          <p className="text-white/60">Manage server discipline and member actions</p>
+        </div>
+        <div className="flex space-x-3">
+          <button className="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 px-4 py-2 rounded-xl text-yellow-400 font-medium transition-all">
+            📊 View Logs
+          </button>
+          <button className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 px-4 py-2 rounded-xl text-red-400 font-medium transition-all">
+            🚨 Emergency
           </button>
         </div>
-        
-        {/* Quick Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { type: 'ban', icon: '🔨', title: 'Ban User', desc: 'Permanently ban a user', color: 'red' },
-            { type: 'kick', icon: '👢', title: 'Kick User', desc: 'Remove user from server', color: 'orange' },
-            { type: 'timeout', icon: '⏰', title: 'Timeout User', desc: 'Temporarily restrict user', color: 'yellow' }
-          ].map(action => (
-            <button 
-              key={action.type}
-              onClick={() => setModerationAction(action.type)}
-              className={`bg-${action.color}-500/20 hover:bg-${action.color}-500/30 border border-${action.color}-500/30 rounded-xl p-4 text-center transition-all duration-200 transform hover:scale-105 ${
-                moderationAction === action.type ? 'ring-2 ring-' + action.color + '-400' : ''
-              }`}
-            >
-              <div className="text-3xl mb-2">{action.icon}</div>
-              <h4 className="text-white font-medium mb-1">{action.title}</h4>
-              <p className="text-white/60 text-sm">{action.desc}</p>
-            </button>
-          ))}
+      </div>
+
+      {/* Quick Moderation Panel */}
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+          <span className="mr-3">⚡</span> Quick Action
+        </h3>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* User Selection */}
+            <div className="relative">
+              <label className="block text-white/80 text-sm font-medium mb-3">Target User</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:outline-none transition-colors"
+                  placeholder="Type username to search..."
+                />
+                {showUserDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-black/90 backdrop-blur-xl border border-white/20 rounded-xl overflow-hidden z-10">
+                    {filteredMembers.map((member, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleMemberSelect(member)}
+                        className="w-full text-left px-4 py-3 hover:bg-white/10 transition-colors flex items-center space-x-3"
+                      >
+                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-sm font-bold text-white">
+                          {member.displayName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{member.displayName}</p>
+                          <p className="text-white/60 text-sm">{member.username}#{member.discriminator}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Selection */}
+            <div>
+              <label className="block text-white/80 text-sm font-medium mb-3">Moderation Action</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 'warn', label: '⚠️ Warn', color: 'yellow' },
+                  { value: 'timeout', label: '⏰ Timeout', color: 'orange' },
+                  { value: 'kick', label: '👢 Kick', color: 'red' },
+                  { value: 'ban', label: '🔨 Ban', color: 'red' }
+                ].map((action) => (
+                  <button
+                    key={action.value}
+                    onClick={() => setModerationAction(action.value)}
+                    className={`p-3 rounded-xl border font-medium transition-all ${
+                      moderationAction === action.value
+                        ? `bg-${action.color}-500/20 border-${action.color}-500/50 text-${action.color}-400`
+                        : 'bg-black/20 border-white/20 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Reason */}
+            <div>
+              <label className="block text-white/80 text-sm font-medium mb-3">Reason <span className="text-red-400">*</span></label>
+              <textarea
+                value={actionReason}
+                onChange={(e) => setActionReason(e.target.value)}
+                className="w-full px-4 py-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:outline-none transition-colors resize-none"
+                rows="4"
+                placeholder="Describe the reason for this action..."
+              />
+            </div>
+
+            {/* Duration */}
+            {(moderationAction === 'timeout' || moderationAction === 'ban') && (
+              <div>
+                <label className="block text-white/80 text-sm font-medium mb-3">Duration</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: '1h', label: '1 Hour' },
+                    { value: '1d', label: '1 Day' },
+                    { value: '7d', label: '7 Days' },
+                    { value: '30d', label: '30 Days' },
+                    { value: 'permanent', label: 'Permanent' },
+                    { value: 'custom', label: 'Custom' }
+                  ].map((duration) => (
+                    <button
+                      key={duration.value}
+                      onClick={() => setActionDuration(duration.value)}
+                      className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                        actionDuration === duration.value
+                          ? 'bg-blue-500/20 border border-blue-500/50 text-blue-400'
+                          : 'bg-black/20 border border-white/20 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      {duration.label}
+                    </button>
+                  ))}
+                </div>
+                {actionDuration === 'custom' && (
+                  <input
+                    type="text"
+                    value={actionDuration === 'custom' ? '' : actionDuration}
+                    onChange={(e) => setActionDuration(e.target.value)}
+                    className="w-full px-4 py-2 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:outline-none transition-colors mt-2"
+                    placeholder="e.g., 2h, 5d, 1w"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Execute Button */}
+        <div className="flex justify-end mt-8">
+          <button 
+            onClick={executeModerationAction}
+            disabled={!selectedUser || !moderationAction || !actionReason}
+            className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50 px-8 py-3 rounded-xl text-white font-bold transition-all transform hover:scale-105 disabled:hover:scale-100"
+          >
+            Execute {moderationAction ? moderationAction.charAt(0).toUpperCase() + moderationAction.slice(1) : 'Action'}
+          </button>
         </div>
       </div>
 
@@ -1479,31 +1276,29 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
           <span>Recent Moderation Actions</span>
         </h3>
         <div className="space-y-3">
-          {recentActions.length > 0 ? (
-            recentActions.map((action, index) => (
-              <div key={index} className="bg-white/5 rounded-xl p-4 border border-white/10 flex items-center justify-between hover:bg-white/10 transition-all duration-200">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${
-                    action.type === 'ban' ? 'bg-red-500/20 text-red-400' :
-                    action.type === 'kick' ? 'bg-orange-500/20 text-orange-400' :
-                    action.type === 'timeout' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-blue-500/20 text-blue-400'
-                  }`}>
-                    {action.type === 'ban' ? '🔨' : action.type === 'kick' ? '👢' : action.type === 'timeout' ? '⏰' : '🛡️'}
+          {(liveData?.moderation?.recentActions || []).length > 0 ? (
+            liveData.moderation.recentActions.slice(0, 5).map((action, i) => (
+              <div key={i} className="flex items-center justify-between p-4 bg-black/20 rounded-xl hover:bg-black/30 transition-colors">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center">
+                    {action.action === 'ban' ? '🔨' : action.action === 'kick' ? '👢' : action.action === 'timeout' ? '⏰' : '⚠️'}
                   </div>
                   <div>
-                    <p className="text-white font-medium">{action.moderator} {action.action} {action.target}</p>
-                    <p className="text-white/60 text-sm">{action.reason}</p>
+                    <p className="text-white font-medium">{action.action} • {action.user}</p>
+                    <p className="text-white/60 text-sm">{action.reason || 'No reason provided'}</p>
                   </div>
                 </div>
-                <span className="text-white/50 text-sm">{action.timestamp}</span>
+                <div className="text-right">
+                  <p className="text-white/80 text-sm">{action.moderator}</p>
+                  <p className="text-white/40 text-xs">{new Date(action.timestamp).toLocaleString()}</p>
+                </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-3">📊</div>
-              <h3 className="text-white/80 font-medium mb-2">Monitoring Server Activity</h3>
-              <p className="text-white/60">Live updates will appear here as members interact with your server</p>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4 opacity-50">🛡️</div>
+              <h4 className="text-white/70 font-medium mb-2">No Recent Actions</h4>
+              <p className="text-white/50 text-sm">Moderation actions will appear here</p>
             </div>
           )}
         </div>
@@ -1511,7 +1306,6 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
     </div>
   )
 }
-
 
 
 function SettingsTab({ selectedServer }) {
@@ -1617,13 +1411,85 @@ function ActionCard({ icon, title, description }) {
   )
 }
 
-function TicketsTab({ selectedServer, tickets, showTicketModal, setShowTicketModal }) {
+function TicketsTab({ selectedServer, showTicketModal, setShowTicketModal }) {
+  const { showToast } = useToast()
+  const [ticketsData, setTicketsData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    const fetchTicketsData = async () => {
+      if (!selectedServer?.id) {
+        setLoading(false)
+        return
+      }
+      
+      try {
+        const response = await fetch(`/api/tickets/${selectedServer.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setTicketsData(data)
+        } else {
+          setTicketsData({ stats: { total: 0, open: 0, closed: 0 }, tickets: [] })
+        }
+      } catch (error) {
+        console.error('Failed to fetch tickets:', error)
+        setTicketsData({ stats: { total: 0, open: 0, closed: 0 }, tickets: [] })
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchTicketsData()
+    // Refresh tickets every 30 seconds
+    const interval = setInterval(fetchTicketsData, 30000)
+    return () => clearInterval(interval)
+  }, [selectedServer?.id])
+  
+  const closeTicket = async (ticketId) => {
+    if (!selectedServer?.id) return
+    
+    try {
+      const response = await fetch(`/api/tickets/${selectedServer.id}/${ticketId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'closed' })
+      })
+      
+      if (response.ok) {
+        showToast('Ticket closed successfully!', 'success')
+        // Refresh data
+        setTicketsData(prev => ({
+          ...prev,
+          tickets: prev.tickets.map(t => t.id === ticketId ? {...t, status: 'closed'} : t),
+          stats: {
+            ...prev.stats,
+            open: prev.stats.open - 1,
+            closed: prev.stats.closed + 1
+          }
+        }))
+      } else {
+        showToast('Failed to close ticket', 'error')
+      }
+    } catch (error) {
+      console.error('Failed to close ticket:', error)
+      showToast('Network error occurred', 'error')
+    }
+  }
+
   if (!selectedServer?.hasSkyfall) {
     return <EmptyState icon="🎫" title="Tickets Unavailable" message="Add Skyfall to server to use ticket system" />
   }
 
-  // Use actual tickets data from API
-  const safeTickets = tickets || { 
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+        <span className="text-white/50 text-xl">Loading tickets...</span>
+      </div>
+    )
+  }
+
+  const safeTickets = ticketsData || { 
     stats: { total: 0, open: 0, closed: 0 }, 
     tickets: []
   }
@@ -1669,14 +1535,34 @@ function TicketsTab({ selectedServer, tickets, showTicketModal, setShowTicketMod
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
-                    <button className="text-red-400 hover:text-red-300 text-sm">Close</button>
+                    <button 
+                      className="text-blue-400 hover:text-blue-300 text-sm px-3 py-1 bg-blue-500/10 rounded hover:bg-blue-500/20 transition-all"
+                      onClick={() => window.open(`https://discord.com/channels/${selectedServer.id}/${ticket.channelId}`, '_blank')}
+                    >
+                      View
+                    </button>
+                    <button 
+                      className="text-red-400 hover:text-red-300 text-sm px-3 py-1 bg-red-500/10 rounded hover:bg-red-500/20 transition-all"
+                      onClick={() => closeTicket(ticket.id)}
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <EmptyState icon="🎫" title="No Active Tickets" message="Tickets will appear here when created" />
+            <div className="text-center py-12">
+              <div className="text-4xl mb-3">🎫</div>
+              <h4 className="text-white/70 font-medium mb-2">No Active Tickets</h4>
+              <p className="text-white/50 text-sm">Users can create tickets with /ticket command</p>
+              <button 
+                className="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all"
+                onClick={() => window.location.reload()}
+              >
+                Refresh Tickets
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -1702,10 +1588,12 @@ function TabButton({ active, onClick, icon, children }) {
 
 function EmptyState({ icon, title, message }) {
   return (
-    <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-12 border border-white/10 text-center">
+    <div className="text-center py-20">
       <div className="text-6xl mb-6 opacity-50">{icon}</div>
       <h3 className="text-2xl font-bold text-white mb-4">{title}</h3>
       <p className="text-white/70 text-lg">{message}</p>
     </div>
   )
 }
+
+export default Dashboard

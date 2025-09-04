@@ -20,6 +20,27 @@ async function sendErrorToDiscord(error, context = {}) {
   } catch (e) { console.error('Webhook failed:', e) }
 }
 
+// Rate limiting helper
+async function rateLimitedFetch(url, options, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    const response = await fetch(url, options)
+    
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('retry-after')
+      const delay = retryAfter ? parseInt(retryAfter) * 1000 : Math.pow(2, i) * 1000
+      
+      console.log(`Rate limited, waiting ${delay}ms before retry ${i + 1}/${retries}`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      continue
+    }
+    
+    return response
+  }
+  
+  // Final attempt without retry
+  return fetch(url, options)
+}
+
 // API route to fetch user's Discord guilds
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -37,8 +58,8 @@ export default async function handler(req, res) {
     const token = authHeader.substring(7)
     console.log('Using Discord token:', token.substring(0, 20) + '...')
     
-    // First verify token is valid by checking user endpoint
-    const userResponse = await fetch('https://discord.com/api/v10/users/@me', {
+    // First verify token is valid by checking user endpoint with rate limiting
+    const userResponse = await rateLimitedFetch('https://discord.com/api/v10/users/@me', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -48,6 +69,11 @@ export default async function handler(req, res) {
     if (!userResponse.ok) {
       const errorText = await userResponse.text()
       console.error('Token validation failed:', userResponse.status, errorText)
+      
+      if (userResponse.status === 429) {
+        return res.status(429).json({ error: 'Rate limited. Please try again in a moment.' })
+      }
+      
       await sendErrorToDiscord(new Error(`Token validation failed: ${userResponse.status} - ${errorText}`), { 
         endpoint: '/api/discord/guilds',
         step: 'token_validation',
@@ -56,8 +82,11 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid or expired token' })
     }
     
-    // Fetch user's guilds from Discord with member counts
-    const guildsResponse = await fetch('https://discord.com/api/v10/users/@me/guilds', {
+    // Add delay before next API call
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Fetch user's guilds from Discord with rate limiting
+    const guildsResponse = await rateLimitedFetch('https://discord.com/api/v10/users/@me/guilds', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -67,6 +96,11 @@ export default async function handler(req, res) {
     if (!guildsResponse.ok) {
       const errorText = await guildsResponse.text()
       console.error('Discord API error:', guildsResponse.status, errorText)
+      
+      if (guildsResponse.status === 429) {
+        return res.status(429).json({ error: 'Rate limited. Please try again in a moment.' })
+      }
+      
       await sendErrorToDiscord(new Error(`Discord guilds API failed: ${guildsResponse.status} - ${errorText}`), { 
         endpoint: '/api/discord/guilds',
         status: guildsResponse.status
@@ -94,7 +128,10 @@ export default async function handler(req, res) {
           let realOnlineCount = 0
           
           if (botPresence.present) {
-            const guildDetailsResponse = await fetch(`https://discord.com/api/v10/guilds/${guild.id}?with_counts=true`, {
+            // Add delay between API calls
+            await new Promise(resolve => setTimeout(resolve, 200))
+            
+            const guildDetailsResponse = await rateLimitedFetch(`https://discord.com/api/v10/guilds/${guild.id}?with_counts=true`, {
               headers: {
                 'Authorization': `Bot ${process.env.DISCORD_BOT_TOKEN}`,
                 'Content-Type': 'application/json'
@@ -181,7 +218,7 @@ async function checkBotInGuild(guildId) {
       return { present: false, memberCount: 0, onlineMembers: 0, status: 'unknown', joinedAt: null }
     }
 
-    const guildResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+    const guildResponse = await rateLimitedFetch(`https://discord.com/api/v10/guilds/${guildId}`, {
       headers: {
         'Authorization': `Bot ${botToken}`,
         'Content-Type': 'application/json'
