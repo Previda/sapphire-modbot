@@ -228,7 +228,7 @@ async function handleOpenTicket(interaction) {
             )
             .setColor(0x00ff00)
             .setThumbnail(user.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: `Sapphire Ticket System • Case #${ticketCase.caseId}`, iconURL: guild.iconURL() })
+            .setFooter({ text: `Skyfall Ticket System • Case #${ticketCase.caseId}`, iconURL: guild.iconURL() })
             .setTimestamp();
 
         await channel.send({ 
@@ -313,7 +313,7 @@ async function handleCloseTicket(interaction) {
             )
             .setColor(0xff0000)
             .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: `Sapphire Ticket System • Case #${ticketCase.caseId}`, iconURL: interaction.guild.iconURL() })
+            .setFooter({ text: `Skyfall Ticket System • Case #${ticketCase.caseId}`, iconURL: interaction.guild.iconURL() })
             .setTimestamp();
 
         if (transcriptFile) {

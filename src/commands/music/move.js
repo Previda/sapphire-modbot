@@ -36,7 +36,7 @@ module.exports = {
                     .setTitle('❌ Queue Empty')
                     .setDescription('There are no songs in the queue to move!')
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }
@@ -50,7 +50,7 @@ module.exports = {
                     .setTitle('❌ Invalid Position')
                     .setDescription(`Queue only has **${queueLength}** songs. Both positions must be between 1 and ${queueLength}.`)
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }
@@ -61,7 +61,7 @@ module.exports = {
                     .setTitle('⚠️ Same Position')
                     .setDescription('The song is already at that position!')
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }

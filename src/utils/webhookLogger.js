@@ -26,7 +26,7 @@ class WebhookLogger {
     }
 
     // Send webhook message
-    async sendWebhook(webhookUrl, embed, username = 'Sapphire Bot', avatarURL = null) {
+    async sendWebhook(webhookUrl, embed, username = 'Skyfall Bot', avatarURL = null) {
         if (!webhookUrl) return false;
 
         try {

@@ -52,7 +52,7 @@ module.exports = {
                     inline: true
                 })
                 .setTimestamp()
-                .setFooter({ text: 'Sapphire Music Bot' });
+                .setFooter({ text: 'Skyfall Music Bot' });
 
             await interaction.reply({ embeds: [embed] });
 

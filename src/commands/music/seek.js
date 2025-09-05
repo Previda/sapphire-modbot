@@ -29,7 +29,7 @@ module.exports = {
                     .setTitle('⏯️ No Song Playing')
                     .setDescription('There\'s no song currently playing to seek in!')
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }
@@ -47,7 +47,7 @@ module.exports = {
                         inline: false
                     })
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }
@@ -61,7 +61,7 @@ module.exports = {
                     .setTitle('⚠️ Seek Time Too Long')
                     .setDescription(`Cannot seek to ${formatTime(seekTime)} - song is only ${formatTime(track.duration)} long!`)
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }

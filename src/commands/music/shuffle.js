@@ -24,7 +24,7 @@ module.exports = {
                     .setTitle('🔀 Cannot Shuffle')
                     .setDescription('There are no songs in the queue to shuffle!')
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }
@@ -35,7 +35,7 @@ module.exports = {
                     .setTitle('🔀 Queue Too Small')
                     .setDescription('Need at least 2 songs in queue to shuffle!')
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }

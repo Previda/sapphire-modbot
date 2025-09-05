@@ -47,7 +47,7 @@ module.exports = {
                 }
             )
             .setFooter({ 
-                text: 'Sapphire Bot • Powered by Skyfall', 
+                text: 'Skyfall Bot • Powered by Skyfall', 
                 iconURL: interaction.client.user.avatarURL() 
             })
             .setTimestamp();

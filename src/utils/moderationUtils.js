@@ -115,7 +115,7 @@ class ModerationManager {
             }
 
             embed.setFooter({ 
-                text: 'Sapphire Moderation System', 
+                text: 'Skyfall Moderation System', 
                 iconURL: client.user.avatarURL() 
             }).setTimestamp();
 
@@ -186,7 +186,7 @@ class ModerationManager {
         }
 
         embed.setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
-            .setFooter({ text: 'Sapphire Moderation System' })
+            .setFooter({ text: 'Skyfall Moderation System' })
             .setTimestamp();
 
         return embed;

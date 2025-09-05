@@ -11,7 +11,7 @@ module.exports = {
         if (channel) {
             const welcomeEmbed = new EmbedBuilder()
                 .setColor('#00ff00')
-                .setTitle('🤖 Thanks for adding Sapphire Bot!')
+                .setTitle('🤖 Thanks for adding Skyfall Bot!')
                 .setDescription('I\'m here to help with moderation and server management.')
                 .addFields(
                     { name: '🚀 Getting Started', value: 'Use `/help` to see all available commands' },

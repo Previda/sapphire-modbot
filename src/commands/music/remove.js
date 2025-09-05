@@ -30,7 +30,7 @@ module.exports = {
                     .setTitle('❌ Queue Empty')
                     .setDescription('There are no songs in the queue to remove!')
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }
@@ -47,7 +47,7 @@ module.exports = {
                         inline: false
                     })
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }

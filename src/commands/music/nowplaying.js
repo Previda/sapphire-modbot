@@ -29,7 +29,7 @@ module.exports = {
                     .setTitle('🎵 Nothing Playing')
                     .setDescription('No music is currently playing. Use `/play` to start playing music!')
                     .setTimestamp()
-                    .setFooter({ text: 'Sapphire Music Bot' });
+                    .setFooter({ text: 'Skyfall Music Bot' });
 
                 return await interaction.reply({ embeds: [embed] });
             }
@@ -67,7 +67,7 @@ module.exports = {
                 .setThumbnail(track.thumbnail || null)
                 .setTimestamp()
                 .setFooter({ 
-                    text: `Requested by ${track.requester} • Sapphire Music Bot`,
+                    text: `Requested by ${track.requester} • Skyfall Music Bot`,
                     iconURL: track.requesterAvatar 
                 });
 

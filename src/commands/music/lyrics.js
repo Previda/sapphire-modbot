@@ -40,7 +40,7 @@ module.exports = {
                             inline: false
                         })
                         .setTimestamp()
-                        .setFooter({ text: 'Sapphire Music Bot' });
+                        .setFooter({ text: 'Skyfall Music Bot' });
 
                     return await interaction.editReply({ embeds: [embed] });
                 }
@@ -107,7 +107,7 @@ module.exports = {
                             inline: false
                         })
                         .setTimestamp()
-                        .setFooter({ text: 'Sapphire Music Bot' });
+                        .setFooter({ text: 'Skyfall Music Bot' });
 
                     await interaction.followUp({ embeds: [followUpEmbed] });
                 }

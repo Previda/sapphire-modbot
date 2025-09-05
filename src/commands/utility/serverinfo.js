@@ -76,7 +76,7 @@ module.exports = {
                     inline: true
                 }
             )
-            .setFooter({ text: `Sapphire Moderation Bot • Optimized for Pi • ${daysSinceJoin} days of service`, iconURL: interaction.client.user.avatarURL() })
+            .setFooter({ text: `Skyfall Moderation Bot • Optimized for Pi • ${daysSinceJoin} days of service`, iconURL: interaction.client.user.avatarURL() })
             .setTimestamp();
 
         if (guild.bannerURL() && guild.premiumTier >= 2) {

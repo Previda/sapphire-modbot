@@ -68,12 +68,12 @@ jobs:
             
             # Get current user for flexible paths
             CURRENT_USER=$(whoami)
-            BOT_DIR="/home/$CURRENT_USER/sapphire-bot"
+            BOT_DIR="/home/$CURRENT_USER/skyfall-bot"
             
             # Check if bot directory exists
             if [ ! -d "$BOT_DIR" ]; then
               echo "📥 Bot not installed yet, running fresh installation..."
-              curl -sSL https://raw.githubusercontent.com/Previda/sapphire-modbot/main/scripts/pi-auto-update.sh | bash -s install
+              curl -sSL https://raw.githubusercontent.com/Previda/skyfall-modbot/main/scripts/pi-auto-update.sh | bash -s install
             else
               echo "🔄 Bot found, running update..."
               cd "$BOT_DIR"
