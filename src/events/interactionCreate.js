@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
 const { handleTicketMenu } = require('../utils/ticketMenu');
+const { handleVerification } = require('../utils/verificationHandler');
 const dashboardLogger = require('../utils/dashboardLogger');
 
 module.exports = {
@@ -97,6 +98,11 @@ async function handleSlashCommand(interaction) {
 
 async function handleButtonInteraction(interaction) {
     const customId = interaction.customId;
+    
+    // Handle verification buttons
+    if (customId.startsWith('verify_')) {
+        return await handleVerification(interaction);
+    }
     
     // Handle ticket-related buttons
     if (customId.startsWith('ticket_') || customId.includes('close') || customId.includes('transcript')) {

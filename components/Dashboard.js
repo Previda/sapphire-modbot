@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useToast } from './Toast'
+import React, { useState, useEffect } from 'react';
+import MusicPlayer from './MusicPlayer';
+import VerificationTab from './VerificationTab';
 import CommandEditor from './CommandEditor'
-import MusicPlayer from './MusicPlayer'
 
 const Dashboard = ({ user }) => {
   const { showToast, ToastContainer } = useToast()
@@ -329,6 +329,7 @@ const Dashboard = ({ user }) => {
               { id: 'overview', name: 'Overview', icon: '📊' },
               { id: 'music', name: 'Music', icon: '🎵' },
               { id: 'moderation', name: 'Moderation', icon: '🛡️' },
+              { id: 'verification', name: 'Verification', icon: '🔐' },
               { id: 'cases', name: 'Cases', icon: '📋' },
               { id: 'tickets', name: 'Tickets', icon: '🎫' },
               { id: 'logs', name: 'Logs', icon: '📜' },
@@ -352,6 +353,7 @@ const Dashboard = ({ user }) => {
           {activeTab === 'overview' && <OverviewTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'music' && selectedServer && <MusicPlayer serverId={selectedServer.id} />}
           {activeTab === 'moderation' && <ModerationTab selectedServer={selectedServer} liveData={liveData} showModerationModal={showModerationModal} setShowModerationModal={setShowModerationModal} />}
+          {activeTab === 'verification' && <VerificationTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'cases' && <CasesTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'tickets' && <TicketsTab selectedServer={selectedServer} tickets={tickets} showTicketModal={showTicketModal} setShowTicketModal={setShowTicketModal} />}
           {activeTab === 'logs' && <LogsTab selectedServer={selectedServer} liveData={liveData} />}
