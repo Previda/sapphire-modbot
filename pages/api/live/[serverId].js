@@ -16,16 +16,16 @@ export default async function handler(req, res) {
     
     if (piApiUrl && piToken) {
       try {
-        console.log(`Connecting to Pi bot API: ${piApiUrl}`)
+        console.log(`Connecting to Pi bot API: ${piApiUrl}/live/${serverId}`)
         
-        const piResponse = await fetch(`${piApiUrl}/api/live/${serverId}`, {
+        const piResponse = await fetch(`${piApiUrl}/live/${serverId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${piToken}`,
             'Content-Type': 'application/json',
             'User-Agent': 'Skyfall-Dashboard/1.0'
           },
-          timeout: 10000
+          timeout: 15000
         })
         
         if (piResponse.ok) {
@@ -39,12 +39,14 @@ export default async function handler(req, res) {
           })
         } else {
           console.log(`Pi bot API responded with status: ${piResponse.status}`)
+          const errorText = await piResponse.text()
+          console.log(`Pi bot API error response: ${errorText}`)
         }
       } catch (piError) {
         console.error('Pi bot API connection failed:', piError.message)
       }
     } else {
-      console.log('Pi bot API credentials not configured')
+      console.log('Pi bot API credentials not configured:', { piApiUrl: !!piApiUrl, piToken: !!piToken })
     }
 
     // Fallback to mock data when Pi bot is not available

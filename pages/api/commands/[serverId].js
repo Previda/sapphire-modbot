@@ -4,7 +4,42 @@ export default async function handler(req, res) {
 
   if (method === 'GET') {
     try {
-      // Return mock commands data for now to avoid API failures
+      // Try to get commands from Pi bot API first
+      const piApiUrl = process.env.PI_BOT_API_URL || process.env.NEXT_PUBLIC_PI_API_URL
+      const piToken = process.env.PI_BOT_TOKEN || process.env.NEXT_PUBLIC_PI_TOKEN
+      
+      if (piApiUrl && piToken) {
+        try {
+          console.log(`Fetching commands from Pi bot API: ${piApiUrl}/commands/${serverId}`)
+          
+          const piResponse = await fetch(`${piApiUrl}/commands/${serverId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${piToken}`,
+              'Content-Type': 'application/json',
+              'User-Agent': 'Skyfall-Dashboard/1.0'
+            },
+            timeout: 10000
+          })
+          
+          if (piResponse.ok) {
+            const piData = await piResponse.json()
+            console.log('Successfully fetched commands from Pi bot API')
+            return res.status(200).json({
+              ...piData,
+              serverId,
+              source: 'pi-bot-api'
+            })
+          } else {
+            console.log(`Pi bot API responded with status: ${piResponse.status}`)
+          }
+        } catch (piError) {
+          console.error('Pi bot commands API failed:', piError.message)
+        }
+      }
+      
+      // Fallback to mock commands data
+      console.log('Using fallback mock commands')
       const mockCommands = [
         {
           id: '1',

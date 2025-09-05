@@ -324,8 +324,8 @@ const Dashboard = ({ user }) => {
         </div>
 
         {/* Navigation */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-2 mb-8 border border-white/10">
-          <nav className="flex space-x-2">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-3 mb-8 border border-white/10">
+          <nav className="flex flex-wrap gap-2 justify-center">
             {[
               { id: 'overview', name: 'Overview', icon: '📊' },
               { id: 'music', name: 'Music', icon: '🎵' },
