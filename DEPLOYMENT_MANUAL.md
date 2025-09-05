@@ -1,4 +1,4 @@
-# Manual Deployment Guide for Sapphire Modbot Dashboard
+# Manual Deployment Guide for Skyfall Modbot Dashboard
 
 Since the automated deployment encountered an error, here are manual deployment instructions for multiple platforms.
 
@@ -17,7 +17,7 @@ vercel login
 ### 3. Deploy from Project Root
 ```bash
 # Navigate to project directory
-cd C:\Users\Mikhail\CascadeProjects\sapphire-modbot
+cd C:\Users\Mikhail\CascadeProjects\skyfall-modbot
 
 # Deploy to Vercel
 vercel
@@ -26,7 +26,7 @@ vercel
 # ? Set up and deploy? Yes
 # ? Which scope? Your personal account
 # ? Link to existing project? No
-# ? What's your project's name? sapphire-modbot-dashboard
+# ? What's your project's name? skyfall-modbot-dashboard
 # ? In which directory is your code located? ./
 ```
 

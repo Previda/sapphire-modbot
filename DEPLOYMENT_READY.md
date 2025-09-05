@@ -1,8 +1,8 @@
-# 🚀 Sapphire Moderation Bot - Deployment Ready
+# 🚀 Skyfall Moderation Bot - Deployment Ready
 
 ## ✅ Current Status: **PRODUCTION READY** - Final Update ⭐
 
-This document outlines the complete readiness status of the Sapphire Moderation Bot for Raspberry Pi deployment. All core systems have been enhanced, integrated, and optimized for production use with comprehensive case management and user notification systems.
+This document outlines the complete readiness status of the Skyfall Moderation Bot for Raspberry Pi deployment. All core systems have been enhanced, integrated, and optimized for production use with comprehensive case management and user notification systems.
 
 **🎉 FINAL UPDATE - December 2024:** All major enhancements completed. The bot now features a unified moderation system with case tracking, comprehensive DM notifications, and an integrated economy with Pi-optimized performance.
 
@@ -121,7 +121,7 @@ This document outlines the complete readiness status of the Sapphire Moderation 
 2. **Run Setup**: `bash deploy.sh` (auto-installs Node.js, dependencies, optimizes Pi)
 3. **Configure Environment**: Add Discord token and optional database URLs to `.env`
 4. **Register Commands**: `node register-commands-fixed.js` (auto-fixes any issues)
-5. **Start Bot**: `npm start` or use PM2 for production (`pm2 start index.js --name sapphire-bot`)
+5. **Start Bot**: `npm start` or use PM2 for production (`pm2 start index.js --name skyfall-bot`)
 
 ### **Optional Enhancements:**
 - Set `MOD_LOG_CHANNEL_ID` for automatic mod action logging
@@ -152,7 +152,7 @@ This document outlines the complete readiness status of the Sapphire Moderation 
 ✅ Documentation complete
 ✅ Deployment scripts ready
 
-**The Sapphire Moderation Bot is now ready for full production deployment on Raspberry Pi with all advanced features operational.**
+**The Skyfall Moderation Bot is now ready for full production deployment on Raspberry Pi with all advanced features operational.**
 | **Tickets** | ticket, manage, reverse | ✅ Optimized | Memory-efficient ticket management |
 | **Administration** | manage, backup, setup | ✅ Ready | Full admin functionality maintained |
 

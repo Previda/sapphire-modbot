@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         headers: {
           'Authorization': `Bearer ${piToken}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'Sapphire-Dashboard/1.0'
+          'User-Agent': 'Skyfall-Dashboard/1.0'
         }
       })
       

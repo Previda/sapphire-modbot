@@ -45,7 +45,7 @@ print_status "Step 2: Connecting to Pi and deploying..."
 # Pi connection details (adjust as needed)
 PI_USER="admin"
 PI_HOST="skyfall.local"  # or IP address
-BOT_DIR="/home/admin/sapphire-modbot"
+BOT_DIR="/home/admin/skyfall-modbot"
 
 ssh $PI_USER@$PI_HOST << 'EOF'
     set -e
@@ -53,15 +53,15 @@ ssh $PI_USER@$PI_HOST << 'EOF'
     echo "🔄 Updating bot on Pi..."
     
     # Navigate to bot directory
-    cd /home/admin/sapphire-modbot || { echo "❌ Bot directory not found"; exit 1; }
+    cd /home/admin/skyfall-modbot || { echo "❌ Bot directory not found"; exit 1; }
     
     # Stop the bot first
     echo "⏹️  Stopping bot..."
-    pm2 stop sapphire-bot || echo "Bot was not running"
+    pm2 stop skyfall-bot || echo "Bot was not running"
     
     # Backup current version
     echo "💾 Creating backup..."
-    cp -r . ../sapphire-modbot-backup-$(date +%Y%m%d_%H%M%S) || echo "Backup failed, continuing..."
+    cp -r . ../skyfall-modbot-backup-$(date +%Y%m%d_%H%M%S) || echo "Backup failed, continuing..."
     
     # Reset any local changes and pull latest
     echo "📥 Pulling latest changes..."
@@ -89,15 +89,15 @@ ssh $PI_USER@$PI_HOST << 'EOF'
     
     # Start the bot
     echo "🚀 Starting bot..."
-    pm2 start sapphire-bot || pm2 restart sapphire-bot
+    pm2 start skyfall-bot || pm2 restart skyfall-bot
     
     # Wait a moment and check status
     sleep 3
-    pm2 status sapphire-bot
+    pm2 status skyfall-bot
     
     # Show recent logs
     echo "📋 Recent bot logs:"
-    pm2 logs sapphire-bot --lines 10 --nostream
+    pm2 logs skyfall-bot --lines 10 --nostream
     
     echo "✅ Deployment complete!"
     

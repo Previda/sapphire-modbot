@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 🛡️ Sapphire Moderation Bot - Raspberry Pi Deployment
-echo "🛡️ Sapphire Moderation Bot v2.0 - Raspberry Pi Edition"
+# 🛡️ Skyfall Moderation Bot - Raspberry Pi Deployment
+echo "🛡️ Skyfall Moderation Bot v2.0 - Raspberry Pi Edition"
 echo "======================================================"
 echo "Enterprise Discord moderation with 42 slash commands"
 echo ""

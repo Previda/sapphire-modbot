@@ -1,4 +1,4 @@
-# 🚀 Sapphire Modbot - Deployment Guide
+# 🚀 Skyfall Modbot - Deployment Guide
 
 ## 📊 Dashboard Deployment (Vercel)
 
@@ -11,15 +11,15 @@
 ```bash
 git init
 git add .
-git commit -m "Initial commit: Sapphire Modbot Dashboard"
+git commit -m "Initial commit: Skyfall Modbot Dashboard"
 git branch -M main
-git remote add origin https://github.com/yourusername/sapphire-modbot.git
+git remote add origin https://github.com/yourusername/skyfall-modbot.git
 git push -u origin main
 ```
 
 ### 2. Vercel Deployment
 1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
-2. Click "New Project" → Import your sapphire-modbot repository
+2. Click "New Project" → Import your skyfall-modbot repository
 3. Framework preset: **Next.js**
 4. Root directory: `./` (default)
 5. Add environment variables in Vercel dashboard:
@@ -75,8 +75,8 @@ sudo apt install -y git
 ```bash
 # Clone repository
 cd /home/pi
-git clone https://github.com/yourusername/sapphire-modbot.git
-cd sapphire-modbot
+git clone https://github.com/yourusername/skyfall-modbot.git
+cd skyfall-modbot
 
 # Install dependencies
 npm install
@@ -119,7 +119,7 @@ node bot-commands/register-commands.js
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
-    name: 'sapphire-modbot',
+    name: 'skyfall-modbot',
     script: 'bot/index.js',
     instances: 1,
     autorestart: true,
@@ -150,10 +150,10 @@ pm2 startup
 # Create update script
 cat > update-bot.sh << 'EOF'
 #!/bin/bash
-echo "🔄 Updating Sapphire Modbot..."
+echo "🔄 Updating Skyfall Modbot..."
 
 # Stop bot
-pm2 stop sapphire-modbot
+pm2 stop skyfall-modbot
 
 # Pull latest changes
 git pull origin main
@@ -162,7 +162,7 @@ git pull origin main
 npm install
 
 # Restart bot
-pm2 restart sapphire-modbot
+pm2 restart skyfall-modbot
 
 echo "✅ Bot updated and restarted!"
 pm2 status
@@ -177,10 +177,10 @@ chmod +x update-bot.sh
 pm2 status
 
 # View logs
-pm2 logs sapphire-modbot
+pm2 logs skyfall-modbot
 
 # Restart bot
-pm2 restart sapphire-modbot
+pm2 restart skyfall-modbot
 
 # Update bot
 ./update-bot.sh
@@ -255,7 +255,7 @@ node bot-commands/register-commands.js
 
 **Bot offline:**
 - Check PM2 status: `pm2 status`
-- View logs: `pm2 logs sapphire-modbot`
+- View logs: `pm2 logs skyfall-modbot`
 - Verify token and permissions
 
 **Commands not working:**
