@@ -65,7 +65,7 @@ const Dashboard = ({ user }) => {
     try {
       setDataLoading(true)
       const [liveResponse, ticketsResponse, commandsResponse] = await Promise.all([
-        fetch(`/api/bot/live/${server.id}`),
+        fetch(`/api/live/${server.id}`),
         fetch(`/api/tickets/${server.id}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('discord_token')}` }
         }),
