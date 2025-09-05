@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useToast } from './Toast'
 import CommandEditor from './CommandEditor'
+import MusicPlayer from './MusicPlayer'
 
 const Dashboard = ({ user }) => {
   const { showToast, ToastContainer } = useToast()
@@ -349,10 +350,12 @@ const Dashboard = ({ user }) => {
         {/* Tab Content */}
         <div className="space-y-6">
           {activeTab === 'overview' && <OverviewTab selectedServer={selectedServer} liveData={liveData} />}
+          {activeTab === 'music' && selectedServer && <MusicPlayer serverId={selectedServer.id} />}
           {activeTab === 'moderation' && <ModerationTab selectedServer={selectedServer} liveData={liveData} showModerationModal={showModerationModal} setShowModerationModal={setShowModerationModal} />}
+          {activeTab === 'cases' && <CasesTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'tickets' && <TicketsTab selectedServer={selectedServer} tickets={tickets} showTicketModal={showTicketModal} setShowTicketModal={setShowTicketModal} />}
+          {activeTab === 'logs' && <LogsTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'commands' && selectedServer && <CommandEditor serverId={selectedServer.id} />}
-          {activeTab === 'settings' && <SettingsTab selectedServer={selectedServer} />}
           {activeTab === 'analytics' && <AnalyticsTab selectedServer={selectedServer} liveData={liveData} />}
         </div>
       </div>
@@ -1632,6 +1635,123 @@ function TabButton({ active, onClick, icon, children }) {
       <span>{icon}</span>
       <span>{children}</span>
     </button>
+  )
+}
+
+function CasesTab({ selectedServer, liveData }) {
+  if (!selectedServer?.hasSkyfall) {
+    return <EmptyState icon="⚖️" title="Skyfall Not Added" message="Add Skyfall to view moderation cases" />
+  }
+
+  const cases = liveData?.moderation?.cases || []
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          ⚖️ Moderation Cases
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-blue-500/20 rounded-xl p-4 border border-blue-500/30">
+            <div className="text-2xl font-bold text-blue-400">{cases.length}</div>
+            <div className="text-blue-300 text-sm">Total Cases</div>
+          </div>
+          <div className="bg-yellow-500/20 rounded-xl p-4 border border-yellow-500/30">
+            <div className="text-2xl font-bold text-yellow-400">{cases.filter(c => c.status === 'active').length}</div>
+            <div className="text-yellow-300 text-sm">Active</div>
+          </div>
+          <div className="bg-green-500/20 rounded-xl p-4 border border-green-500/30">
+            <div className="text-2xl font-bold text-green-400">{cases.filter(c => c.status === 'resolved').length}</div>
+            <div className="text-green-300 text-sm">Resolved</div>
+          </div>
+          <div className="bg-purple-500/20 rounded-xl p-4 border border-purple-500/30">
+            <div className="text-2xl font-bold text-purple-400">{cases.filter(c => c.appealable).length}</div>
+            <div className="text-purple-300 text-sm">Appealable</div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {cases.length > 0 ? cases.slice(0, 10).map((case_, index) => (
+            <div key={index} className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-blue-400 font-mono text-sm">#{case_.caseId || index + 1}</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  case_.type === 'ban' ? 'bg-red-500/20 text-red-400' :
+                  case_.type === 'timeout' ? 'bg-yellow-500/20 text-yellow-400' :
+                  case_.type === 'kick' ? 'bg-orange-500/20 text-orange-400' :
+                  'bg-gray-500/20 text-gray-400'
+                }`}>
+                  {case_.type || case_.action}
+                </span>
+              </div>
+              <div className="text-white font-medium mb-1">{case_.user || case_.target}</div>
+              <div className="text-gray-300 text-sm mb-2">{case_.reason}</div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-400">By {case_.moderator}</span>
+                <span className="text-gray-400">{new Date(case_.timestamp).toLocaleDateString()}</span>
+              </div>
+            </div>
+          )) : (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-3">⚖️</div>
+              <h4 className="text-white/70 font-medium mb-2">No Moderation Cases</h4>
+              <p className="text-white/50 text-sm">Moderation actions will appear here</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LogsTab({ selectedServer, liveData }) {
+  if (!selectedServer?.hasSkyfall) {
+    return <EmptyState icon="📜" title="Skyfall Not Added" message="Add Skyfall to view server logs" />
+  }
+
+  const logs = liveData?.logs?.recent || []
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          📜 Server Logs
+        </h2>
+        
+        <div className="space-y-3">
+          {logs.length > 0 ? logs.slice(0, 20).map((log, index) => (
+            <div key={index} className="flex items-center gap-4 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+              <div className={`w-3 h-3 rounded-full ${
+                log.level === 'error' ? 'bg-red-400' :
+                log.level === 'warn' ? 'bg-yellow-400' :
+                log.level === 'info' ? 'bg-blue-400' :
+                'bg-gray-400'
+              }`}></div>
+              <div className="flex-1">
+                <div className="text-white text-sm">{log.message}</div>
+                <div className="text-gray-400 text-xs">{new Date(log.timestamp).toLocaleString()}</div>
+              </div>
+              {log.user && (
+                <div className="text-gray-300 text-sm">{log.user}</div>
+              )}
+            </div>
+          )) : (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-3">📜</div>
+              <h4 className="text-white/70 font-medium mb-2">No Recent Logs</h4>
+              <p className="text-white/50 text-sm">Server activity logs will appear here</p>
+              <button 
+                className="mt-4 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all"
+                onClick={() => window.location.reload()}
+              >
+                Refresh Logs
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
