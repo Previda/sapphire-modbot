@@ -98,7 +98,7 @@ const Dashboard = ({ user }) => {
     try {
       setDataLoading(true)
       
-      // Try multiple endpoints in order of preference
+      // Use working endpoints with proper fallbacks
       const endpoints = [
         `/api/live-data`,
         `/api/bot-live-${selectedServer.id}`,
@@ -139,71 +139,76 @@ const Dashboard = ({ user }) => {
 
   if (initialLoad && loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center space-y-8">
-          {/* Logo/Brand */}
-          <div className="mb-8">
-            <div className="w-20 h-20 bg-white/10 rounded-2xl backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto mb-4">
-              <span className="text-4xl">🏰</span>
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-2">Skyfall Dashboard</h1>
-            <p className="text-white/60">Loading your Discord servers...</p>
-          </div>
-
-          {/* Loading Animation */}
-          <div className="relative">
-            <div className="relative w-20 h-20 mx-auto mb-8">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-20 animate-pulse"></div>
-              <div className="absolute inset-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-spin" style={{animationDuration: '3s'}}></div>
-              <div className="absolute inset-4 rounded-full bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-                <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{animationDelay: '0.5s'}}></div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="w-80 h-1 bg-white/10 rounded-full mx-auto overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full transition-all duration-1000 ease-out" 
-                     style={{width: dataLoading ? '85%' : '35%'}}></div>
-              </div>
-              <p className="text-white/70 text-sm font-medium">
-                {dataLoading ? 'Loading server data...' : 'Connecting to Discord...'}
-              </p>
-            </div>
-          </div>
-
-          {/* Loading Steps */}
-          <div className="space-y-4 text-left max-w-sm mx-auto">
-            <div className="flex items-center space-x-4 transition-all duration-500 ease-out">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-emerald-400 flex items-center justify-center shadow-lg">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-indigo-500/5 rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        </div>
+        
+        <div className="text-center space-y-12 z-10 relative">
+          {/* Modern Logo */}
+          <div className="mb-12">
+            <div className="relative">
+              <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl backdrop-blur-xl border border-white/10 flex items-center justify-center mx-auto mb-6 shadow-2xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <svg className="w-12 h-12 text-white relative z-10" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7v10l10 5 10-5V7l-10-5zm0 2.18L19.82 8 12 11.82 4.18 8 12 4.18zM4 9.07l7 3.5v7.36l-7-3.5V9.07zm16 0v7.36l-7 3.5v-7.36l7-3.5z"/>
                 </svg>
               </div>
-              <span className="text-white/80 font-medium">Discord Connected</span>
+              <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full blur-xl animate-pulse"></div>
+            </div>
+            <h1 className="text-5xl font-black text-white mb-4 tracking-tight">
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                Sapphire
+              </span>
+              <span className="text-white/90"> Dashboard</span>
+            </h1>
+            <p className="text-white/50 text-lg font-medium tracking-wide">Initializing Discord integration...</p>
+          </div>
+
+          {/* Advanced Loading Animation */}
+          <div className="relative">
+            <div className="relative w-32 h-32 mx-auto mb-12">
+              {/* Outer Ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
+              
+              {/* Middle Ring */}
+              <div className="absolute inset-4 rounded-full border-3 border-blue-500/20"></div>
+              <div className="absolute inset-4 rounded-full border-3 border-transparent border-r-blue-500 animate-spin" style={{animationDuration: '2s', animationDirection: 'reverse'}}></div>
+              
+              {/* Inner Ring */}
+              <div className="absolute inset-8 rounded-full border-2 border-indigo-500/20"></div>
+              <div className="absolute inset-8 rounded-full border-2 border-transparent border-b-indigo-500 animate-spin" style={{animationDuration: '1.5s'}}></div>
+              
+              {/* Center Core */}
+              <div className="absolute inset-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center animate-pulse">
+                <div className="w-4 h-4 bg-white rounded-full animate-ping"></div>
+              </div>
             </div>
             
-            <div className="flex items-center space-x-4 transition-all duration-700 ease-out">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                dataLoading 
-                  ? 'bg-gradient-to-r from-blue-400 to-purple-400 shadow-lg shadow-blue-400/50' 
-                  : 'bg-white/20 border-2 border-white/30'
-              }`}>
-                {dataLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <span className="text-white/60 text-sm font-bold">2</span>
-                )}
+            {/* Progress Bar */}
+            <div className="space-y-6">
+              <div className="w-96 max-w-sm mx-auto">
+                <div className="h-2 bg-white/5 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+                  <div className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 rounded-full transition-all duration-2000 ease-out animate-pulse" 
+                       style={{width: dataLoading ? '75%' : '25%'}}></div>
+                </div>
               </div>
-              <span className={`font-medium transition-colors duration-300 ${
-                dataLoading ? 'text-white' : 'text-white/50'
-              }`}>Fetching Servers</span>
-            </div>
-            
-            <div className="flex items-center space-x-4 transition-all duration-500 ease-out">
-              <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">
-                <span className="text-white/40 text-sm font-bold">3</span>
+              
+              {/* Status Text */}
+              <div className="space-y-2">
+                <p className="text-white/80 text-base font-semibold">
+                  {dataLoading ? 'Fetching server analytics...' : 'Authenticating with Discord API...'}
+                </p>
+                <div className="flex items-center justify-center space-x-1">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
               </div>
-              <span className="text-white/40 font-medium">Loading Dashboard</span>
             </div>
           </div>
         </div>
@@ -218,12 +223,17 @@ const Dashboard = ({ user }) => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <span className="text-xl">🏰</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg border border-white/10">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7v10l10 5 10-5V7l-10-5zm0 2.18L19.82 8 12 11.82 4.18 8 12 4.18zM4 9.07l7 3.5v7.36l-7-3.5V9.07zm16 0v7.36l-7 3.5v-7.36l7-3.5z"/>
+                </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Skyfall Dashboard</h1>
-                <p className="text-white/60 text-sm">Discord Bot Management</p>
+                <h1 className="text-2xl font-black text-white tracking-tight">
+                  <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Sapphire</span>
+                  <span className="text-white/90"> Dashboard</span>
+                </h1>
+                <p className="text-white/50 text-sm font-medium">Advanced Discord Bot Management</p>
               </div>
             </div>
             

@@ -23,6 +23,27 @@ export default async function handler(req, res) {
 
     const guilds = await guildsResponse.json()
     
+    // Check which guilds have the bot using bot token
+    const botToken = process.env.DISCORD_BOT_TOKEN
+    const botGuilds = []
+    
+    if (botToken) {
+      try {
+        const botGuildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
+          headers: {
+            'Authorization': `Bot ${botToken}`
+          }
+        })
+        
+        if (botGuildsResponse.ok) {
+          const botGuildsData = await botGuildsResponse.json()
+          botGuilds.push(...botGuildsData.map(g => g.id))
+        }
+      } catch (error) {
+        console.error('Bot guilds fetch error:', error)
+      }
+    }
+    
     // Filter guilds where user has elevated permissions (admin, manage server, etc.)
     const elevatedGuilds = guilds.filter(guild => {
       const permissions = parseInt(guild.permissions)
@@ -33,11 +54,19 @@ export default async function handler(req, res) {
       return hasAdmin || hasManageGuild || isOwner
     })
 
+    // Mark which guilds have the bot
+    const guildsWithBotStatus = elevatedGuilds.map(guild => ({
+      ...guild,
+      botPresent: botGuilds.includes(guild.id),
+      canManage: true
+    }))
+
     res.status(200).json({
       allGuilds: guilds,
-      elevatedGuilds: elevatedGuilds,
+      elevatedGuilds: guildsWithBotStatus,
       totalGuilds: guilds.length,
-      elevatedCount: elevatedGuilds.length
+      elevatedCount: guildsWithBotStatus.length,
+      botGuilds: botGuilds.length
     })
 
   } catch (error) {
