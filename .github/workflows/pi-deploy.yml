@@ -52,14 +52,10 @@ jobs:
       - name: Deploy to Raspberry Pi
         uses: appleboy/ssh-action@v1.0.3
         continue-on-error: true
-        env:
-          PI_HOST: ${{ secrets.PI_HOST }}
-          PI_USER: ${{ secrets.PI_USER }}
-          PI_SSH_KEY: ${{ secrets.PI_SSH_KEY }}
         with:
-          host: ${{ env.PI_HOST }}
-          username: ${{ env.PI_USER }}
-          key: ${{ env.PI_SSH_KEY }}
+          host: ${{ secrets.PI_HOST }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
           port: 22
           timeout: 30s
           command_timeout: 10m
