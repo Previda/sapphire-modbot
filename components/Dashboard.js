@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import MusicPlayer from './MusicPlayer';
 import VerificationTab from './VerificationTab';
-import CommandEditor from './CommandEditor'
+import CommandEditor from './CommandEditor';
+import { useToast } from './Toast';
 
 const Dashboard = ({ user }) => {
   const { showToast, ToastContainer } = useToast()
