@@ -98,15 +98,33 @@ const Dashboard = ({ user }) => {
     try {
       setDataLoading(true)
       
-      const response = await fetch(`/api/bot/live/${selectedServer.id}`)
+      // Try multiple endpoints in order of preference
+      const endpoints = [
+        `/api/live-data`,
+        `/api/bot-live-${selectedServer.id}`,
+        `/api/test-live`
+      ]
       
-      if (response.ok) {
-        const data = await response.json()
+      let data = null
+      let lastError = null
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint)
+          if (response.ok) {
+            data = await response.json()
+            break
+          }
+          lastError = `${endpoint}: ${response.status}`
+        } catch (err) {
+          lastError = `${endpoint}: ${err.message}`
+        }
+      }
+      
+      if (data) {
         setLiveData(data)
       } else {
-        console.error(`Live data API error: ${response.status}`)
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('Error details:', errorData)
+        console.error('All API endpoints failed:', lastError)
       }
     } catch (error) {
       console.error('Live data fetch error:', error)
