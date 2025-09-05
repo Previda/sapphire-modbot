@@ -10,134 +10,194 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Try to get real Discord data, fallback to mock data
-    let realData = null
-    
-    try {
-      realData = await fetchRealDiscordData(serverId)
-    } catch (error) {
-      console.error('Failed to fetch real Discord data:', error)
-    }
-    
-    if (realData) {
-      return res.status(200).json(realData)
-    }
-    
-    // Fallback to mock data
-    const mockData = {
-      serverId,
-      lastUpdated: new Date().toISOString(),
-      stats: {
-        memberCount: 1543,
-        onlineMembers: 327,
-        botUptime: Math.floor((Date.now() - 1640995200000) / 1000),
-        commandsToday: 156,
-        serverHealth: 98,
-        messagesPerHour: 45,
-        activeChannels: 8
-      },
-      music: {
-        isPlaying: false,
-        currentSong: null,
-        queue: [],
-        volume: 75,
-        repeat: 'off',
-        shuffle: false
-      },
-      moderation: {
-        recentActions: [
-          {
-            id: '1',
-            action: 'timeout',
-            user: 'User123',
-            moderator: 'Moderator456',
-            reason: 'Spam messages',
-            timestamp: new Date(Date.now() - 3600000).toISOString()
-          }
-        ],
-        automodStats: {
-          messagesScanned: 2340,
-          actionsToday: 12,
-          blockedSpam: 8,
-          filteredWords: 4,
-          autoTimeouts: 2
-        },
-        cases: []
-      },
-      tickets: {
-        active: [],
-        totalToday: 3,
-        resolvedToday: 2,
-        avgResponseTime: 1200
-      },
-      logs: {
-        recent: [
-          {
-            id: '1',
-            type: 'command',
-            user: 'User123',
-            action: 'Used /play command',
-            details: 'Song: Never Gonna Give You Up',
-            timestamp: new Date().toISOString(),
-            channel: 'music'
-          }
-        ],
-        totalToday: 156,
-        errorCount: 2,
-        warningCount: 5
-      },
-      analytics: {
-        messageActivity: Array.from({length: 24}, (_, i) => ({
-          hour: i,
-          messages: Math.floor(Math.random() * 100),
-          commands: Math.floor(Math.random() * 20)
-        })),
-        topCommands: [
-          { name: 'play', usage: 45 },
-          { name: 'skip', usage: 23 },
-          { name: 'queue', usage: 18 }
-        ],
-        memberGrowth: {
-          daily: 5,
-          weekly: 28,
-          monthly: 134
-        }
-      },
-      commands: [
-        { name: 'play', category: 'Music', enabled: true, usage: 45, cooldown: 3, description: 'Play music from YouTube, Spotify, or SoundCloud' },
-        { name: 'skip', category: 'Music', enabled: true, usage: 23, cooldown: 2, description: 'Skip the current song' },
-        { name: 'stop', category: 'Music', enabled: true, usage: 8, cooldown: 2, description: 'Stop music and clear queue' },
-        { name: 'queue', category: 'Music', enabled: true, usage: 18, cooldown: 1, description: 'Show current music queue' },
-        { name: 'volume', category: 'Music', enabled: true, usage: 12, cooldown: 1, description: 'Set music volume' },
-        { name: 'ban', category: 'Moderation', enabled: true, usage: 2, cooldown: 5, description: 'Ban a member from the server' },
-        { name: 'kick', category: 'Moderation', enabled: true, usage: 3, cooldown: 3, description: 'Kick a member from the server' },
-        { name: 'warn', category: 'Moderation', enabled: true, usage: 7, cooldown: 1, description: 'Warn a member' },
-        { name: 'timeout', category: 'Moderation', enabled: true, usage: 4, cooldown: 3, description: 'Timeout a member' },
-        { name: 'ticket', category: 'Tickets', enabled: true, usage: 8, cooldown: 5, description: 'Manage support tickets' },
-        { name: 'ticket-setup', category: 'Tickets', enabled: true, usage: 1, cooldown: 10, description: 'Setup ticket system' },
-        { name: '8ball', category: 'Games', enabled: true, usage: 15, cooldown: 2, description: 'Ask the magic 8-ball a question' },
-        { name: 'coinflip', category: 'Games', enabled: true, usage: 9, cooldown: 1, description: 'Flip a coin' },
-        { name: 'dice', category: 'Games', enabled: true, usage: 6, cooldown: 1, description: 'Roll dice' },
-        { name: 'rps', category: 'Games', enabled: true, usage: 11, cooldown: 2, description: 'Play Rock Paper Scissors' },
-        { name: 'trivia', category: 'Games', enabled: true, usage: 4, cooldown: 5, description: 'Start a trivia question' },
-        { name: 'ping', category: 'Utility', enabled: true, usage: 24, cooldown: 1, description: 'Check bot latency' },
-        { name: 'help', category: 'Utility', enabled: true, usage: 16, cooldown: 2, description: 'Show command list' },
-        { name: 'serverinfo', category: 'Utility', enabled: true, usage: 5, cooldown: 3, description: 'Show server information' },
-        { name: 'userinfo', category: 'Utility', enabled: true, usage: 8, cooldown: 2, description: 'Show user information' }
-      ],
-      responseTime: '42ms',
-      uptime: '99.8%',
-      memoryUsage: '287MB'
-    }
-    
-    return res.status(200).json(mockData)
+    const realData = await fetchRealDiscordData(serverId)
+    return res.status(200).json(realData)
   } catch (error) {
     console.error('Live data error:', error)
-    return res.status(500).json({ error: 'Failed to fetch live data' })
+    return res.status(500).json({ 
+      error: 'Failed to fetch live data', 
+      details: error.message,
+      serverId 
+    })
   }
 }
 
-// Helper functions
+async function fetchRealDiscordData(serverId) {
+  const botToken = process.env.DISCORD_BOT_TOKEN
+  if (!botToken) {
+    throw new Error('No bot token configured')
+  }
+
+  // Fetch guild data
+  const guildResponse = await fetch(`https://discord.com/api/v10/guilds/${serverId}?with_counts=true`, {
+    headers: {
+      'Authorization': `Bot ${botToken}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  if (!guildResponse.ok) {
+    throw new Error(`Guild fetch failed: ${guildResponse.status} ${guildResponse.statusText}`)
+  }
+
+  const guild = await guildResponse.json()
+
+  // Fetch audit log for recent moderation actions
+  const auditResponse = await fetch(`https://discord.com/api/v10/guilds/${serverId}/audit-logs?limit=50`, {
+    headers: {
+      'Authorization': `Bot ${botToken}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  let recentActions = []
+  if (auditResponse.ok) {
+    const auditData = await auditResponse.json()
+    
+    // Get user info for moderators and targets
+    const userIds = new Set()
+    auditData.audit_log_entries?.forEach(entry => {
+      if (entry.target_id) userIds.add(entry.target_id)
+      if (entry.user_id) userIds.add(entry.user_id)
+    })
+    
+    const users = {}
+    for (const userId of userIds) {
+      try {
+        const userResponse = await fetch(`https://discord.com/api/v10/users/${userId}`, {
+          headers: {
+            'Authorization': `Bot ${botToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          users[userId] = `${userData.username}${userData.discriminator !== '0' ? '#' + userData.discriminator : ''}`
+        }
+      } catch (error) {
+        users[userId] = `User#${userId.slice(-4)}`
+      }
+    }
+    
+    recentActions = auditData.audit_log_entries?.slice(0, 10).map(entry => ({
+      id: entry.id,
+      action: getActionName(entry.action_type),
+      user: users[entry.target_id] || 'Unknown User',
+      moderator: users[entry.user_id] || 'Unknown Moderator',
+      reason: entry.reason || 'No reason provided',
+      timestamp: entry.created_at || new Date().toISOString(),
+      actionType: entry.action_type
+    })) || []
+  }
+
+  // Fetch channels for active channel count
+  const channelsResponse = await fetch(`https://discord.com/api/v10/guilds/${serverId}/channels`, {
+    headers: {
+      'Authorization': `Bot ${botToken}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  let activeChannels = 0
+  if (channelsResponse.ok) {
+    const channels = await channelsResponse.json()
+    activeChannels = channels.filter(ch => ch.type === 0 || ch.type === 2).length // Text and Voice channels
+  }
+
+  // Try to fetch Pi bot data for enhanced stats
+  let piData = null
+  try {
+    const piUrl = process.env.PI_BOT_API_URL
+    const piToken = process.env.PI_BOT_TOKEN
+    if (piUrl && piToken) {
+      const piResponse = await fetch(`${piUrl}/api/guild/${serverId}/stats`, {
+        headers: {
+          'Authorization': `Bearer ${piToken}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 5000
+      })
+      if (piResponse.ok) {
+        piData = await piResponse.json()
+      }
+    }
+  } catch (error) {
+    console.log('Pi bot data not available:', error.message)
+  }
+
+  return {
+    serverId,
+    lastUpdated: new Date().toISOString(),
+    stats: {
+      memberCount: guild.member_count || 0,
+      onlineMembers: guild.presence_count || 0,
+      botUptime: piData?.uptime || Math.floor((Date.now() - 1640995200000) / 1000),
+      commandsToday: piData?.commandsToday || 0,
+      serverHealth: piData?.health || 100,
+      messagesPerHour: piData?.messagesPerHour || 0,
+      activeChannels: activeChannels
+    },
+    music: piData?.music || {
+      isPlaying: false,
+      currentSong: null,
+      queue: [],
+      volume: 0,
+      repeat: 'off',
+      shuffle: false
+    },
+    moderation: {
+      recentActions,
+      automodStats: piData?.automod || {
+        messagesScanned: 0,
+        actionsToday: recentActions.length,
+        blockedSpam: 0,
+        filteredWords: 0,
+        autoTimeouts: 0
+      }
+    },
+    tickets: piData?.tickets || {
+      active: [],
+      totalToday: 0,
+      resolvedToday: 0,
+      avgResponseTime: 0
+    },
+    logs: {
+      recent: recentActions.map(action => ({
+        id: action.id,
+        type: 'moderation',
+        user: action.user,
+        action: action.action,
+        details: action.reason,
+        timestamp: action.timestamp,
+        channel: 'audit-log'
+      })),
+      totalToday: recentActions.length,
+      errorCount: 0,
+      warningCount: 0
+    },
+    analytics: piData?.analytics || {
+      messageActivity: Array.from({length: 24}, (_, i) => ({
+        hour: i,
+        messages: 0,
+        commands: 0
+      })),
+      topCommands: [],
+      memberGrowth: {
+        daily: 0,
+        weekly: 0,
+        monthly: 0
+      }
+    },
+    commands: piData?.commands || [
+      { name: 'play', category: 'Music', enabled: true, usage: 0, cooldown: 3, description: 'Play music' },
+      { name: 'skip', category: 'Music', enabled: true, usage: 0, cooldown: 2, description: 'Skip song' },
+      { name: 'ban', category: 'Moderation', enabled: true, usage: 0, cooldown: 5, description: 'Ban member' },
+      { name: 'kick', category: 'Moderation', enabled: true, usage: 0, cooldown: 3, description: 'Kick member' },
+      { name: 'ping', category: 'Utility', enabled: true, usage: 0, cooldown: 1, description: 'Check latency' }
+    ]
+  }
+}
+
 function getActionName(actionType) {
   const actions = {
     1: 'Server Update',
