@@ -660,11 +660,12 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                             <div>
                               <label className="block text-white/70 text-sm mb-1">Command Description</label>
                               <input
+                                id={`cmd-desc-${command.name}`}
+                                name={`commandDescription-${command.name}`}
                                 type="text"
                                 defaultValue={command.description || ''}
                                 className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
                                 placeholder="What this command does"
-                                id={`desc-${command.id}`}
                               />
                             </div>
                             
@@ -693,11 +694,12 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                               <div>
                                 <label className="block text-white/70 text-sm mb-1">Command Alias</label>
                                 <input
+                                  id={`cmd-alias-${command.name}`}
+                                  name={`commandAlias-${command.name}`}
                                   type="text"
                                   defaultValue={command.alias || ''}
                                   className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
                                   placeholder="Alternative name (optional)"
-                                  id={`alias-${command.id}`}
                                 />
                               </div>
                               
@@ -707,11 +709,12 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                                   <div>
                                     <label className="block text-white/70 text-sm mb-1">Default Reason</label>
                                     <input
+                                      id={`cmd-reason-${command.name}`}
+                                      name={`defaultReason-${command.name}`}
                                       type="text"
                                       defaultValue={command.defaultReason || ''}
                                       className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
                                       placeholder="Default moderation reason"
-                                      id={`reason-${command.id}`}
                                     />
                                   </div>
                                   
@@ -744,13 +747,14 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                                   <div>
                                     <label className="block text-white/70 text-sm mb-1">Max Queue Size</label>
                                     <input
+                                      id={`cmd-queue-${command.name}`}
+                                      name={`maxQueueSize-${command.name}`}
                                       type="number"
                                       min="1"
                                       max="100"
-                                      defaultValue={command.maxQueue || 50}
+                                      defaultValue={command.maxQueueSize || 50}
                                       className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
                                       placeholder="Maximum songs in queue"
-                                      id={`maxqueue-${command.id}`}
                                     />
                                   </div>
                                   <div>
@@ -1201,11 +1205,13 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
               <label className="block text-white/80 text-sm font-medium mb-3">Target User</label>
               <div className="relative">
                 <input
+                  id="targetUser"
+                  name="targetUser"
                   type="text"
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
-                  className="w-full px-4 py-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:outline-none transition-colors"
-                  placeholder="Type username to search..."
+                  placeholder="Enter username or user ID"
+                  className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
                 />
                 {showUserDropdown && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-black/90 backdrop-blur-xl border border-white/20 rounded-xl overflow-hidden z-10">
@@ -1297,11 +1303,13 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
                 </div>
                 {actionDuration === 'custom' && (
                   <input
+                    id="customDuration"
+                    name="customDuration"
                     type="text"
                     value={actionDuration === 'custom' ? '' : actionDuration}
                     onChange={(e) => setActionDuration(e.target.value)}
-                    className="w-full px-4 py-2 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:outline-none transition-colors mt-2"
-                    placeholder="e.g., 2h, 5d, 1w"
+                    placeholder="e.g., 1d, 2h, 30m"
+                    className="px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:border-blue-400 focus:outline-none transition-colors mt-2"
                   />
                 )}
               </div>
@@ -1387,6 +1395,8 @@ function SettingsTab({ selectedServer }) {
               </div>
               {setting.type === 'text' && (
                 <input 
+                  id={`setting-${setting.id}`}
+                  name={`setting-${setting.id}`}
                   type="text" 
                   defaultValue={setting.value}
                   className={`${setting.width} px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-center`}
@@ -1394,7 +1404,13 @@ function SettingsTab({ selectedServer }) {
               )}
               {setting.type === 'toggle' && (
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked={setting.value} />
+                  <input 
+                    id={`toggle-${setting.id}`}
+                    name={`toggle-${setting.id}`}
+                    type="checkbox" 
+                    className="sr-only peer" 
+                    defaultChecked={setting.value} 
+                  />
                   <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
                 </label>
               )}

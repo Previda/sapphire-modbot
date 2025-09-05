@@ -214,6 +214,8 @@ function VerificationConfigured({ config, stats, onUpdate, updating }) {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
+                id="dmWelcome"
+                name="dmWelcome"
                 type="checkbox"
                 checked={settings.dmWelcome}
                 onChange={(e) => setSettings(prev => ({ ...prev, dmWelcome: e.target.checked }))}
@@ -245,6 +247,8 @@ function VerificationConfigured({ config, stats, onUpdate, updating }) {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
+                id="removeUnverified"
+                name="removeUnverified"
                 type="checkbox"
                 checked={settings.removeUnverified}
                 onChange={(e) => setSettings(prev => ({ ...prev, removeUnverified: e.target.checked }))}
@@ -258,12 +262,14 @@ function VerificationConfigured({ config, stats, onUpdate, updating }) {
             <div>
               <label className="text-white font-medium mb-2 block">Timeout (Hours)</label>
               <input
+                id="timeoutHours"
+                name="timeoutHours"
                 type="number"
                 min="1"
                 max="168"
                 value={settings.timeoutHours}
                 onChange={(e) => setSettings(prev => ({ ...prev, timeoutHours: parseInt(e.target.value) }))}
-                className="w-full p-3 bg-white/10 text-white rounded-lg border border-white/20"
+                className="w-24 px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-center"
               />
             </div>
           )}

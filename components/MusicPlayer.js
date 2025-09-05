@@ -190,18 +190,16 @@ export default function MusicPlayer({ serverId }) {
         <div className="flex items-center gap-3">
           <span className="text-white text-sm">🔊</span>
           <input 
+            id="volumeSlider"
+            name="volumeSlider"
             type="range" 
             min="0" 
             max="100" 
-            value={musicState?.volume || volume}
-            onChange={(e) => {
-              const newVolume = parseInt(e.target.value);
-              setVolume(newVolume);
-              sendMusicCommand('volume', { volume: newVolume });
-            }}
-            className="w-24 accent-purple-500"
+            value={volume}
+            onChange={(e) => setVolume(e.target.value)}
+            className="w-32 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
           />
-          <span className="text-gray-300 text-sm w-10">{musicState?.volume || volume}%</span>
+          <span className="text-gray-300 text-sm w-10">{volume}%</span>
         </div>
         
         <div className="flex items-center gap-2">
@@ -309,11 +307,13 @@ function PlayUrlInput({ onPlay }) {
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       <input 
+        id="musicUrl"
+        name="musicUrl"
         type="text"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
         placeholder="Enter YouTube URL or search term..."
-        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+        className="flex-1 px-4 py-2 bg-black/30 border border-white/20 rounded-l text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
         disabled={loading}
       />
       <button 
