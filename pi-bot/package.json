@@ -1,12 +1,12 @@
 {
-  "name": "sapphire-pi-bot",
+  "name": "skyfall-pi-bot",
   "version": "1.0.0",
   "description": "Discord bot with API server for Pi",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
     "dev": "nodemon bot.js",
-    "pm2": "pm2 start bot.js --name sapphire-bot"
+    "pm2": "pm2 start bot.js --name skyfall-bot"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
@@ -18,6 +18,6 @@
     "nodemon": "^3.0.2"
   },
   "keywords": ["discord", "bot", "api", "dashboard"],
-  "author": "Sapphire Dashboard",
+  "author": "Skyfall Dashboard",
   "license": "MIT"
 }

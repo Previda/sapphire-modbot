@@ -231,7 +231,7 @@ const Dashboard = ({ user }) => {
               </div>
               <div>
                 <h1 className="text-2xl font-black text-white tracking-tight">
-                  <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Sapphire</span>
+                  <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Skyfall</span>
                   <span className="text-white/90"> Dashboard</span>
                 </h1>
                 <p className="text-white/50 text-sm font-medium">Advanced Discord Bot Management</p>

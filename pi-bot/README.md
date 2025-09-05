@@ -1,4 +1,4 @@
-# Sapphire Pi Bot Setup
+# Skyfall Pi Bot Setup
 
 ## Installation on Pi
 
@@ -19,8 +19,8 @@ npm --version
 ### 2. Copy Bot Files to Pi
 ```bash
 # Create directory on Pi
-mkdir -p ~/sapphire-bot
-cd ~/sapphire-bot
+mkdir -p ~/skyfall-bot
+cd ~/skyfall-bot
 
 # Copy files (you'll need to transfer bot.js, package.json from Windows to Pi)
 # Use SCP or copy manually
@@ -28,7 +28,7 @@ cd ~/sapphire-bot
 
 ### 3. Install Dependencies
 ```bash
-cd ~/sapphire-bot
+cd ~/skyfall-bot
 npm install
 ```
 
