@@ -16,26 +16,42 @@ export default async function handler(req, res) {
 
 async function getTickets(req, res, serverId) {
   try {
-    // Try bot API first
+    // Connect to Pi bot API
     const botApiUrl = process.env.PI_BOT_API_URL;
     const botToken = process.env.PI_BOT_TOKEN;
     
-    if (botApiUrl && botToken) {
-      try {
-        const response = await fetch(`${botApiUrl}/tickets/${serverId}`, {
-          headers: {
-            'Authorization': `Bearer ${botToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          const ticketsData = await response.json();
-          return res.status(200).json(ticketsData);
+    if (!botApiUrl || !botToken) {
+      return res.status(503).json({ 
+        error: 'Bot API not configured',
+        message: 'Tickets unavailable - bot offline'
+      });
+    }
+
+    try {
+      const response = await fetch(`${botApiUrl}/api/tickets/${serverId}`, {
+        headers: {
+          'Authorization': `Bearer ${botToken}`,
+          'Content-Type': 'application/json'
         }
-      } catch (botApiError) {
-        console.log('Bot API unavailable, using Discord API fallback');
+      });
+      
+      if (response.ok) {
+        const ticketsData = await response.json();
+        return res.status(200).json(ticketsData);
+      } else {
+        // Return empty tickets data if bot doesn't have any
+        return res.status(200).json({
+          stats: { total: 0, open: 0, closed: 0 },
+          tickets: [],
+          message: 'No tickets found for this server'
+        });
       }
+    } catch (botApiError) {
+      console.error('Tickets API error:', botApiError);
+      return res.status(500).json({ 
+        error: 'Connection failed',
+        message: 'Cannot reach bot - may be offline'
+      });
     }
     
     // Fallback to Discord API
@@ -120,41 +136,51 @@ async function createTicket(req, res, serverId) {
       return res.status(400).json({ error: 'Ticket reason is required' });
     }
 
-    // Try to create ticket via bot API
+    // Connect to Pi bot API
     const botApiUrl = process.env.PI_BOT_API_URL;
     const botToken = process.env.PI_BOT_TOKEN;
     
-    if (botApiUrl && botToken) {
-      try {
-        const response = await fetch(`${botApiUrl}/tickets/${serverId}/create`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${botToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            reason,
-            category: category || 'general',
-            priority: priority || 'normal',
-            source: 'dashboard'
-          })
-        });
-        
-        if (response.ok) {
-          const ticketData = await response.json();
-          return res.status(200).json(ticketData);
-        }
-      } catch (botApiError) {
-        console.log('Bot API unavailable for ticket creation');
-      }
+    if (!botApiUrl || !botToken) {
+      return res.status(503).json({ 
+        error: 'Bot API not configured',
+        message: 'Ticket creation unavailable - bot offline'
+      });
     }
-    
-    // Fallback: Return instructions for manual ticket creation
-    return res.status(200).json({
-      success: false,
-      message: 'Bot API unavailable. Please use the Discord bot command /ticket create',
-      fallbackCommand: `/ticket create reason:${reason}`
-    });
+
+    try {
+      const response = await fetch(`${botApiUrl}/api/tickets/${serverId}/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${botToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reason,
+          category: category || 'general',
+          priority: priority || 'normal',
+          source: 'dashboard',
+          serverId
+        })
+      });
+      
+      if (response.ok) {
+        const ticketData = await response.json();
+        return res.status(200).json(ticketData);
+      } else {
+        const errorText = await response.text();
+        console.error('Bot API error:', response.status, errorText);
+        return res.status(response.status).json({ 
+          error: 'Bot API error',
+          message: 'Failed to create ticket'
+        });
+      }
+    } catch (botApiError) {
+      console.error('Ticket creation error:', botApiError);
+      return res.status(500).json({ 
+        error: 'Connection failed',
+        message: 'Cannot reach bot - may be offline'
+      });
+    }
     
   } catch (error) {
     console.error('Create ticket error:', error);

@@ -1,5 +1,3 @@
-import { getDocument, setDocument } from '../../../utils/simpleDatabase';
-
 export default async function handler(req, res) {
   const { serverId } = req.query;
 
@@ -7,98 +5,86 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Server ID required' });
   }
 
+  const botApiUrl = process.env.PI_BOT_API_URL;
+  const botToken = process.env.PI_BOT_TOKEN;
+
+  if (!botApiUrl || !botToken) {
+    return res.status(503).json({ 
+      error: 'Bot API not configured',
+      message: 'Verification system unavailable - bot offline'
+    });
+  }
+
   if (req.method === 'GET') {
     try {
-      const config = await getDocument('verification', serverId);
-      const logs = await getDocument('verification_logs', serverId) || { entries: [] };
-      const attempts = await getDocument('verification_attempts', serverId) || { entries: [] };
-
-      // Calculate stats
-      const stats = {
-        totalVerifications: logs.entries.filter(e => e.success === true).length,
-        pendingVerifications: logs.entries.filter(e => e.success === null).length,
-        failedAttempts: attempts.entries.filter(e => !e.success).length,
-        verificationRate: 0,
-        averageVerificationTime: 0
-      };
-
-      if (logs.entries.length > 0) {
-        const successful = logs.entries.filter(e => e.success === true);
-        stats.verificationRate = Math.round((successful.length / logs.entries.length) * 100);
-      }
-
-      res.status(200).json({
-        config: config || null,
-        stats,
-        recentLogs: logs.entries.slice(0, 20),
-        recentAttempts: attempts.entries.slice(0, 10)
+      // Fetch verification data from Pi bot API
+      const response = await fetch(`${botApiUrl}/api/verification/${serverId}`, {
+        headers: {
+          'Authorization': `Bearer ${botToken}`,
+          'Content-Type': 'application/json'
+        }
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        return res.status(200).json(data);
+      } else {
+        // Fallback data if bot doesn't have verification data yet
+        return res.status(200).json({
+          config: null,
+          stats: {
+            totalVerifications: 0,
+            pendingVerifications: 0,
+            failedAttempts: 0,
+            verificationRate: 0,
+            averageVerificationTime: 0
+          },
+          recentLogs: [],
+          recentAttempts: [],
+          message: 'Verification not configured for this server'
+        });
+      }
 
     } catch (error) {
       console.error('Verification API error:', error);
-      res.status(500).json({ error: 'Failed to fetch verification data' });
+      return res.status(500).json({ 
+        error: 'Connection failed',
+        message: 'Cannot reach bot - may be offline'
+      });
     }
 
   } else if (req.method === 'POST') {
     try {
       const { action, settings } = req.body;
 
-      if (action === 'update_settings') {
-        const config = await getDocument('verification', serverId);
-        if (!config) {
-          return res.status(404).json({ error: 'Verification not configured' });
-        }
+      // Send verification command to Pi bot API
+      const response = await fetch(`${botApiUrl}/api/verification/${serverId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${botToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action, settings, serverId })
+      });
 
-        const updatedConfig = {
-          ...config,
-          ...settings,
-          updatedAt: Date.now()
-        };
-
-        await setDocument('verification', serverId, updatedConfig);
-        
-        res.status(200).json({ 
-          success: true, 
-          message: 'Settings updated',
-          config: updatedConfig 
-        });
-
-      } else if (action === 'toggle_enabled') {
-        const config = await getDocument('verification', serverId);
-        if (!config) {
-          return res.status(404).json({ error: 'Verification not configured' });
-        }
-
-        const updatedConfig = {
-          ...config,
-          enabled: !config.enabled,
-          updatedAt: Date.now()
-        };
-
-        await setDocument('verification', serverId, updatedConfig);
-        
-        res.status(200).json({ 
-          success: true, 
-          message: `Verification ${updatedConfig.enabled ? 'enabled' : 'disabled'}`,
-          config: updatedConfig 
-        });
-
-      } else if (action === 'clear_logs') {
-        await setDocument('verification_logs', serverId, { entries: [] });
-        await setDocument('verification_attempts', serverId, { entries: [] });
-        
-        res.status(200).json({ 
-          success: true, 
-          message: 'Logs cleared' 
-        });
-
+      if (response.ok) {
+        const result = await response.json();
+        return res.status(200).json(result);
       } else {
-        res.status(400).json({ error: 'Invalid action' });
+        const errorText = await response.text();
+        console.error('Bot API error:', response.status, errorText);
+        return res.status(response.status).json({ 
+          error: 'Bot API error',
+          message: `Failed to ${action} verification`
+        });
       }
 
     } catch (error) {
       console.error('Verification API POST error:', error);
-      res.status(500).json({ error: 'Failed to update verification settings' });
+      return res.status(500).json({ 
+        error: 'Connection failed',
+        message: 'Cannot reach bot - may be offline'
+      });
     }
 
   } else {

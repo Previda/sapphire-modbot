@@ -2,132 +2,91 @@ export default async function handler(req, res) {
   const { serverId } = req.query
   const { method } = req
 
+  const botApiUrl = process.env.PI_BOT_API_URL;
+  const botToken = process.env.PI_BOT_TOKEN;
+
+  if (!botApiUrl || !botToken) {
+    return res.status(503).json({ 
+      error: 'Bot API not configured',
+      message: 'Commands unavailable - bot offline'
+    });
+  }
+
   if (method === 'GET') {
     try {
-      // Try to get commands from Pi bot API first
-      const piApiUrl = process.env.PI_BOT_API_URL || process.env.NEXT_PUBLIC_PI_API_URL
-      const piToken = process.env.PI_BOT_TOKEN || process.env.NEXT_PUBLIC_PI_TOKEN
-      
-      if (piApiUrl && piToken) {
-        try {
-          console.log(`Fetching commands from Pi bot API: ${piApiUrl}/commands/${serverId}`)
-          
-          const piResponse = await fetch(`${piApiUrl}/commands/${serverId}`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${piToken}`,
-              'Content-Type': 'application/json',
-              'User-Agent': 'Skyfall-Dashboard/1.0'
-            },
-            timeout: 10000
-          })
-          
-          if (piResponse.ok) {
-            const piData = await piResponse.json()
-            console.log('Successfully fetched commands from Pi bot API')
-            return res.status(200).json({
-              ...piData,
-              serverId,
-              source: 'pi-bot-api'
-            })
-          } else {
-            console.log(`Pi bot API responded with status: ${piResponse.status}`)
-          }
-        } catch (piError) {
-          console.error('Pi bot commands API failed:', piError.message)
+      // Fetch commands from Pi bot API
+      const response = await fetch(`${botApiUrl}/api/commands/${serverId}`, {
+        headers: {
+          'Authorization': `Bearer ${botToken}`,
+          'Content-Type': 'application/json'
         }
-      }
-      
-      // Fallback to mock commands data
-      console.log('Using fallback mock commands')
-      const mockCommands = [
-        {
-          id: '1',
-          name: 'play',
-          description: 'Play music from YouTube',
-          category: 'Music',
-          enabled: true,
-          usage: 45,
-          cooldown: 3,
-          options: [],
-          permissions: ['SEND_MESSAGES']
-        },
-        {
-          id: '2',
-          name: 'skip',
-          description: 'Skip current song',
-          category: 'Music',
-          enabled: true,
-          usage: 23,
-          cooldown: 2,
-          options: [],
-          permissions: ['SEND_MESSAGES']
-        },
-        {
-          id: '3',
-          name: 'ban',
-          description: 'Ban a user from the server',
-          category: 'Moderation',
-          enabled: true,
-          usage: 2,
-          cooldown: 5,
-          options: [],
-          permissions: ['BAN_MEMBERS']
-        },
-        {
-          id: '4',
-          name: 'kick',
-          description: 'Kick a user from the server',
-          category: 'Moderation',
-          enabled: true,
-          usage: 3,
-          cooldown: 3,
-          options: [],
-          permissions: ['KICK_MEMBERS']
-        },
-        {
-          id: '5',
-          name: 'ticket',
-          description: 'Create a support ticket',
-          category: 'Support',
-          enabled: true,
-          usage: 8,
-          cooldown: 5,
-          options: [],
-          permissions: ['SEND_MESSAGES']
-        }
-      ]
+      });
 
-      res.status(200).json({
-        serverId,
-        commands: mockCommands,
-        totalCommands: mockCommands.length,
-        categories: [...new Set(mockCommands.map(cmd => cmd.category))]
-      })
+      if (response.ok) {
+        const data = await response.json();
+        return res.status(200).json({
+          ...data,
+          serverId,
+          source: 'pi-bot-api'
+        });
+      } else {
+        // Fallback with empty commands list
+        return res.status(200).json({
+          serverId,
+          commands: [],
+          totalCommands: 0,
+          categories: [],
+          message: 'No commands configured for this server',
+          source: 'fallback'
+        });
+      }
 
     } catch (error) {
-      console.error('Commands fetch error:', error)
-      res.status(500).json({ error: 'Failed to fetch commands' })
+      console.error('Commands fetch error:', error);
+      return res.status(500).json({ 
+        error: 'Connection failed',
+        message: 'Cannot reach bot - may be offline'
+      });
     }
   }
 
   if (method === 'PUT') {
-    // Update command settings
     try {
-      const { commandId, enabled, cooldown } = req.body
+      const { commandId, enabled, cooldown } = req.body;
       
-      // Here you would update command settings in your bot's database
-      // For now, just return success
-      res.status(200).json({ 
-        success: true, 
-        message: 'Command updated successfully' 
-      })
+      // Send command update to Pi bot API
+      const response = await fetch(`${botApiUrl}/api/commands/${serverId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${botToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ commandId, enabled, cooldown, serverId })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return res.status(200).json(result);
+      } else {
+        const errorText = await response.text();
+        console.error('Bot API error:', response.status, errorText);
+        return res.status(response.status).json({ 
+          error: 'Bot API error',
+          message: 'Failed to update command'
+        });
+      }
       
     } catch (error) {
-      console.error('Command update error:', error)
-      res.status(500).json({ error: 'Failed to update command' })
+      console.error('Command update error:', error);
+      return res.status(500).json({ 
+        error: 'Connection failed',
+        message: 'Cannot reach bot - may be offline'
+      });
     }
   }
+
+  res.setHeader('Allow', ['GET', 'PUT']);
+  res.status(405).json({ error: `Method ${method} not allowed` });
 }
 
 function getCategoryFromCommand(commandName) {
