@@ -1,9 +1,40 @@
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // Return mock data for the specific server
+  // Try Pi bot API first, then fallback to mock data
+  const piApiUrl = process.env.PI_BOT_API_URL || process.env.NEXT_PUBLIC_PI_API_URL
+  const piToken = process.env.PI_BOT_TOKEN || process.env.NEXT_PUBLIC_PI_TOKEN
+  const serverId = "1340417327518191697"
+  
+  if (piApiUrl && piToken) {
+    try {
+      console.log(`Connecting to Pi bot API: ${piApiUrl}`)
+      const piResponse = await fetch(`${piApiUrl}/api/live/${serverId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${piToken}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Sapphire-Dashboard/1.0'
+        }
+      })
+      
+      if (piResponse.ok) {
+        const piData = await piResponse.json()
+        return res.status(200).json({
+          ...piData,
+          serverId,
+          lastUpdated: new Date().toISOString(),
+          source: 'pi-bot-api'
+        })
+      }
+    } catch (error) {
+      console.error('Pi bot API failed:', error.message)
+    }
+  }
+
+  // Fallback mock data
   const mockData = {
     serverId: "1340417327518191697",
     lastUpdated: new Date().toISOString(),

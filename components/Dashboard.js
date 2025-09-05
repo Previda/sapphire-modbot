@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useToast } from './Toast'
+import CommandEditor from './CommandEditor'
 
 const Dashboard = ({ user }) => {
   const { showToast, ToastContainer } = useToast()
@@ -350,7 +351,7 @@ const Dashboard = ({ user }) => {
           {activeTab === 'overview' && <OverviewTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'moderation' && <ModerationTab selectedServer={selectedServer} liveData={liveData} showModerationModal={showModerationModal} setShowModerationModal={setShowModerationModal} />}
           {activeTab === 'tickets' && <TicketsTab selectedServer={selectedServer} tickets={tickets} showTicketModal={showTicketModal} setShowTicketModal={setShowTicketModal} />}
-          {activeTab === 'commands' && <CommandsTab selectedServer={selectedServer} commands={commands} editingCommand={editingCommand} setEditingCommand={setEditingCommand} />}
+          {activeTab === 'commands' && selectedServer && <CommandEditor serverId={selectedServer.id} />}
           {activeTab === 'settings' && <SettingsTab selectedServer={selectedServer} />}
           {activeTab === 'analytics' && <AnalyticsTab selectedServer={selectedServer} liveData={liveData} />}
         </div>
