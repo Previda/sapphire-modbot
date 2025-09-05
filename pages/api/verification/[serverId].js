@@ -1,4 +1,4 @@
-import { getDocument, setDocument } from '../../../src/models/database';
+import { getDocument, setDocument } from '../../../utils/simpleDatabase';
 
 export default async function handler(req, res) {
   const { serverId } = req.query;
