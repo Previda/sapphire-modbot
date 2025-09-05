@@ -194,19 +194,21 @@ export default function CommandEditor({ serverId }) {
           <form onSubmit={editingCommand ? (e) => { e.preventDefault(); handleUpdate(editingCommand) } : handleCreate} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Command Name</label>
+                <label htmlFor="commandName" className="block text-sm font-medium text-gray-300 mb-2">Command Name</label>
                 <input
+                  id="commandName"
+                  name="commandName"
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
                   placeholder="command-name"
                   required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                <label htmlFor="commandCategory" className="block text-sm font-medium text-gray-300 mb-2">Category</label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
@@ -220,8 +222,10 @@ export default function CommandEditor({ serverId }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+              <label htmlFor="commandDescription" className="block text-sm font-medium text-gray-300 mb-2">Description</label>
               <textarea
+                id="commandDescription"
+                name="commandDescription"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
@@ -233,12 +237,14 @@ export default function CommandEditor({ serverId }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Cooldown (seconds)</label>
+                <label htmlFor="commandCooldown" className="block text-sm font-medium text-gray-300 mb-2">Cooldown (seconds)</label>
                 <input
+                  id="commandCooldown"
+                  name="commandCooldown"
                   type="number"
                   value={formData.cooldown}
                   onChange={(e) => setFormData(prev => ({ ...prev, cooldown: parseInt(e.target.value) }))}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                  className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
                   min="0"
                 />
               </div>

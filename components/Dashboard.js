@@ -271,6 +271,8 @@ const Dashboard = ({ user }) => {
               </h2>
               <div className="relative">
                 <select 
+                  id="serverSelect"
+                  name="serverSelect"
                   value={selectedServer?.id || ''} 
                   onChange={(e) => {
                     const guild = userGuilds.find(g => g.id === e.target.value)
@@ -1267,6 +1269,8 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
             <div>
               <label className="block text-white/80 text-sm font-medium mb-3">Reason <span className="text-red-400">*</span></label>
               <textarea
+                id="reason"
+                name="reason"
                 value={actionReason}
                 onChange={(e) => setActionReason(e.target.value)}
                 className="w-full px-4 py-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/40 focus:border-blue-400 focus:outline-none transition-colors resize-none"

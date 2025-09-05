@@ -226,8 +226,10 @@ function VerificationConfigured({ config, stats, onUpdate, updating }) {
           </div>
 
           <div>
-            <label className="text-white font-medium mb-2 block">Welcome Message</label>
+            <label htmlFor="welcomeMessage" className="text-white font-medium mb-2 block">Welcome Message</label>
             <textarea
+              id="welcomeMessage"
+              name="welcomeMessage"
               value={settings.welcomeMessage}
               onChange={(e) => setSettings(prev => ({ ...prev, welcomeMessage: e.target.value }))}
               className="w-full p-3 bg-white/10 text-white rounded-lg border border-white/20 resize-none"
@@ -260,7 +262,7 @@ function VerificationConfigured({ config, stats, onUpdate, updating }) {
 
           {settings.removeUnverified && (
             <div>
-              <label className="text-white font-medium mb-2 block">Timeout (Hours)</label>
+              <label htmlFor="timeoutHours" className="text-white font-medium mb-2 block">Timeout (Hours)</label>
               <input
                 id="timeoutHours"
                 name="timeoutHours"
