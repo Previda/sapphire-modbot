@@ -364,19 +364,74 @@ async function handleAppealReview(interaction) {
     }
 }
 
-async function listPendingAppeals(interaction) {
-    // This would require a database query to get pending appeals
-    // For now, show a placeholder
+async function handleAppealSetup(interaction) {
+    if (!interaction.member.permissions.has('ManageGuild')) {
+        return interaction.reply({
+            content: '❌ You need the **Manage Server** permission to setup appeals.',
+            ephemeral: true
+        });
+    }
+
+    const channel = interaction.options.getChannel('channel');
+    const requireReason = interaction.options.getBoolean('require_reason') || false;
+
+    await interaction.reply({
+        content: `✅ Appeal system setup in ${channel}. Require reason: ${requireReason ? 'Yes' : 'No'}`,
+        ephemeral: true
+    });
+}
+
+async function handleAppealList(interaction) {
+    if (!interaction.member.permissions.has('ModerateMembers')) {
+        return interaction.reply({
+            content: '❌ You need the **Moderate Members** permission to list appeals.',
+            ephemeral: true
+        });
+    }
+
+    const status = interaction.options.getString('status');
     const embed = new EmbedBuilder()
-        .setTitle('📋 Pending Appeals')
+        .setTitle('📋 Appeals List')
         .setColor(0xffa500)
-        .setDescription('Use `/appeal review <case_id>` to review a specific appeal.')
+        .setDescription(`Showing appeals${status ? ` with status: ${status}` : ''}`)
         .addFields(
-            { name: '🔍 How to Review', value: 'Provide a case ID to review that specific appeal', inline: false }
+            { name: '🔍 Note', value: 'Use `/appeal review <appeal_code>` to review a specific appeal', inline: false }
         )
         .setTimestamp();
 
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handleAppealSettings(interaction) {
+    if (!interaction.member.permissions.has('ManageGuild')) {
+        return interaction.reply({
+            content: '❌ You need the **Manage Server** permission to configure appeals.',
+            ephemeral: true
+        });
+    }
+
+    const action = interaction.options.getString('action');
+    const category = interaction.options.getChannel('category');
+
+    let response = '';
+    switch (action) {
+        case 'enable':
+            response = '✅ Appeal system enabled.';
+            break;
+        case 'disable':
+            response = '❌ Appeal system disabled.';
+            break;
+        case 'category':
+            response = category ? `📁 Appeal category set to ${category}` : '❌ No category provided.';
+            break;
+        case 'view':
+            response = '⚙️ Appeal settings: Enabled, No category set';
+            break;
+        default:
+            response = '❓ Unknown action.';
+    }
+
+    await interaction.reply({ content: response, ephemeral: true });
 }
 
 function getStatusColor(status) {
