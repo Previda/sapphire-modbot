@@ -150,6 +150,23 @@ async function handleOpenTicket(interaction) {
     const guild = interaction.guild;
 
     try {
+        // Check if user is blacklisted
+        const { isUserBlacklisted } = require('./blacklist.js');
+        const isBlacklisted = await isUserBlacklisted(interaction.guild.id, user.id);
+        
+        if (isBlacklisted) {
+            return interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle('🚫 Ticket Access Denied')
+                    .setDescription('You are blacklisted from creating tickets in this server.')
+                    .addFields(
+                        { name: '📞 Contact', value: 'Contact server moderators if you believe this is a mistake.', inline: false }
+                    )],
+                ephemeral: true
+            });
+        }
+
         // Clean up any tickets with deleted channels first
         await cleanupDeletedTickets(interaction.guild);
 

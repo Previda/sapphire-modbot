@@ -275,8 +275,7 @@ module.exports = {
             // Raspberry Pi multi-method audio extraction
             console.log('🔄 Starting Pi-optimized audio extraction...');
             
-            // Method 1: Try yt-dlp command line (more reliable on Pi)
-            
+            // Method 1: Try yt-dlp with better Pi compatibility
             try {
                 console.log('🔄 Method 1: Trying yt-dlp extraction...');
                 
@@ -288,11 +287,15 @@ module.exports = {
                 const audioFile = path.join(tempDir, `audio_${Date.now()}.webm`);
                 
                 await new Promise((resolve, reject) => {
-                    const ytDlpCommand = `yt-dlp -f "bestaudio[ext=webm]" --no-playlist -o "${audioFile}" "${songUrl}"`;
+                    // Updated yt-dlp command with better Pi compatibility
+                    const ytDlpCommand = `yt-dlp -f "bestaudio/best" --extract-audio --audio-format webm --no-playlist --no-check-certificate -o "${audioFile}" "${songUrl}"`;
                     
-                    exec(ytDlpCommand, { timeout: 30000 }, (error, stdout, stderr) => {
+                    exec(ytDlpCommand, { 
+                        timeout: 45000,
+                        env: { ...process.env, PATH: process.env.PATH + ':/usr/local/bin:/usr/bin' }
+                    }, (error, stdout, stderr) => {
                         if (error) {
-                            console.log('yt-dlp failed:', error.message, error);
+                            console.log('yt-dlp failed:', error.message);
                             reject(error);
                         } else {
                             console.log('✅ yt-dlp extraction successful');
@@ -301,8 +304,24 @@ module.exports = {
                     });
                 });
                 
-                if (fs.existsSync(audioFile)) {
-                    resource = createAudioResource(audioFile, {
+                // Check for extracted file with different extensions
+                const possibleFiles = [
+                    audioFile,
+                    audioFile.replace('.webm', '.m4a'),
+                    audioFile.replace('.webm', '.mp3'),
+                    audioFile.replace('.webm', '.opus')
+                ];
+                
+                let foundFile = null;
+                for (const file of possibleFiles) {
+                    if (fs.existsSync(file)) {
+                        foundFile = file;
+                        break;
+                    }
+                }
+                
+                if (foundFile) {
+                    resource = createAudioResource(foundFile, {
                         inlineVolume: true
                     });
                     
@@ -315,7 +334,7 @@ module.exports = {
                     // Clean up file after playback
                     player.once(AudioPlayerStatus.Idle, () => {
                         try {
-                            fs.unlinkSync(audioFile);
+                            fs.unlinkSync(foundFile);
                             console.log('Temp audio file cleaned up');
                         } catch (cleanupError) {
                             console.log('Could not cleanup temp file:', cleanupError.message);
@@ -324,7 +343,6 @@ module.exports = {
                 }
                 
             } catch (ytDlpError) {
-                console.log('Method 1 (yt-dlp) full error:', ytDlpError);
                 console.log('Method 1 (yt-dlp) failed:', ytDlpError.message);
             }
             
