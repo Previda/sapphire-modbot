@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MusicPlayer from './MusicPlayer';
 import VerificationTab from './VerificationTab';
+import VerificationPanel from './VerificationPanel';
 import CommandEditor from './CommandEditor';
 import { useToast } from './Toast';
 
@@ -356,7 +357,7 @@ const Dashboard = ({ user }) => {
           {activeTab === 'overview' && <OverviewTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'music' && selectedServer && <MusicPlayer serverId={selectedServer.id} />}
           {activeTab === 'moderation' && <ModerationTab selectedServer={selectedServer} liveData={liveData} showModerationModal={showModerationModal} setShowModerationModal={setShowModerationModal} />}
-          {activeTab === 'verification' && <VerificationTab selectedServer={selectedServer} liveData={liveData} />}
+          {activeTab === 'verification' && <VerificationPanel selectedServer={selectedServer} />}
           {activeTab === 'cases' && <CasesTab selectedServer={selectedServer} liveData={liveData} />}
           {activeTab === 'tickets' && <TicketsTab selectedServer={selectedServer} tickets={tickets} showTicketModal={showTicketModal} setShowTicketModal={setShowTicketModal} />}
           {activeTab === 'logs' && <LogsTab selectedServer={selectedServer} liveData={liveData} />}
