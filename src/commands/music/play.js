@@ -284,16 +284,21 @@ module.exports = {
                     fs.mkdirSync(tempDir, { recursive: true });
                 }
                 
-                const audioFile = path.join(tempDir, `audio_${Date.now()}.webm`);
+                const audioFile = path.join(tempDir, `audio_${Date.now()}.mp3`);
                 
                 await new Promise((resolve, reject) => {
-                    // Updated yt-dlp command with better Pi compatibility
-                    const ytDlpCommand = `yt-dlp -f "bestaudio/best" --extract-audio --audio-format webm --no-playlist --no-check-certificate -o "${audioFile}" "${songUrl}"`;
+                    // Simplified yt-dlp command for Pi
+                    const ytDlpCommand = `yt-dlp --extract-audio --audio-format mp3 --audio-quality 0 -o "${audioFile}" "${songUrl}"`;
+                    
+                    console.log('🔄 Running yt-dlp command:', ytDlpCommand);
                     
                     exec(ytDlpCommand, { 
-                        timeout: 45000,
+                        timeout: 60000,
                         env: { ...process.env, PATH: process.env.PATH + ':/usr/local/bin:/usr/bin' }
                     }, (error, stdout, stderr) => {
+                        console.log('yt-dlp stdout:', stdout);
+                        console.log('yt-dlp stderr:', stderr);
+                        
                         if (error) {
                             console.log('yt-dlp failed:', error.message);
                             reject(error);
@@ -304,12 +309,12 @@ module.exports = {
                     });
                 });
                 
-                // Check for extracted file with different extensions
+                // Check for extracted file with different extensions  
                 const possibleFiles = [
                     audioFile,
-                    audioFile.replace('.webm', '.m4a'),
-                    audioFile.replace('.webm', '.mp3'),
-                    audioFile.replace('.webm', '.opus')
+                    audioFile.replace('.mp3', '.m4a'),
+                    audioFile.replace('.mp3', '.webm'),
+                    audioFile.replace('.mp3', '.opus')
                 ];
                 
                 let foundFile = null;
