@@ -11,7 +11,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live chrome-extension: moz-extension: 'wasm-unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline' chrome-extension: moz-extension:; img-src 'self' data: https: blob: chrome-extension: moz-extension:; font-src 'self' data: chrome-extension: moz-extension:; connect-src 'self' https: wss: chrome-extension: moz-extension: blob:; media-src 'self' blob:; frame-src 'self' https://vercel.live; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; worker-src 'self' blob: 'unsafe-eval';"
+            value: "default-src 'self' 'unsafe-eval' 'unsafe-inline' chrome-extension: moz-extension: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live chrome-extension: moz-extension: 'wasm-unsafe-eval' blob: data: 'unsafe-hashes'; style-src 'self' 'unsafe-inline' chrome-extension: moz-extension: 'unsafe-hashes'; img-src 'self' data: https: blob: chrome-extension: moz-extension:; font-src 'self' data: chrome-extension: moz-extension:; connect-src 'self' https: wss: chrome-extension: moz-extension: blob: data:; media-src 'self' blob: data:; frame-src 'self' https://vercel.live chrome-extension: moz-extension:; object-src 'self' chrome-extension: moz-extension:; base-uri 'self'; frame-ancestors 'self'; worker-src 'self' blob: 'unsafe-eval' chrome-extension: moz-extension:; child-src 'self' blob: chrome-extension: moz-extension:;"
           },
           {
             key: 'Cache-Control',
