@@ -132,21 +132,97 @@ class AutoModSystem {
 
     async handleViolations(message, violations, config) {
         try {
-            await message.delete();
+            // Delete the offending message
+            await message.delete().catch(() => {});
             
+            const userId = message.author.id;
+            const guildId = message.guild.id;
+            
+            // Track user violation count
+            const violationKey = `${guildId}-${userId}`;
+            const userViolationCount = (this.violations.get(guildId)?.get(userId)?.violationCount || 0) + 1;
+            
+            // Update violation count
+            if (!this.violations.has(guildId)) {
+                this.violations.set(guildId, new Map());
+            }
+            const guildViolations = this.violations.get(guildId);
+            if (!guildViolations.has(userId)) {
+                guildViolations.set(userId, { messages: [], lastMessage: '', violationCount: 0 });
+            }
+            guildViolations.get(userId).violationCount = userViolationCount;
+
+            // Apply progressive punishment
+            const member = message.member;
+            let action = 'warning';
+            let duration = null;
+
+            if (userViolationCount >= config.muteThreshold) {
+                // Mute user for repeated violations
+                action = 'timeout';
+                duration = config.muteDuration * 1000; // Convert to milliseconds
+                try {
+                    await member.timeout(duration, `AutoMod: ${violations.join(', ')} (${userViolationCount} violations)`);
+                    console.log(`🚨 AutoMod: Timed out ${message.author.tag} for ${config.muteDuration}s due to ${violations.join(', ')}`);
+                } catch (error) {
+                    console.error('Failed to timeout user:', error);
+                    action = 'failed_timeout';
+                }
+            } else if (userViolationCount >= config.warnThreshold) {
+                action = 'warning';
+                // Send warning DM
+                try {
+                    const warningEmbed = new EmbedBuilder()
+                        .setTitle('⚠️ AutoMod Warning')
+                        .setColor(0xff9900)
+                        .setDescription(`You have been warned for ${violations.join(', ')} in **${message.guild.name}**.`)
+                        .addFields(
+                            { name: 'Violations', value: `${userViolationCount}/${config.muteThreshold}` },
+                            { name: 'Next Action', value: userViolationCount + 1 >= config.muteThreshold ? 'Timeout' : 'Another Warning' }
+                        )
+                        .setTimestamp();
+                    
+                    await message.author.send({ embeds: [warningEmbed] });
+                } catch (error) {
+                    console.log('Could not DM user warning');
+                }
+            }
+
+            // Log the action
             const embed = new EmbedBuilder()
-                .setTitle('🚨 AutoMod Violation')
-                .setColor(0xff0000)
+                .setTitle('🚨 AutoMod Action')
+                .setColor(action === 'timeout' ? 0xff0000 : 0xff9900)
                 .addFields(
-                    { name: '👤 User', value: message.author.toString(), inline: true },
+                    { name: '👤 User', value: `${message.author.tag} (${message.author.id})`, inline: true },
                     { name: '📝 Violations', value: violations.join(', '), inline: true },
-                    { name: '📍 Channel', value: message.channel.toString(), inline: true }
+                    { name: '📍 Channel', value: message.channel.toString(), inline: true },
+                    { name: '🔢 Violation Count', value: `${userViolationCount}`, inline: true },
+                    { name: '⚡ Action', value: action === 'timeout' ? `Timed out for ${config.muteDuration}s` : `Warning issued`, inline: true },
+                    { name: '💬 Message', value: message.content.slice(0, 100) + (message.content.length > 100 ? '...' : ''), inline: false }
                 )
                 .setTimestamp();
 
-            const logChannel = message.guild.channels.cache.find(ch => ch.name === 'mod-log' || ch.name === 'logs');
+            // Send to log channel
+            const logChannel = message.guild.channels.cache.find(ch => 
+                ch.name === 'mod-log' || ch.name === 'logs' || ch.name === 'automod-log'
+            );
             if (logChannel) {
                 await logChannel.send({ embeds: [embed] });
+            }
+
+            // Send notification to general channel for timeout actions
+            if (action === 'timeout') {
+                const publicEmbed = new EmbedBuilder()
+                    .setTitle('🚨 AutoMod Action')
+                    .setColor(0xff0000)
+                    .setDescription(`${message.author} was timed out for ${config.muteDuration} seconds`)
+                    .addFields(
+                        { name: 'Reason', value: violations.join(', '), inline: true },
+                        { name: 'Violations', value: `${userViolationCount}`, inline: true }
+                    )
+                    .setTimestamp();
+                
+                await message.channel.send({ embeds: [publicEmbed] });
             }
 
         } catch (error) {

@@ -405,12 +405,15 @@ module.exports = {
             }, 600000);
 
         } catch (error) {
-            console.error('❌ Play command error:', error);
+            // Don't spam logs with ytdl extraction errors
+            if (!error.message?.includes('Could not extract functions')) {
+                console.error('❌ Play command error:', error);
+            }
             await interaction.editReply({
                 embeds: [new EmbedBuilder()
                     .setColor(0xff0000)
-                    .setTitle('❌ Error')
-                    .setDescription('An unexpected error occurred while trying to play music.')]
+                    .setTitle('❌ Audio Error')
+                    .setDescription('YouTube playback temporarily unavailable. Try again or use a direct audio link.')]
             });
         }
     },

@@ -199,9 +199,14 @@ module.exports = {
 
         } catch (error) {
             console.error('Mute command error:', error);
-            await interaction.reply({
-                content: '❌ Failed to mute the user. Please check my permissions.',
-                ephemeral: true
+            const errorMsg = error.message?.includes('Missing Permissions') 
+                ? '❌ I need **Moderate Members** permission to timeout users.'
+                : error.message?.includes('Cannot timeout') 
+                ? '❌ Cannot timeout this user (they may have higher permissions than me).'
+                : `❌ Failed to mute user: ${error.message}`;
+            
+            await interaction.editReply({
+                content: errorMsg
             });
         }
     }

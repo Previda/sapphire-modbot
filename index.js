@@ -352,7 +352,12 @@ client.on('messageCreate', async message => {
     // Process message through modules with error handling (guild messages only)
     if (message.guild) {
         try {
-            // Process through AutoMod with safety check
+            // Process through AutoMod system first
+            if (autoModSystem && typeof autoModSystem.processMessage === 'function') {
+                await autoModSystem.processMessage(message);
+            }
+            
+            // Process through legacy AutoMod if exists
             if (autoMod && typeof autoMod.processMessage === 'function') {
                 await autoMod.processMessage(message);
             }
