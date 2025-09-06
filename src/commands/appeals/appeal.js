@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
-const { loadConfig, saveConfig } = require('../../utils/configManager');
+const { loadGuildConfig, saveGuildConfig } = require('../../utils/configManager');
 const appealLibrary = require('../../utils/appealLibrary');
 
 module.exports = {
@@ -327,13 +327,13 @@ async function handleAppealSetup(interaction) {
     await interaction.deferReply();
 
     try {
-        const config = await loadConfig(interaction.guild.id);
+        const config = await loadGuildConfig(interaction.guild.id);
         config.appeals = config.appeals || {};
         config.appeals.channel = channel.id;
         config.appeals.requireReason = requireReason;
         config.appeals.enabled = true;
 
-        await saveConfig(interaction.guild.id, config);
+        await saveGuildConfig(interaction.guild.id, config);
 
         const embed = new EmbedBuilder()
             .setTitle('✅ Appeal System Setup Complete')
@@ -432,7 +432,7 @@ async function handleAppealSettings(interaction) {
     await interaction.deferReply();
 
     try {
-        const config = await loadConfig(interaction.guild.id);
+        const config = await loadGuildConfig(interaction.guild.id);
         config.appeals = config.appeals || {};
 
         switch (action) {
@@ -448,7 +448,7 @@ async function handleAppealSettings(interaction) {
         }
 
         if (action !== 'view') {
-            await saveConfig(interaction.guild.id, config);
+            await saveGuildConfig(interaction.guild.id, config);
         }
 
         const embed = new EmbedBuilder()

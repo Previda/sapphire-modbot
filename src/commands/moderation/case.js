@@ -52,6 +52,13 @@ module.exports = {
         // Defer reply for database operations
         await interaction.deferReply();
 
+        // Handle DMs - require server_id parameter
+        if (!interaction.guild) {
+            return interaction.editReply({
+                content: '❌ This command must be used in a server, not DMs. Use `/appeal` commands for DM appeals.'
+            });
+        }
+
         if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers) && 
             interaction.guild.ownerId !== interaction.user.id) {
             return interaction.editReply({

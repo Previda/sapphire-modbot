@@ -500,6 +500,25 @@ app.get('/stats/:serverId', authenticateToken, async (req, res) => {
             m.presence?.status === 'dnd'
         ).size;
 
+        // Get real data from database
+        const { getCaseStats } = require('./src/utils/caseManager');
+        const { loadGuildConfig } = require('./src/utils/configManager');
+        
+        let caseStats = { total: 0, active: 0, closed: 0, appealed: 0, types: {} };
+        let guildConfig = {};
+        
+        try {
+            caseStats = await getCaseStats(serverId);
+            guildConfig = await loadGuildConfig(serverId);
+        } catch (error) {
+            console.error('Error fetching real data:', error);
+        }
+
+        // Get real channel data
+        const textChannels = guild.channels.cache.filter(c => c.type === 0);
+        const voiceChannels = guild.channels.cache.filter(c => c.type === 2);
+        const categories = guild.channels.cache.filter(c => c.type === 4);
+
         const stats = {
             serverId,
             lastUpdated: new Date().toISOString(),
@@ -507,13 +526,17 @@ app.get('/stats/:serverId', authenticateToken, async (req, res) => {
                 memberCount: guild.memberCount,
                 onlineMembers: onlineMembers,
                 botUptime: Math.floor(client.uptime / 1000),
-                commandsToday: Math.floor(Math.random() * 50) + 10,
-                serverHealth: 85,
-                messagesPerHour: Math.floor(Math.random() * 100) + 20,
-                activeChannels: guild.channels.cache.filter(c => c.type === 0).size
+                commandsToday: 0, // TODO: Track actual commands
+                serverHealth: guild.available ? 100 : 0,
+                messagesPerHour: 0, // TODO: Track actual messages  
+                activeChannels: textChannels.size,
+                voiceChannels: voiceChannels.size,
+                categories: categories.size,
+                roles: guild.roles.cache.size,
+                emojis: guild.emojis.cache.size
             },
             music: {
-                isPlaying: false,
+                isPlaying: false, // TODO: Get real music data
                 currentSong: null,
                 queue: [],
                 volume: 75,
@@ -521,38 +544,55 @@ app.get('/stats/:serverId', authenticateToken, async (req, res) => {
                 shuffle: false
             },
             moderation: {
-                recentActions: [],
+                recentActions: [], // TODO: Get recent mod actions
                 automodStats: {
-                    messagesScanned: Math.floor(Math.random() * 1000) + 500,
-                    actionsToday: Math.floor(Math.random() * 20) + 5,
-                    blockedSpam: Math.floor(Math.random() * 15) + 2,
-                    filteredWords: Math.floor(Math.random() * 10) + 1,
-                    autoTimeouts: Math.floor(Math.random() * 8) + 1
-                }
+                    messagesScanned: 0, // TODO: Track real automod stats
+                    actionsToday: caseStats.total || 0,
+                    blockedSpam: 0,
+                    filteredWords: 0,
+                    autoTimeouts: 0
+                },
+                caseStats: caseStats,
+                automodEnabled: guildConfig.moderation?.automod?.enabled || false,
+                antiRaidEnabled: guildConfig.antiraid?.enabled || false,
+                antiNukeEnabled: guildConfig.antinuke?.enabled || false
             },
             tickets: {
-                active: [],
-                totalToday: Math.floor(Math.random() * 5),
-                resolvedToday: Math.floor(Math.random() * 3),
-                avgResponseTime: Math.floor(Math.random() * 30) + 5
+                active: [], // TODO: Get real ticket data
+                totalToday: 0,
+                resolvedToday: 0,
+                avgResponseTime: 0,
+                enabled: guildConfig.tickets?.enabled || false,
+                categoryId: guildConfig.tickets?.categoryId || null
+            },
+            appeals: {
+                enabled: guildConfig.appeals?.enabled || false,
+                channelId: guildConfig.appeals?.channel || null,
+                requireReason: guildConfig.appeals?.requireReason || false
+            },
+            xp: {
+                enabled: guildConfig.xp?.enabled || false,
+                multiplier: guildConfig.xp?.multiplier || 1,
+                roleRewards: guildConfig.xp?.roleRewards || []
             },
             logs: {
-                recent: [],
+                recent: [], // TODO: Get real log data
                 totalToday: 0,
                 errorCount: 0,
-                warningCount: 0
+                warningCount: 0,
+                channelId: guildConfig.moderation?.logChannelId || null
             },
             analytics: {
-                messageActivity: [],
-                topCommands: [],
+                messageActivity: [], // TODO: Get real analytics
+                topCommands: [], // TODO: Track command usage
                 memberGrowth: {
-                    daily: 0,
+                    daily: 0, // TODO: Calculate real growth
                     weekly: 0,
                     monthly: 0
                 }
             },
-            commands: [],
-            responseTime: 'N/A',
+            commands: Array.from(client.commands.keys()), // Real command list
+            responseTime: `${Date.now() - Date.now()}ms`,
             uptime: `${Math.floor(client.uptime / 1000)}s`,
             memoryUsage: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
         };
