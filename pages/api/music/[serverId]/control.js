@@ -53,7 +53,8 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('Music control error:', error);
-    return res.status(500).json({ 
+    return res.status(200).json({ 
+      success: false,
       error: 'Connection failed',
       message: 'Cannot reach bot - may be offline'
     });

@@ -43,9 +43,13 @@ export default async function handler(req, res) {
 
     } catch (error) {
       console.error('Commands fetch error:', error);
-      return res.status(500).json({ 
-        error: 'Connection failed',
-        message: 'Cannot reach bot - may be offline'
+      return res.status(200).json({
+        serverId,
+        commands: [],
+        totalCommands: 0,
+        categories: [],
+        error: 'Bot offline - no commands available',
+        source: 'error-fallback'
       });
     }
   }

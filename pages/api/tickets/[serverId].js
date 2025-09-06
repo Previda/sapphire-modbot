@@ -48,75 +48,11 @@ async function getTickets(req, res, serverId) {
       }
     } catch (botApiError) {
       console.error('Tickets API error:', botApiError);
-      return res.status(500).json({ 
-        error: 'Connection failed',
-        message: 'Cannot reach bot - may be offline'
-      });
-    }
-    
-    // Fallback to Discord API
-    const discordToken = process.env.DISCORD_BOT_TOKEN;
-    if (!discordToken) {
-      return res.status(500).json({ error: 'Discord bot token not configured' });
-    }
-
-    const discordResponse = await fetch(`https://discord.com/api/v10/guilds/${serverId}/channels`, {
-      headers: {
-        'Authorization': `Bot ${discordToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (discordResponse.ok) {
-      const channels = await discordResponse.json();
-      const ticketChannels = channels.filter(channel => 
-        channel.name.startsWith('ticket-') || 
-        channel.name.includes('support') ||
-        channel.topic?.includes('ticket') ||
-        (channel.parent_id && channels.find(c => c.id === channel.parent_id)?.name?.toLowerCase().includes('ticket'))
-      );
-      
-      // Get additional ticket info from channel topics or names
-      const tickets = ticketChannels.map((channel) => {
-        try {
-          // Try to extract ticket info from channel name or topic
-          const ticketMatch = channel.name.match(/ticket-(\w+)/) || [null, channel.id.slice(-6)];
-          const ticketId = ticketMatch[1] || channel.id.slice(-6);
-          
-          // Get recent messages to determine activity
-          let lastActivity = channel.last_message_id ? 
-            new Date(((BigInt(channel.last_message_id) >> 22n) + 1420070400000n)) : 
-            new Date(((BigInt(channel.id) >> 22n) + 1420070400000n));
-          
-          return {
-            id: channel.id,
-            ticketId: ticketId.toUpperCase(),
-            name: channel.name,
-            status: channel.archived ? 'closed' : 'open',
-            createdAt: new Date(((BigInt(channel.id) >> 22n) + 1420070400000n)).toISOString(),
-            lastActivity: lastActivity.toISOString(),
-            topic: channel.topic || 'Support ticket',
-            userID: null, // Would need to parse from topic or fetch messages
-            category: channel.parent_id ? 'Categorized' : 'General'
-          };
-        } catch (err) {
-          console.error('Error processing ticket channel:', err);
-          return null;
-        }
-      }).filter(Boolean);
-      
-      const stats = {
-        total: tickets.length,
-        open: tickets.filter(t => t.status === 'open').length,
-        closed: tickets.filter(t => t.status === 'closed').length
-      };
-      
       return res.status(200).json({
-        stats,
-        tickets: tickets.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity))
+        stats: { total: 0, open: 0, closed: 0 },
+        tickets: [],
+        error: 'Bot offline - no ticket data available'
       });
-    } else {
-      throw new Error(`Discord API error: ${discordResponse.status}`);
     }
   } catch (error) {
     console.error('Tickets API error:', error);

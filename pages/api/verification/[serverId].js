@@ -47,9 +47,18 @@ export default async function handler(req, res) {
 
     } catch (error) {
       console.error('Verification API error:', error);
-      return res.status(500).json({ 
-        error: 'Connection failed',
-        message: 'Cannot reach bot - may be offline'
+      return res.status(200).json({
+        config: null,
+        stats: {
+          totalVerifications: 0,
+          pendingVerifications: 0,
+          failedAttempts: 0,
+          verificationRate: 0,
+          averageVerificationTime: 0
+        },
+        recentLogs: [],
+        recentAttempts: [],
+        error: 'Bot offline - verification unavailable'
       });
     }
 
