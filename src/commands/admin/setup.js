@@ -113,28 +113,32 @@ module.exports = {
             return await showSetupMenu(interaction);
         }
 
-        const guildConfig = await loadGuildConfig();
-        if (!guildConfig[interaction.guild.id]) {
-            guildConfig[interaction.guild.id] = {
-                modlog: null,
-                tickets: {
-                    category: null,
-                    supportRole: null,
-                    enabled: true
-                },
-                automod: {
-                    enabled: false,
-                    warnThreshold: 3
-                },
-                xp: {
-                    enabled: true,
-                    perMessage: 15,
-                    levelupChannel: null
-                }
-            };
-        }
+        // Defer reply to prevent timeout on slow operations
+        await interaction.deferReply({ ephemeral: true });
 
-        const serverConfig = guildConfig[interaction.guild.id];
+        try {
+            const guildConfig = await loadGuildConfig();
+            if (!guildConfig[interaction.guild.id]) {
+                guildConfig[interaction.guild.id] = {
+                    modlog: null,
+                    tickets: {
+                        category: null,
+                        supportRole: null,
+                        enabled: true
+                    },
+                    automod: {
+                        enabled: false,
+                        warnThreshold: 3
+                    },
+                    xp: {
+                        enabled: true,
+                        perMessage: 15,
+                        levelupChannel: null
+                    }
+                };
+            }
+
+            const serverConfig = guildConfig[interaction.guild.id];
 
         switch (subcommand) {
             case 'modlog':
@@ -155,6 +159,23 @@ module.exports = {
             case 'reset':
                 await handleResetConfig(interaction, guildConfig);
                 break;
+            default:
+                await interaction.editReply({
+                    content: '❌ Unknown setup command.'
+                });
+        }
+        } catch (error) {
+            console.error('Setup command error:', error);
+            if (interaction.deferred) {
+                await interaction.editReply({
+                    content: '❌ An error occurred during setup. Please try again.'
+                });
+            } else {
+                await interaction.reply({
+                    content: '❌ An error occurred during setup. Please try again.',
+                    ephemeral: true
+                });
+            }
         }
     }
 };
@@ -205,9 +226,8 @@ async function handleTicketSetup(interaction, guildConfig, serverConfig) {
         if (category) {
             // Validate category is actually a category channel
             if (category.type !== ChannelType.GuildCategory) {
-                return interaction.reply({
-                    content: '❌ Please select a category channel for tickets.',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: '❌ Please select a category channel for tickets.'
                 });
             }
             serverConfig.tickets.category = category.id;
@@ -216,9 +236,8 @@ async function handleTicketSetup(interaction, guildConfig, serverConfig) {
         if (supportRole) {
             // Validate role exists and bot can see it
             if (!supportRole) {
-                return interaction.reply({
-                    content: '❌ Could not find the specified support role.',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: '❌ Could not find the specified support role.'
                 });
             }
             serverConfig.tickets.supportRole = supportRole.id;
@@ -237,13 +256,12 @@ async function handleTicketSetup(interaction, guildConfig, serverConfig) {
             .setDescription('Ticket system has been configured successfully.')
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
         
     } catch (error) {
         console.error('Error in handleTicketSetup:', error);
-        await interaction.reply({
-            content: '❌ Failed to configure ticket system. Please check my permissions and try again.',
-            ephemeral: true
+        await interaction.editReply({
+            content: '❌ Failed to configure ticket system. Please check my permissions and try again.'
         });
     }
 }
