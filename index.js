@@ -229,17 +229,36 @@ client.on('interactionCreate', async interaction => {
         }
 
         try {
+            // Ensure we respond within Discord's 3-second limit
+            const timeoutId = setTimeout(async () => {
+                if (!interaction.replied && !interaction.deferred) {
+                    try {
+                        await interaction.reply({
+                            content: '⏳ Command is taking longer than expected...',
+                            ephemeral: true
+                        });
+                    } catch (err) {
+                        console.error('Timeout reply error:', err);
+                    }
+                }
+            }, 2500); // 2.5 seconds to be safe
+
             await command.execute(interaction);
+            clearTimeout(timeoutId);
         } catch (error) {
             console.error('❌ Command execution error:', error);
             const reply = { 
                 content: '❌ An error occurred while executing this command. Please try again later.', 
                 ephemeral: true 
             };
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(reply);
-            } else {
-                await interaction.reply(reply);
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp(reply);
+                } else {
+                    await interaction.reply(reply);
+                }
+            } catch (replyError) {
+                console.error('Error sending error response:', replyError);
             }
         }
     }

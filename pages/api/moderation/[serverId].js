@@ -4,7 +4,12 @@ export default async function handler(req, res) {
 
   const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN
   if (!BOT_TOKEN) {
-    return res.status(500).json({ error: 'Bot token not configured' })
+    return res.status(200).json({ 
+      error: 'Bot token not configured',
+      cases: [],
+      totalCases: 0,
+      todaysCases: 0
+    })
   }
 
   if (method === 'POST') {
@@ -147,7 +152,11 @@ export default async function handler(req, res) {
       
     } catch (error) {
       console.error('Moderation action error:', error)
-      res.status(500).json({ error: 'Internal server error' })
+      res.status(200).json({ 
+        success: false,
+        error: 'Action failed',
+        message: 'Cannot perform moderation action - bot may be offline'
+      })
     }
   }
 
@@ -225,7 +234,13 @@ export default async function handler(req, res) {
       
     } catch (error) {
       console.error('Moderation fetch error:', error)
-      res.status(500).json({ error: 'Failed to fetch moderation data' })
+      res.status(200).json({ 
+        serverId,
+        cases: [],
+        totalCases: 0,
+        todaysCases: 0,
+        error: 'Failed to fetch moderation data - bot may be offline'
+      })
     }
   }
 }
