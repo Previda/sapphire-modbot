@@ -125,6 +125,7 @@ module.exports = {
                 ephemeral: true
             });
         }
+    }
 };
 
 async function handleSubmitAppeal(interaction) {

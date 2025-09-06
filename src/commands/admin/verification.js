@@ -42,16 +42,24 @@ module.exports = {
             subcommand
                 .setName('settings')
                 .setDescription('Configure verification settings')
-                .addBoolean('dm_welcome', dm =>
-                    dm.setDescription('Send welcome DM to verified members'))
-                .addString('welcome_message', msg =>
-                    msg.setDescription('Custom welcome message'))
-                .addBoolean('remove_unverified', remove =>
-                    remove.setDescription('Remove unverified members after timeout'))
-                .addInteger('timeout_hours', timeout =>
-                    timeout.setDescription('Hours before removing unverified members (1-168)')
+                .addBooleanOption(option =>
+                    option.setName('dm_welcome')
+                        .setDescription('Send welcome DM to verified members')
+                        .setRequired(false))
+                .addStringOption(option =>
+                    option.setName('welcome_message')
+                        .setDescription('Custom welcome message')
+                        .setRequired(false))
+                .addBooleanOption(option =>
+                    option.setName('remove_unverified')
+                        .setDescription('Remove unverified members after timeout')
+                        .setRequired(false))
+                .addIntegerOption(option =>
+                    option.setName('timeout_hours')
+                        .setDescription('Hours before removing unverified members (1-168)')
                         .setMinValue(1)
-                        .setMaxValue(168))),
+                        .setMaxValue(168)
+                        .setRequired(false))),
 
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();

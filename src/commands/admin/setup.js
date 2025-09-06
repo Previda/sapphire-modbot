@@ -215,7 +215,7 @@ async function handleModlogSetup(interaction, guildConfig, serverConfig) {
         .setDescription('Moderation actions will now be logged to this channel.')
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 async function handleTicketSetup(interaction, guildConfig, serverConfig) {
@@ -276,16 +276,16 @@ async function handleAutomodSetup(interaction, guildConfig, serverConfig) {
     await saveGuildConfig(guildConfig);
 
     const embed = new EmbedBuilder()
-        .setTitle('🤖 Auto-Moderation Configured')
+        .setTitle('🛡️ Auto-moderation Configured')
         .setColor(enabled ? 0x00ff00 : 0xff0000)
         .addFields(
-            { name: '⚡ Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
+            { name: '✅ Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
             { name: '⚠️ Warning Threshold', value: warnThreshold.toString(), inline: true }
         )
-        .setDescription(`Auto-moderation has been ${enabled ? 'enabled' : 'disabled'}.`)
+        .setDescription('Auto-moderation settings have been updated.')
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 async function handleXPSetup(interaction, guildConfig, serverConfig) {
@@ -302,17 +302,17 @@ async function handleXPSetup(interaction, guildConfig, serverConfig) {
     await saveGuildConfig(guildConfig);
 
     const embed = new EmbedBuilder()
-        .setTitle('⭐ XP System Configured')
-        .setColor(enabled ? 0xffd700 : 0x808080)
+        .setTitle('🎯 XP System Configured')
+        .setColor(enabled ? 0x00ff00 : 0xff0000)
         .addFields(
-            { name: '💫 Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
-            { name: '📈 XP per Message', value: perMessage.toString(), inline: true },
-            { name: '📢 Levelup Channel', value: levelupChannel ? levelupChannel.toString() : 'Current channel', inline: true }
+            { name: '✅ Status', value: enabled ? 'Enabled' : 'Disabled', inline: true },
+            { name: '💰 XP per message', value: perMessage.toString(), inline: true },
+            { name: '📢 Level-up channel', value: levelupChannel ? levelupChannel.toString() : 'None set', inline: true }
         )
-        .setDescription(`XP system has been ${enabled ? 'enabled' : 'disabled'}.`)
+        .setDescription('XP system settings have been updated.')
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 async function handleViewConfig(interaction, serverConfig) {
@@ -352,7 +352,7 @@ async function handleViewConfig(interaction, serverConfig) {
         .setThumbnail(guild.iconURL())
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 async function handleResetConfig(interaction, guildConfig) {
@@ -368,7 +368,7 @@ async function handleResetConfig(interaction, guildConfig) {
         )
         .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 // Export configuration loader for other modules
