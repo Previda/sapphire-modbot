@@ -15,6 +15,8 @@ const Dashboard = ({ user }) => {
   const [loading, setLoading] = useState(true)
   const [dataLoading, setDataLoading] = useState(false)
   const [initialLoad, setInitialLoad] = useState(true)
+  const [fadeClass, setFadeClass] = useState('opacity-0')
+  const [tabTransition, setTabTransition] = useState('')
   const [tickets, setTickets] = useState({ stats: { total: 0, open: 0, closed: 0 }, tickets: [] })
   const [showTicketModal, setShowTicketModal] = useState(false)
   const [commands, setCommands] = useState([])
@@ -27,6 +29,13 @@ const Dashboard = ({ user }) => {
     const interval = setInterval(fetchLiveData, 5000)
     return () => clearInterval(interval)
   }, [selectedServer])
+
+  useEffect(() => {
+    // Fade in effect after initial load
+    if (!loading && !initialLoad) {
+      setFadeClass('opacity-100 transition-opacity duration-500 ease-in-out')
+    }
+  }, [loading, initialLoad])
 
   const fetchUserGuilds = async () => {
     try {
@@ -55,8 +64,10 @@ const Dashboard = ({ user }) => {
       console.error('Error fetching guilds:', error)
     } finally {
       setDataLoading(false)
-      setLoading(false)
-      setInitialLoad(false)
+      setTimeout(() => {
+        setLoading(false)
+        setInitialLoad(false)
+      }, 100)
     }
   }
 
@@ -919,9 +930,15 @@ function AnalyticsTab({ selectedServer, liveData }) {
 
   if (loading) {
     return (
-      <div className="text-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-        <span className="text-white/50 text-xl">Loading analytics...</span>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <div className="absolute inset-0 rounded-full h-12 w-12 border-t-2 border-purple-400 animate-spin mx-auto" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2 animate-pulse">Loading Analytics</h2>
+          <p className="text-white/60 animate-fade-in">Fetching server analytics...</p>
+        </div>
       </div>
     )
   }
