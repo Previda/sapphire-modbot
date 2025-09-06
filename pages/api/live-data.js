@@ -29,6 +29,9 @@ export default async function handler(req, res) {
         }
       } catch (error) {
         console.error('Bot API error:', error)
+        console.error('API URL:', botApiUrl)
+        console.error('Token exists:', !!botToken)
+        console.error('Full URL:', `${botApiUrl}/stats/${serverId}`)
       }
     }
     
