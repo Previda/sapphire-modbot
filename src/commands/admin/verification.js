@@ -10,16 +10,19 @@ module.exports = {
             subcommand
                 .setName('setup')
                 .setDescription('Set up the verification system')
-                .addChannel('channel', channel =>
-                    channel
+                .addChannelOption(option =>
+                    option
+                        .setName('channel')
                         .setDescription('Channel for verification messages')
                         .setRequired(true))
-                .addRole('role', role =>
-                    role
+                .addRoleOption(option =>
+                    option
+                        .setName('role')
                         .setDescription('Role to give verified members')
                         .setRequired(true))
-                .addString('type', type =>
-                    type
+                .addStringOption(option =>
+                    option
+                        .setName('type')
                         .setDescription('Verification type')
                         .setRequired(true)
                         .addChoices(

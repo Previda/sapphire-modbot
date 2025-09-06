@@ -310,46 +310,36 @@ async function handleAppealReview(interaction) {
         });
     }
 
-    const caseID = interaction.options.getString('case_id');
-    const action = interaction.options.getString('action');
-    const response = interaction.options.getString('response');
+    const appealCode = interaction.options.getString('appeal_code');
     
-    if (!caseID) {
+    if (!appealCode) {
         return interaction.reply({
-            content: '❌ Please provide a case ID to review.',
+            content: '❌ Please provide an appeal code to review.',
             flags: 64
         });
     }
 
     try {
-        const { getCaseById } = require('../../utils/caseManager');
-        const caseData = await getCaseById(caseID.toUpperCase(), interaction.guild.id);
+        const caseData = await appealLibrary.validateAppeal(appealCode, interaction.guild.id);
         
-        if (!caseData) {
+        if (!caseData.valid) {
             return interaction.reply({
-                content: `❌ Case \`${caseID}\` not found.`,
+                content: `❌ Appeal code \`${appealCode}\` not found or invalid.`,
                 flags: 64
             });
         }
 
-        if (!caseData.appealed) {
-            return interaction.reply({
-                content: `❌ Case \`${caseID}\` has not been appealed.`,
-                flags: 64
-            });
-        }
-
+        const appeal = caseData.appeal;
+        
         const reviewEmbed = new EmbedBuilder()
-            .setTitle(`📋 Appeal Review - Case ${caseID}`)
+            .setTitle(`📋 Appeal Review - ${appealCode}`)
             .setColor(0xffa500)
             .addFields(
-                { name: '👤 User', value: `<@${caseData.userId}> (${caseData.userId})`, inline: true },
-                { name: '⚖️ Punishment', value: caseData.type.toUpperCase(), inline: true },
-                { name: '📅 Appeal Date', value: new Date(caseData.appealData.submittedAt).toLocaleString(), inline: true },
-                { name: '📝 Appeal Reason', value: caseData.appealData.reason, inline: false },
-                { name: '🔍 Evidence', value: caseData.appealData.evidence, inline: false },
-                { name: '📞 Contact', value: caseData.appealData.contact, inline: true },
-                { name: '📊 Status', value: caseData.status, inline: true }
+                { name: '👤 User', value: `<@${appeal.moderatedUserId}> (${appeal.moderatedUserId})`, inline: true },
+                { name: '⚖️ Punishment', value: appeal.type || 'Unknown', inline: true },
+                { name: '📅 Appeal Date', value: new Date().toLocaleString(), inline: true },
+                { name: '📝 Appeal Code', value: appealCode, inline: false },
+                { name: '📊 Status', value: 'Under Review', inline: true }
             )
             .setTimestamp();
 
