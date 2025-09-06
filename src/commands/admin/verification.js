@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
-const { getDocument, setDocument } = require('../../utils/database');
+const database = require('../../database/connection');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -94,6 +94,12 @@ async function setupVerification(interaction, guildId) {
 
     if (!interaction.guild.members.me.permissions.has('ManageRoles') || 
         role.position >= interaction.guild.members.me.roles.highest.position) {
+        await database.updateGuildSettings(guildId, {
+            verificationEnabled: true,
+            verificationChannel: channel.id,
+            verificationRole: role.id,
+            verificationType: type
+        });
         return interaction.reply({
             content: '❌ I need Manage Roles permission and the verification role must be below my highest role.',
             ephemeral: true

@@ -97,7 +97,8 @@ module.exports = {
         let subcommand;
         try {
             subcommand = interaction.options.getSubcommand();
-        switch (subcommand) {
+        
+            switch (subcommand) {
             case 'submit':
                 await handleSubmitAppeal(interaction);
                 break;
@@ -116,8 +117,14 @@ module.exports = {
             case 'settings':
                 await handleAppealSettings(interaction);
                 break;
+            }
+        } catch (error) {
+            console.error('Appeal command error:', error);
+            await interaction.reply({
+                content: '❌ An error occurred while processing the appeal command.',
+                ephemeral: true
+            });
         }
-    }
 };
 
 async function handleSubmitAppeal(interaction) {
@@ -184,39 +191,10 @@ async function handleSubmitAppeal(interaction) {
     }
 
     try {
-        
-        if (!caseData) {
-            return interaction.reply({
-                content: `❌ Case \`${caseID}\` not found. Please check the case ID and try again.`,
-                flags: 64
-            });
-        }
-
-        if (!caseData.userId || caseData.userId !== interaction.user.id) {
-            return interaction.reply({
-                content: '❌ You can only appeal your own cases.',
-                flags: 64
-            });
-        }
-
-        if (!caseData.appealable) {
-            return interaction.reply({
-                content: '❌ This case is not appealable.',
-                flags: 64
-            });
-        }
-
-        if (caseData.appealed) {
-            return interaction.reply({
-                content: `❌ This case has already been appealed. Status: ${caseData.status}`,
-                flags: 64
-            });
-        }
-
         // Create appeal modal (embed guild ID for DM support)
         const modal = new ModalBuilder()
-            .setCustomId(`appeal_modal_${caseID}_${guildId}`)
-            .setTitle(`Appeal Case ${caseID}`);
+            .setCustomId(`appeal_modal_${appealCode}_${guildId}`)
+            .setTitle(`Appeal Submission`);
 
         const reasonInput = new TextInputBuilder()
             .setCustomId('appeal_reason')
