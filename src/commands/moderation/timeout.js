@@ -132,10 +132,35 @@ module.exports = {
 
         } catch (error) {
             console.error('Timeout command error:', error);
-            await interaction.reply({
-                content: '❌ Failed to timeout the user. Please check my permissions.',
-                ephemeral: true
-            });
+            console.error('Error stack:', error.stack);
+            
+            let errorMessage = '❌ Failed to timeout the user. ';
+            
+            if (error.code === 50013) {
+                errorMessage += 'Missing permissions - I need "Moderate Members" permission.';
+            } else if (error.code === 50001) {
+                errorMessage += 'Missing access - Cannot access this user or channel.';
+            } else if (error.message.includes('Missing Permissions')) {
+                errorMessage += 'I don\'t have permission to timeout this user.';
+            } else if (error.message.includes('Cannot timeout')) {
+                errorMessage += 'This user cannot be timed out (they may have higher permissions).';
+            } else if (error.message.includes('ENOENT') || error.message.includes('data')) {
+                errorMessage += 'Database error - could not save case data.';
+            } else {
+                errorMessage += `Error: ${error.message}`;
+            }
+            
+            const isDeferred = interaction.deferred || interaction.replied;
+            if (isDeferred) {
+                await interaction.editReply({
+                    content: errorMessage
+                });
+            } else {
+                await interaction.reply({
+                    content: errorMessage,
+                    ephemeral: true
+                });
+            }
         }
     }
 };

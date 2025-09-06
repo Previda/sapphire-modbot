@@ -111,10 +111,11 @@ module.exports = {
             const durationText = `${durationMinutes}m`;
 
             // Create moderation case with proper case ID
-            const newCase = await createCase(guild.id, {
+            const newCase = await createCase({
                 type: 'mute',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
+                guildId: guild.id,
                 reason: reason,
                 expires: new Date(Date.now() + timeoutDuration).toISOString(),
                 appealable: true
@@ -199,15 +200,35 @@ module.exports = {
 
         } catch (error) {
             console.error('Mute command error:', error);
-            const errorMsg = error.message?.includes('Missing Permissions') 
-                ? '❌ I need **Moderate Members** permission to timeout users.'
-                : error.message?.includes('Cannot timeout') 
-                ? '❌ Cannot timeout this user (they may have higher permissions than me).'
-                : `❌ Failed to mute user: ${error.message}`;
+            console.error('Error stack:', error.stack);
             
-            await interaction.editReply({
-                content: errorMsg
-            });
+            let errorMessage = '❌ Failed to mute the user. ';
+            
+            if (error.code === 50013) {
+                errorMessage += 'Missing permissions - I need "Moderate Members" permission.';
+            } else if (error.code === 50001) {
+                errorMessage += 'Missing access - Cannot access this user or channel.';
+            } else if (error.message.includes('Missing Permissions')) {
+                errorMessage += 'I don\'t have permission to timeout this user.';
+            } else if (error.message.includes('Cannot timeout')) {
+                errorMessage += 'This user cannot be timed out (they may have higher permissions).';
+            } else if (error.message.includes('ENOENT') || error.message.includes('data')) {
+                errorMessage += 'Database error - could not save case data.';
+            } else {
+                errorMessage += `Error: ${error.message}`;
+            }
+            
+            const isDeferred = interaction.deferred || interaction.replied;
+            if (isDeferred) {
+                await interaction.editReply({
+                    content: errorMessage
+                });
+            } else {
+                await interaction.reply({
+                    content: errorMessage,
+                    ephemeral: true
+                });
+            }
         }
     }
 };
