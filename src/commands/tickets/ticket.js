@@ -57,6 +57,28 @@ module.exports = {
             subcommand
                 .setName('transcript')
                 .setDescription('Generate ticket transcript'))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('admin')
+                .setDescription('Admin ticket management')
+                .addStringOption(option =>
+                    option.setName('action')
+                        .setDescription('Admin action to perform')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Force Close', value: 'force_close' },
+                            { name: 'Transfer Ownership', value: 'transfer' },
+                            { name: 'Set Priority', value: 'priority' },
+                            { name: 'Add Multiple Users', value: 'bulk_add' }
+                        ))
+                .addUserOption(option =>
+                    option.setName('user')
+                        .setDescription('Target user for action')
+                        .setRequired(false))
+                .addStringOption(option =>
+                    option.setName('reason')
+                        .setDescription('Reason for admin action')
+                        .setRequired(false)))
         .setDefaultMemberPermissions(null), // Allow all users to create tickets
 
     async execute(interaction) {
@@ -88,8 +110,19 @@ module.exports = {
         
         try {
             switch (subcommand) {
-                case 'open':
-                    await handleOpenTicket(interaction);
+                case 'transcript':
+                    await handleTranscript(interaction); 
+                    break;
+                case 'admin':
+                    // Only admins/mods can use admin commands
+                    if (!interaction.member.permissions.has('ManageChannels') && 
+                        interaction.guild.ownerId !== interaction.user.id) {
+                        return interaction.reply({
+                            content: '❌ You need **Manage Channels** permission to use admin ticket commands.',
+                            flags: 64
+                        });
+                    }
+                    await handleTicketAdmin(interaction);
                     break;
                 case 'close':
                     // Only admins can close tickets manually
@@ -318,6 +351,176 @@ async function handleOpenTicket(interaction) {
         console.error('Error creating ticket:', error);
         await interaction.reply({
             content: '❌ Failed to create ticket. Please try again later.',
+            flags: 64
+        });
+    }
+}
+
+async function handleTicketAdmin(interaction) {
+    const action = interaction.options.getString('action');
+    const targetUser = interaction.options.getUser('user');
+    const reason = interaction.options.getString('reason') || 'No reason provided';
+    const channel = interaction.channel;
+
+    try {
+        // Find ticket case by channel ID
+        const allCases = moderationManager.getAllCases();
+        const ticketCase = allCases.find(c => c.channelId === channel.id && c.type === 'ticket' && c.status === 'open');
+
+        if (!ticketCase) {
+            return interaction.reply({
+                content: '❌ This is not an active ticket channel.',
+                flags: 64
+            });
+        }
+
+        switch (action) {
+            case 'force_close':
+                // Force close ticket with admin override
+                moderationManager.updateCase(ticketCase.caseId, { 
+                    status: 'closed',
+                    closedBy: interaction.user.id,
+                    closedByTag: interaction.user.tag,
+                    closeReason: `[ADMIN] ${reason}`,
+                    closedAt: Date.now(),
+                    adminForced: true
+                });
+
+                const closeEmbed = new EmbedBuilder()
+                    .setTitle('🔒 Ticket Force Closed')
+                    .setDescription(`Ticket forcibly closed by admin ${interaction.user.tag}`)
+                    .addFields(
+                        { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                        { name: '👮 Admin', value: interaction.user.tag, inline: true },
+                        { name: '📝 Reason', value: reason, inline: false }
+                    )
+                    .setColor(0xff0000)
+                    .setTimestamp();
+
+                await interaction.reply({ embeds: [closeEmbed] });
+                
+                // Delete channel after 10 seconds
+                setTimeout(async () => {
+                    try {
+                        await channel.delete();
+                    } catch (error) {
+                        console.error('Error deleting channel:', error);
+                    }
+                }, 10000);
+                break;
+
+            case 'transfer':
+                if (!targetUser) {
+                    return interaction.reply({
+                        content: '❌ You must specify a user to transfer the ticket to.',
+                        flags: 64
+                    });
+                }
+
+                // Update ticket ownership
+                moderationManager.updateCase(ticketCase.caseId, { 
+                    userId: targetUser.id,
+                    transferredBy: interaction.user.id,
+                    transferReason: reason,
+                    transferredAt: Date.now()
+                });
+
+                // Update channel permissions
+                await channel.permissionOverwrites.edit(targetUser, {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    ReadMessageHistory: true,
+                    AttachFiles: true
+                });
+
+                const transferEmbed = new EmbedBuilder()
+                    .setTitle('🔄 Ticket Transferred')
+                    .setDescription(`Ticket ownership transferred to ${targetUser.tag}`)
+                    .addFields(
+                        { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                        { name: '👤 New Owner', value: targetUser.tag, inline: true },
+                        { name: '👮 Admin', value: interaction.user.tag, inline: true },
+                        { name: '📝 Reason', value: reason, inline: false }
+                    )
+                    .setColor(0x3498db)
+                    .setTimestamp();
+
+                await interaction.reply({ embeds: [transferEmbed] });
+                break;
+
+            case 'priority':
+                // Set ticket priority
+                const priorities = ['🔴 High', '🟡 Medium', '🟢 Low'];
+                const priority = priorities[Math.floor(Math.random() * priorities.length)];
+
+                moderationManager.updateCase(ticketCase.caseId, { 
+                    priority: priority,
+                    prioritySetBy: interaction.user.id,
+                    priorityReason: reason,
+                    prioritySetAt: Date.now()
+                });
+
+                const priorityEmbed = new EmbedBuilder()
+                    .setTitle('⚡ Ticket Priority Set')
+                    .setDescription(`Ticket priority updated to ${priority}`)
+                    .addFields(
+                        { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                        { name: '⚡ Priority', value: priority, inline: true },
+                        { name: '👮 Admin', value: interaction.user.tag, inline: true },
+                        { name: '📝 Reason', value: reason, inline: false }
+                    )
+                    .setColor(0xff9500)
+                    .setTimestamp();
+
+                await interaction.reply({ embeds: [priorityEmbed] });
+                break;
+
+            case 'bulk_add':
+                // Add multiple users mentioned in reason field
+                const userMentions = reason.match(/<@!?(\d+)>/g);
+                if (!userMentions) {
+                    return interaction.reply({
+                        content: '❌ Please mention users in the reason field to add them. Example: `@user1 @user2 @user3`',
+                        flags: 64
+                    });
+                }
+
+                const addedUsers = [];
+                for (const mention of userMentions) {
+                    const userId = mention.match(/\d+/)[0];
+                    try {
+                        const user = await interaction.guild.members.fetch(userId);
+                        await channel.permissionOverwrites.create(user, {
+                            ViewChannel: true,
+                            SendMessages: true,
+                            ReadMessageHistory: true,
+                            AttachFiles: true
+                        });
+                        addedUsers.push(user.user.tag);
+                    } catch (error) {
+                        console.error(`Failed to add user ${userId}:`, error);
+                    }
+                }
+
+                const bulkEmbed = new EmbedBuilder()
+                    .setTitle('👥 Bulk Add Users')
+                    .setDescription(`Added ${addedUsers.length} users to ticket`)
+                    .addFields(
+                        { name: '🆔 Case ID', value: `#${ticketCase.caseId}`, inline: true },
+                        { name: '👥 Added Users', value: addedUsers.join(', ') || 'None', inline: false },
+                        { name: '👮 Admin', value: interaction.user.tag, inline: true }
+                    )
+                    .setColor(0x00ff00)
+                    .setTimestamp();
+
+                await interaction.reply({ embeds: [bulkEmbed] });
+                break;
+        }
+
+    } catch (error) {
+        console.error('Error with admin ticket command:', error);
+        await interaction.reply({
+            content: '❌ Failed to execute admin command. Please try again later.',
             flags: 64
         });
     }
