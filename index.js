@@ -598,7 +598,7 @@ app.get('/stats/:serverId', authenticateToken, async (req, res) => {
             memoryUsage: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
         };
 
-        res.json(data);
+        res.json(stats);
     } catch (error) {
         console.error('Stats endpoint error:', error);
         res.status(500).json({ error: 'Internal server error' });
