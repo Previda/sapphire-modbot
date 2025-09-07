@@ -1,9 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior, StreamType } = require('@discordjs/voice');
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
 const spotify = require('spotify-url-info');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -279,25 +279,45 @@ module.exports = {
             console.log('🎵 Starting direct streaming...');
             
             try {
-                // Method 1: Direct FFmpeg streaming from YouTube URL
-                console.log('🔄 Method 1: Direct FFmpeg streaming...');
+                // Method 1: Get direct audio URL then stream with FFmpeg
+                console.log('🔄 Method 1: Getting direct URL for FFmpeg...');
                 
-                const ffmpegCommand = `ffmpeg -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "${songUrl}" -f wav -ar 48000 -ac 2 pipe:1`;
-                
-                const ffmpegProcess = exec(ffmpegCommand, {
-                    stdio: ['ignore', 'pipe', 'pipe']
+                const urlCommand = `yt-dlp -f "bestaudio/best" --get-url "${songUrl}"`;
+                const directUrl = await new Promise((resolve, reject) => {
+                    exec(urlCommand, { timeout: 15000 }, (error, stdout, stderr) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(stdout.trim());
+                        }
+                    });
                 });
                 
-                if (ffmpegProcess.stdout) {
+                if (directUrl && directUrl.startsWith('http')) {
+                    console.log('🔗 Got direct URL, starting FFmpeg stream...');
+                    
+                    const ffmpegCommand = `ffmpeg -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "${directUrl}" -f s16le -ar 48000 -ac 2 pipe:1`;
+                    
+                    const ffmpegProcess = spawn('ffmpeg', [
+                        '-reconnect', '1',
+                        '-reconnect_streamed', '1', 
+                        '-reconnect_delay_max', '5',
+                        '-i', directUrl,
+                        '-f', 's16le',
+                        '-ar', '48000',
+                        '-ac', '2',
+                        'pipe:1'
+                    ], { stdio: ['ignore', 'pipe', 'pipe'] });
+                    
                     resource = createAudioResource(ffmpegProcess.stdout, {
-                        inputType: 'raw',
+                        inputType: StreamType.Raw,
                         inlineVolume: true
                     });
                     
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('🎵 FFmpeg direct streaming started');
+                    console.log('🎵 FFmpeg streaming with direct URL started');
                     console.log('🔊 Audio player status:', player.state.status);
                     console.log('🔊 Voice connection status:', connection.state.status);
                     audioCreated = true;
