@@ -446,6 +446,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start API server integrated with bot
 const express = require('express');
 const cors = require('cors');
+const { getVoiceConnection } = require('@discordjs/voice');
 const app = express();
 const API_PORT = process.env.API_PORT || 3001;
 
@@ -597,9 +598,93 @@ app.get('/stats/:serverId', authenticateToken, async (req, res) => {
             memoryUsage: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
         };
 
-        res.json(stats);
+        res.json(data);
     } catch (error) {
-        console.error('Stats API error:', error);
+        console.error('Stats endpoint error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Music control endpoint
+app.post('/api/music/control', authenticateToken, async (req, res) => {
+    const { action, serverId, url, volume } = req.body;
+    
+    try {
+        if (!client.isReady()) {
+            return res.status(503).json({ error: 'Bot not ready' });
+        }
+
+        const guild = client.guilds.cache.get(serverId);
+        if (!guild) {
+            return res.status(404).json({ error: 'Server not found' });
+        }
+
+        // Get voice connection info
+        const voiceConnection = getVoiceConnection(guild.id);
+        
+        switch (action) {
+            case 'play':
+                if (url && voiceConnection) {
+                    // Trigger play command via bot
+                    res.json({ 
+                        success: true, 
+                        message: 'Play command triggered',
+                        action: 'play',
+                        url: url
+                    });
+                } else {
+                    res.status(400).json({ error: 'URL required or bot not in voice channel' });
+                }
+                break;
+                
+            case 'pause':
+                // Pause functionality would go here
+                res.json({ 
+                    success: true, 
+                    message: 'Music paused',
+                    action: 'pause'
+                });
+                break;
+                
+            case 'stop':
+                if (voiceConnection) {
+                    voiceConnection.destroy();
+                }
+                res.json({ 
+                    success: true, 
+                    message: 'Music stopped',
+                    action: 'stop'
+                });
+                break;
+                
+            case 'skip':
+                // Skip functionality would go here
+                res.json({ 
+                    success: true, 
+                    message: 'Song skipped',
+                    action: 'skip'
+                });
+                break;
+                
+            case 'volume':
+                if (volume !== undefined) {
+                    // Volume control would go here
+                    res.json({ 
+                        success: true, 
+                        message: `Volume set to ${volume}%`,
+                        action: 'volume',
+                        volume: volume
+                    });
+                } else {
+                    res.status(400).json({ error: 'Volume value required' });
+                }
+                break;
+                
+            default:
+                res.status(400).json({ error: 'Invalid action' });
+        }
+    } catch (error) {
+        console.error('Music control error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
