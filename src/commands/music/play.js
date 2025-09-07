@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior, StreamType } = require('@discordjs/voice');
+const play = require('play-dl');
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
 const spotify = require('spotify-url-info');
@@ -275,101 +276,41 @@ module.exports = {
 
             await interaction.editReply({ embeds: [playEmbed] });
 
-            // Simplified streaming - start with basic ytdl-core
-            console.log('🎵 Starting simplified audio streaming...');
+            // Use play-dl library for reliable streaming
+            console.log('🎵 Starting play-dl streaming...');
             
-            // Method 1: Basic ytdl-core with better options
+            // Method 1: play-dl (most reliable)
             try {
-                console.log('🔄 Method 1: Enhanced ytdl-core...');
+                console.log('🔄 Method 1: play-dl streaming...');
                 
-                const stream = ytdl(songUrl, {
-                    filter: 'audioonly',
-                    quality: 'highestaudio',
-                    highWaterMark: 1 << 25,
-                    requestOptions: {
-                        headers: {
-                            'Cookie': '',
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                        }
-                    }
+                const stream = await play.stream(songUrl, {
+                    quality: 2 // High quality
                 });
                 
-                resource = createAudioResource(stream, {
-                    inlineVolume: true,
-                    inputType: 'arbitrary'
+                resource = createAudioResource(stream.stream, {
+                    inputType: stream.type,
+                    inlineVolume: true
                 });
                 
                 player.play(resource);
                 connection.subscribe(player);
                 
-                console.log('🎵 Enhanced ytdl-core streaming started');
+                console.log('🎵 play-dl streaming started successfully');
                 console.log('🔊 Audio player status:', player.state.status);
                 audioCreated = true;
                 
-            } catch (ytdlError) {
-                console.log('Method 1 (Enhanced ytdl-core) failed:', ytdlError.message);
+            } catch (playDlError) {
+                console.log('Method 1 (play-dl) failed:', playDlError.message);
             }
             
-            // Method 2: yt-dlp direct URL with simple fetch
+            // Method 2: Fallback ytdl-core (simple)
             if (!audioCreated) {
                 try {
-                    console.log('🔄 Method 2: yt-dlp URL + fetch...');
-                    
-                    const urlCommand = `yt-dlp -f "bestaudio[ext=webm]/bestaudio/best" --get-url "${songUrl}"`;
-                    const directUrl = await new Promise((resolve, reject) => {
-                        exec(urlCommand, { 
-                            timeout: 10000,
-                            env: { ...process.env, PATH: process.env.PATH + ':/usr/local/bin:/usr/bin' }
-                        }, (error, stdout, stderr) => {
-                            if (error) {
-                                reject(error);
-                            } else {
-                                const url = stdout.trim().split('\n')[0];
-                                resolve(url);
-                            }
-                        });
-                    });
-                    
-                    if (directUrl && directUrl.startsWith('http')) {
-                        console.log('🔗 Got direct URL, streaming...');
-                        
-                        const response = await fetch(directUrl, {
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                            }
-                        });
-                        
-                        if (response.ok && response.body) {
-                            resource = createAudioResource(response.body, {
-                                inlineVolume: true
-                            });
-                            
-                            player.play(resource);
-                            connection.subscribe(player);
-                            
-                            console.log('🎵 yt-dlp + fetch streaming started');
-                            audioCreated = true;
-                        }
-                    }
-                    
-                } catch (fetchError) {
-                    console.log('Method 2 (yt-dlp + fetch) failed:', fetchError.message);
-                }
-            }
-            
-            // Method 3: Fallback ytdl-core with lowest quality
-            if (!audioCreated) {
-                try {
-                    console.log('🔄 Method 3: Fallback ytdl-core...');
+                    console.log('🔄 Method 2: Simple ytdl-core fallback...');
                     
                     const stream = ytdl(songUrl, {
                         filter: 'audioonly',
-                        quality: 'lowestaudio',
-                        requestOptions: {
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36'
-                            }
-                        }
+                        quality: 'lowestaudio'
                     });
                     
                     resource = createAudioResource(stream, {
@@ -379,11 +320,11 @@ module.exports = {
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('🎵 Fallback ytdl-core streaming started');
+                    console.log('🎵 ytdl-core fallback started');
                     audioCreated = true;
                     
-                } catch (fallbackError) {
-                    console.log('Method 3 (Fallback ytdl-core) failed:', fallbackError.message);
+                } catch (ytdlError) {
+                    console.log('Method 2 (ytdl-core fallback) failed:', ytdlError.message);
                 }
             }
             
