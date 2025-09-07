@@ -282,9 +282,11 @@ const Dashboard = ({ user }) => {
                 <span>Server</span>
               </h2>
               <div className="relative">
+                <label htmlFor="serverSelect" className="sr-only">Select Discord Server</label>
                 <select 
                   id="serverSelect"
                   name="serverSelect"
+                  aria-label="Select Discord Server"
                   value={selectedServer?.id || ''} 
                   onChange={(e) => {
                     const guild = userGuilds.find(g => g.id === e.target.value)
@@ -292,9 +294,12 @@ const Dashboard = ({ user }) => {
                       window.open('https://discord.com/channels/@me', '_blank')
                       return
                     }
-                    setSelectedServer(guild)
+                    if (guild) {
+                      setSelectedServer(guild)
+                      fetchLiveDataForServer(guild)
+                    }
                   }}
-                  className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-xl px-6 py-4 text-white font-medium min-w-[450px] focus:ring-2 focus:ring-purple-400 focus:border-purple-400 outline-none backdrop-blur-sm transition-all duration-200 hover:border-purple-400/50 appearance-none cursor-pointer"
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent appearance-none cursor-pointer"
                 >
                   <option value="" className="bg-gray-900 text-gray-300">🔍 Select a server you can manage</option>
                   {userGuilds.map(guild => (

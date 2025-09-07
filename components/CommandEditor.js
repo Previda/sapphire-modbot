@@ -210,6 +210,7 @@ export default function CommandEditor({ serverId }) {
               <div>
                 <label htmlFor="commandCategory" className="block text-sm font-medium text-gray-300 mb-2">Category</label>
                 <select
+                  id="commandCategory"
                   value={formData.category}
                   onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
@@ -252,6 +253,7 @@ export default function CommandEditor({ serverId }) {
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Permissions</label>
                 <select
+                  id="commandPermissions"
                   multiple
                   value={formData.permissions}
                   onChange={(e) => setFormData(prev => ({ 
