@@ -238,7 +238,6 @@ async function disableVerification(interaction, guildId) {
         });
     }
 
-    const guildConfig = await loadGuildConfig(guildId);
     guildConfig.verification = { ...config, enabled: false, disabledAt: Date.now() };
     await saveGuildConfig(guildId, guildConfig);
 
