@@ -272,93 +272,86 @@ module.exports = {
 
             await interaction.editReply({ embeds: [playEmbed] });
 
-            // Raspberry Pi multi-method audio extraction
-            console.log('🔄 Starting Pi-optimized audio extraction...');
+            // New simple direct streaming approach for Pi
+            console.log('🎵 Starting direct streaming...');
             
-            // Method 1: Try yt-dlp with better Pi compatibility
             try {
-                console.log('🔄 Method 1: Trying yt-dlp extraction...');
+                // Method 1: Direct FFmpeg streaming from YouTube URL
+                console.log('🔄 Method 1: Direct FFmpeg streaming...');
                 
-                const tempDir = path.join(__dirname, '../../../temp');
-                if (!fs.existsSync(tempDir)) {
-                    fs.mkdirSync(tempDir, { recursive: true });
-                }
+                const ffmpegCommand = `ffmpeg -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "${songUrl}" -f wav -ar 48000 -ac 2 pipe:1`;
                 
-                const audioFile = path.join(tempDir, `audio_${Date.now()}.mp3`);
-                
-                await new Promise((resolve, reject) => {
-                    // Simplified yt-dlp command for Pi
-                    const ytDlpCommand = `yt-dlp --extract-audio --audio-format mp3 --audio-quality 0 -o "${audioFile}" "${songUrl}"`;
-                    
-                    console.log('🔄 Running yt-dlp command:', ytDlpCommand);
-                    
-                    exec(ytDlpCommand, { 
-                        timeout: 60000,
-                        env: { ...process.env, PATH: process.env.PATH + ':/usr/local/bin:/usr/bin' }
-                    }, (error, stdout, stderr) => {
-                        console.log('yt-dlp stdout:', stdout);
-                        console.log('yt-dlp stderr:', stderr);
-                        
-                        if (error) {
-                            console.log('yt-dlp failed:', error.message);
-                            reject(error);
-                        } else {
-                            console.log('✅ yt-dlp extraction successful');
-                            resolve();
-                        }
-                    });
+                const ffmpegProcess = exec(ffmpegCommand, {
+                    stdio: ['ignore', 'pipe', 'pipe']
                 });
                 
-                // Check for extracted file with different extensions  
-                const possibleFiles = [
-                    audioFile,
-                    audioFile.replace('.mp3', '.m4a'),
-                    audioFile.replace('.mp3', '.webm'),
-                    audioFile.replace('.mp3', '.opus')
-                ];
-                
-                let foundFile = null;
-                for (const file of possibleFiles) {
-                    if (fs.existsSync(file)) {
-                        foundFile = file;
-                        break;
-                    }
-                }
-                
-                if (foundFile) {
-                    resource = createAudioResource(foundFile, {
+                if (ffmpegProcess.stdout) {
+                    resource = createAudioResource(ffmpegProcess.stdout, {
+                        inputType: 'raw',
                         inlineVolume: true
                     });
                     
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('🎵 yt-dlp playback started successfully');
+                    console.log('🎵 FFmpeg direct streaming started');
                     audioCreated = true;
-                    
-                    // Clean up file after playback
-                    player.once(AudioPlayerStatus.Idle, () => {
-                        try {
-                            fs.unlinkSync(foundFile);
-                            console.log('Temp audio file cleaned up');
-                        } catch (cleanupError) {
-                            console.log('Could not cleanup temp file:', cleanupError.message);
-                        }
-                    });
                 }
                 
-            } catch (ytDlpError) {
-                console.log('Method 1 (yt-dlp) failed:', ytDlpError.message);
+            } catch (ffmpegError) {
+                console.log('Method 1 (FFmpeg) failed:', ffmpegError.message);
             }
             
-            // Method 2: ytdl-core SIMPLE approach (if yt-dlp failed)
+            // Method 2: Simple HTTP stream for supported URLs
+            if (!audioCreated && (songUrl.includes('youtu') || songUrl.includes('soundcloud'))) {
+                try {
+                    console.log('🔄 Method 2: HTTP streaming...');
+                    
+                    // Get direct URL using yt-dlp but just for URL extraction, not download
+                    const urlCommand = `yt-dlp -g "${songUrl}"`;
+                    const directUrl = await new Promise((resolve, reject) => {
+                        exec(urlCommand, { timeout: 10000 }, (error, stdout, stderr) => {
+                            if (error) {
+                                reject(error);
+                            } else {
+                                resolve(stdout.trim());
+                            }
+                        });
+                    });
+                    
+                    if (directUrl && directUrl.startsWith('http')) {
+                        const response = await fetch(directUrl);
+                        if (response.ok) {
+                            resource = createAudioResource(response.body, {
+                                inlineVolume: true
+                            });
+                            
+                            player.play(resource);
+                            connection.subscribe(player);
+                            
+                            console.log('🎵 HTTP streaming started');
+                            audioCreated = true;
+                        }
+                    }
+                    
+                } catch (httpError) {
+                    console.log('Method 2 (HTTP) failed:', httpError.message);
+                }
+            }
+            
+            // Method 3: Simple ytdl-core as final fallback
             if (!audioCreated) {
                 try {
-                    console.log('🔄 Method 2: Trying SIMPLE ytdl-core...');
+                    console.log('🔄 Method 3: Basic ytdl-core...');
                     
                     const stream = ytdl(songUrl, {
                         filter: 'audioonly',
-                        quality: 'highestaudio'
+                        quality: 'lowestaudio',
+                        requestOptions: {
+                            headers: {
+                                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            }
+                        }
                     });
                     
                     resource = createAudioResource(stream, {
@@ -368,40 +361,11 @@ module.exports = {
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('🎵 Simple ytdl-core playback started');
+                    console.log('🎵 Basic ytdl-core streaming started');
                     audioCreated = true;
                     
                 } catch (ytdlError) {
-                    console.log('Method 2 (ytdl-core) full error:', ytdlError);
-
-                    console.log('Method 2 (ytdl-core) failed:', ytdlError.message, ytdlError);
-                }
-            }
-            
-            // Method 3: IMMEDIATE simple stream (skip file extraction)
-            if (!audioCreated) {
-                try {
-                    console.log('🔄 Method 3: IMMEDIATE stream...');
-                    
-                    // Get stream immediately and play
-                    const stream = ytdl(songUrl, {
-                        filter: 'audioonly',
-                        quality: 'lowestaudio'
-                    });
-                    
-                    resource = createAudioResource(stream, {
-                        inlineVolume: true
-                    });
-                    
-                    player.play(resource);
-                    connection.subscribe(player);
-                    
-                    console.log('🎵 IMMEDIATE stream playback started');
-                    audioCreated = true;
-                    
-                } catch (basicError) {
-                    console.log('Method 3 (immediate stream) full error:', basicError);
-                    console.error('❌ All methods failed:', basicError.message);
+                    console.log('Method 3 (ytdl-core) failed:', ytdlError.message);
                 }
             }
             
