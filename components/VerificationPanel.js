@@ -144,8 +144,10 @@ export default function VerificationPanel({ selectedServer }) {
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-white">Verification Configuration</h3>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label htmlFor="verificationEnabled" className="relative inline-flex items-center cursor-pointer">
             <input
+              id="verificationEnabled"
+              name="verificationEnabled"
               type="checkbox"
               checked={config.enabled}
               onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
@@ -158,57 +160,68 @@ export default function VerificationPanel({ selectedServer }) {
         {config.enabled && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Verification Channel ID</label>
+              <label htmlFor="verificationChannelId" className="block text-sm font-medium text-slate-300 mb-2">Verification Channel ID</label>
               <input
+                id="verificationChannelId"
+                name="verificationChannelId"
                 type="text"
                 value={config.channelId}
                 onChange={(e) => setConfig({ ...config, channelId: e.target.value })}
                 placeholder="Enter channel ID"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Verified Role ID</label>
+              <label htmlFor="verifiedRoleId" className="block text-sm font-medium text-slate-300 mb-2">Verified Role ID</label>
               <input
+                id="verifiedRoleId"
+                name="verifiedRoleId"
                 type="text"
                 value={config.roleId}
                 onChange={(e) => setConfig({ ...config, roleId: e.target.value })}
                 placeholder="Enter role ID"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-300 mb-2">Welcome Message</label>
+              <label htmlFor="welcomeMessage" className="block text-sm font-medium text-slate-300 mb-2">Welcome Message</label>
               <textarea
+                id="welcomeMessage"
+                name="welcomeMessage"
                 value={config.welcomeMessage}
                 onChange={(e) => setConfig({ ...config, welcomeMessage: e.target.value })}
                 placeholder="Enter welcome message"
-                rows="3"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500"
+                rows={3}
+                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Verify Button Text</label>
+              <label htmlFor="verifyButtonText" className="block text-sm font-medium text-slate-300 mb-2">Verify Button Text</label>
               <input
+                id="verifyButtonText"
+                name="verifyButtonText"
                 type="text"
                 value={config.verifyButtonText}
                 onChange={(e) => setConfig({ ...config, verifyButtonText: e.target.value })}
                 placeholder="Button text"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Minimum Account Age (days)</label>
+              <label htmlFor="requiredAge" className="block text-sm font-medium text-slate-300 mb-2">Minimum Account Age (days)</label>
               <input
+                id="requiredAge"
+                name="requiredAge"
                 type="number"
                 value={config.requiredAge}
                 onChange={(e) => setConfig({ ...config, requiredAge: parseInt(e.target.value) || 0 })}
+                placeholder="0"
                 min="0"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500"
+                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
           </div>

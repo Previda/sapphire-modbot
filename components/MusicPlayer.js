@@ -188,7 +188,7 @@ export default function MusicPlayer({ serverId }) {
       {/* Volume and Settings */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <span className="text-white text-sm">🔊</span>
+          <label htmlFor="volumeSlider" className="text-white text-sm">🔊</label>
           <input 
             id="volumeSlider"
             name="volumeSlider"
@@ -198,6 +198,7 @@ export default function MusicPlayer({ serverId }) {
             value={volume}
             onChange={(e) => setVolume(e.target.value)}
             className="w-32 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+            aria-label="Volume control"
           />
           <span className="text-gray-300 text-sm w-10">{volume}%</span>
         </div>
@@ -306,6 +307,7 @@ function PlayUrlInput({ onPlay }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
+      <label htmlFor="musicUrl" className="sr-only">Music URL or search term</label>
       <input 
         id="musicUrl"
         name="musicUrl"
@@ -315,6 +317,7 @@ function PlayUrlInput({ onPlay }) {
         placeholder="Enter YouTube URL or search term..."
         className="flex-1 px-4 py-2 bg-black/30 border border-white/20 rounded-l text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
         disabled={loading}
+        aria-label="Music URL or search term"
       />
       <button 
         type="submit" 

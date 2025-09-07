@@ -677,7 +677,7 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                           <div className="space-y-4">
                             {/* Description */}
                             <div>
-                              <label className="block text-white/70 text-sm mb-1">Command Description</label>
+                              <label htmlFor={`cmd-desc-${command.name}`} className="block text-white/70 text-sm mb-1">Command Description</label>
                               <input
                                 id={`cmd-desc-${command.name}`}
                                 name={`commandDescription-${command.name}`}
@@ -692,11 +692,12 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                             <div className="grid md:grid-cols-2 gap-4">
                               {/* Cooldown - for all commands */}
                               <div>
-                                <label className="block text-white/70 text-sm mb-1">Cooldown (seconds)</label>
+                                <label htmlFor={`cooldown-${command.id}`} className="block text-white/70 text-sm mb-1">Cooldown (seconds)</label>
                                 <select
                                   defaultValue={command.cooldown}
                                   className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
                                   id={`cooldown-${command.id}`}
+                                  name={`cooldown-${command.id}`}
                                 >
                                   <option value="0">No cooldown</option>
                                   <option value="1">1 second</option>
@@ -711,7 +712,7 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                               
                               {/* Alias - for all commands */}
                               <div>
-                                <label className="block text-white/70 text-sm mb-1">Command Alias</label>
+                                <label htmlFor={`cmd-alias-${command.name}`} className="block text-white/70 text-sm mb-1">Command Alias</label>
                                 <input
                                   id={`cmd-alias-${command.name}`}
                                   name={`commandAlias-${command.name}`}
@@ -726,7 +727,7 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                               {(['ban', 'kick', 'mute', 'warn', 'timeout'].includes(command.name.toLowerCase()) || command.category === 'moderation') && (
                                 <>
                                   <div>
-                                    <label className="block text-white/70 text-sm mb-1">Default Reason</label>
+                                    <label htmlFor={`cmd-reason-${command.name}`} className="block text-white/70 text-sm mb-1">Default Reason</label>
                                     <input
                                       id={`cmd-reason-${command.name}`}
                                       name={`defaultReason-${command.name}`}
@@ -740,11 +741,12 @@ function CommandsTab({ selectedServer, commands, editingCommand, setEditingComma
                                   {/* Ban duration only for ban/timeout commands */}
                                   {(['ban', 'timeout'].includes(command.name.toLowerCase())) && (
                                     <div>
-                                      <label className="block text-white/70 text-sm mb-1">Ban Duration</label>
+                                      <label htmlFor={`duration-${command.id}`} className="block text-white/70 text-sm mb-1">Ban Duration</label>
                                       <select
                                         defaultValue={command.banDuration || 0}
                                         className="w-full px-3 py-2 bg-black/30 border border-white/20 rounded text-white text-sm"
                                         id={`duration-${command.id}`}
+                                        name={`duration-${command.id}`}
                                       >
                                         <option value="0">Permanent</option>
                                         <option value="1">1 hour</option>

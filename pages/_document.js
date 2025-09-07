@@ -7,7 +7,7 @@ export default function Document() {
         {/* Content Security Policy */}
         <meta
           name="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss: ws:; media-src 'self' https: blob:; object-src 'none'; frame-src 'self' https:; worker-src 'self' blob:;"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: vercel.live; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss: ws: vercel.live; media-src 'self' https: blob:; object-src 'none'; frame-src 'self' https: vercel.live; worker-src 'self' blob:;"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         
