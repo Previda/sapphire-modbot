@@ -1,7 +1,7 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ChannelType } = require('discord.js');
-const moderationManager = require('../../utils/moderationUtils');
-const { cleanupDeletedTickets } = require('../../utils/ticketUtils');
+const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
 const { createCase } = require('../../utils/caseManager');
+const { cleanupDeletedTickets } = require('../../utils/ticketUtils');
+const { loadGuildConfig } = require('../../utils/configManager');
 const dashboardLogger = require('../../utils/dashboardLogger');
 const fs = require('fs');
 const path = require('path');
@@ -181,19 +181,54 @@ async function handleOpenTicket(interaction) {
             appealable: false
         });
 
+        // Check bot permissions first
+        const botMember = guild.members.me;
+        if (!botMember.permissions.has(['ManageChannels', 'ManageRoles'])) {
+            return interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle('❌ Permission Error')
+                    .setDescription('Bot needs **Manage Channels** and **Manage Roles** permissions to create tickets.')],
+                ephemeral: true
+            });
+        }
+
+        // Get ticket category or create in parent category
+        let parent = null;
+        const config = loadGuildConfig(guild.id);
+        if (config.tickets?.categoryId) {
+            parent = guild.channels.cache.get(config.tickets.categoryId);
+        }
+
         // Create ticket channel
         const channel = await guild.channels.create({
             name: `${category}-${user.username}-${ticketCase.caseId}`,
             type: ChannelType.GuildText,
+            parent: parent,
             topic: `Ticket by ${user.tag} | Case #${ticketCase.caseId} | Reason: ${reason}`,
             permissionOverwrites: [
                 {
-                    id: guild.roles.everyone,
-                    deny: ['ViewChannel']
+                    id: guild.roles.everyone.id,
+                    deny: [PermissionFlagsBits.ViewChannel]
                 },
                 {
                     id: user.id,
-                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles']
+                    allow: [
+                        PermissionFlagsBits.ViewChannel,
+                        PermissionFlagsBits.SendMessages,
+                        PermissionFlagsBits.ReadMessageHistory,
+                        PermissionFlagsBits.AttachFiles,
+                        PermissionFlagsBits.EmbedLinks
+                    ]
+                },
+                {
+                    id: botMember.id,
+                    allow: [
+                        PermissionFlagsBits.ViewChannel,
+                        PermissionFlagsBits.SendMessages,
+                        PermissionFlagsBits.ManageMessages,
+                        PermissionFlagsBits.ReadMessageHistory
+                    ]
                 }
             ]
         });
