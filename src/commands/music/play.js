@@ -235,18 +235,20 @@ module.exports = {
                         highWaterMark: 1 << 25,
                         requestOptions: {
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36 (KHTML, like Gecko) Raspbian Chromium/78.0.3904.108 Chrome/78.0.3904.108 Safari/537.36'
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                             }
                         }
                     });
                     
                     const recoveryResource = createAudioResource(recoveryStream, {
-                        inlineVolume: true,
-                        inputType: 'arbitrary'
+                        inlineVolume: true
                     });
                     
                     player.play(recoveryResource);
-                    console.log('🔄 Recovery attempt started - silent mode');
+                    connection.subscribe(player);
+                    
+                    console.log('🎵 Recovery stream started successfully');
+                    console.log('🔊 Audio player status:', player.state.status);
                     
                 } catch (recoveryError) {
                     console.error('❌ Recovery failed:', recoveryError);
@@ -260,44 +262,40 @@ module.exports = {
                 safeDestroy();
             });
 
-            // Show "Now Playing" embed immediately
-            const playEmbed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setTitle('🎵 Now Playing')
-                .setDescription(`**${songInfo.title}**`)
-                .addFields(
-                    { name: '👤 Artist', value: songInfo.artist, inline: true },
-                    { name: '⏱️ Duration', value: songInfo.duration, inline: true },
-                    { name: '🔗 Source', value: songInfo.source, inline: true }
-                )
-                .setThumbnail(songInfo.thumbnail)
-                .setFooter({ text: `Requested by ${interaction.user.tag}` })
-                .setTimestamp();
+            // Method 1: Try play-dl first (most reliable)
+            let audioCreated = false;
+            let resource;
 
-            await interaction.editReply({ embeds: [playEmbed] });
-
-            // Use play-dl library for reliable streaming
-            console.log('🎵 Starting play-dl streaming...');
-            
-            // Method 1: play-dl (most reliable)
             try {
-                console.log('🔄 Method 1: play-dl streaming...');
+                console.log('🎵 Method 1: Attempting play-dl stream...');
                 
-                const stream = await play.stream(songUrl, {
-                    quality: 2 // High quality
+                // Initialize play-dl if not done
+                if (!play.is_expired()) {
+                    await play.setToken({
+                        useragent: ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36']
+                    });
+                }
+                
+                const stream = await play.stream(songUrl, { 
+                    seek: 0,
+                    quality: 2,
+                    htmldata: false
                 });
                 
-                resource = createAudioResource(stream.stream, {
-                    inputType: stream.type,
-                    inlineVolume: true
-                });
-                
-                player.play(resource);
-                connection.subscribe(player);
-                
-                console.log('🎵 play-dl streaming started successfully');
-                console.log('🔊 Audio player status:', player.state.status);
-                audioCreated = true;
+                if (stream && stream.stream) {
+                    console.log('✅ play-dl stream successful');
+                    resource = createAudioResource(stream.stream, {
+                        inputType: stream.type,
+                        inlineVolume: true
+                    });
+                    resource.volume?.setVolume(0.5);
+                    player.play(resource);
+                    connection.subscribe(player);
+                    
+                    console.log('🎵 play-dl streaming started successfully');
+                    console.log('🔊 Audio player status:', player.state.status);
+                    audioCreated = true;
+                }
                 
             } catch (playDlError) {
                 console.log('Method 1 (play-dl) failed:', playDlError.message);

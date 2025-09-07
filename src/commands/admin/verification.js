@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
-const database = require('../../database/connection');
+const { loadGuildConfig, saveGuildConfig } = require('../../utils/configManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -105,12 +105,14 @@ async function setupVerification(interaction, guildId) {
 
     if (!interaction.guild.members.me.permissions.has('ManageRoles') || 
         role.position >= interaction.guild.members.me.roles.highest.position) {
-        await database.updateGuildSettings(guildId, {
-            verificationEnabled: true,
-            verificationChannel: channel.id,
-            verificationRole: role.id,
-            verificationType: type
-        });
+        const config = await loadGuildConfig(guildId);
+        config.verification = {
+            enabled: true,
+            channelId: channel.id,
+            roleId: role.id,
+            type: type
+        };
+        await saveGuildConfig(guildId, config);
         return interaction.reply({
             content: '❌ I need Manage Roles permission and the verification role must be below my highest role.',
             ephemeral: true
@@ -130,7 +132,9 @@ async function setupVerification(interaction, guildId) {
         createdBy: interaction.user.id
     };
 
-    await setDocument('verification', guildId, config);
+    const guildConfig = await loadGuildConfig(guildId);
+    guildConfig.verification = config;
+    await saveGuildConfig(guildId, guildConfig);
 
     // Send verification message to channel
     await sendVerificationMessage(channel, type, interaction.guild.name);
@@ -225,7 +229,8 @@ async function sendVerificationMessage(channel, type, guildName) {
 }
 
 async function disableVerification(interaction, guildId) {
-    const config = await getDocument('verification', guildId);
+    const guildConfig = await loadGuildConfig(guildId);
+    const config = guildConfig.verification;
     if (!config?.enabled) {
         return interaction.reply({
             content: '❌ Verification system is not currently enabled.',
@@ -233,7 +238,9 @@ async function disableVerification(interaction, guildId) {
         });
     }
 
-    await setDocument('verification', guildId, { ...config, enabled: false, disabledAt: Date.now() });
+    const guildConfig = await loadGuildConfig(guildId);
+    guildConfig.verification = { ...config, enabled: false, disabledAt: Date.now() };
+    await saveGuildConfig(guildId, guildConfig);
 
     const embed = new EmbedBuilder()
         .setColor('#ff0000')
@@ -246,7 +253,8 @@ async function disableVerification(interaction, guildId) {
 }
 
 async function showVerificationStatus(interaction, guildId) {
-    const config = await getDocument('verification', guildId);
+    const guildConfig = await loadGuildConfig(guildId);
+    const config = guildConfig.verification;
     
     if (!config) {
         return interaction.reply({
@@ -279,7 +287,8 @@ async function showVerificationStatus(interaction, guildId) {
 }
 
 async function configureSettings(interaction, guildId) {
-    const config = await getDocument('verification', guildId);
+    const guildConfig = await loadGuildConfig(guildId);
+    const config = guildConfig.verification;
     if (!config) {
         return interaction.reply({
             content: '❌ Please set up verification first with `/verification setup`.',
@@ -312,7 +321,8 @@ async function configureSettings(interaction, guildId) {
         });
     }
 
-    await setDocument('verification', guildId, { ...config, ...updates, updatedAt: Date.now() });
+    guildConfig.verification = { ...config, ...updates, updatedAt: Date.now() };
+    await saveGuildConfig(guildId, guildConfig);
 
     const embed = new EmbedBuilder()
         .setColor('#00ff00')

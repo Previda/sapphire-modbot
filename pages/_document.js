@@ -5,7 +5,11 @@ export default function Document() {
     <Html lang="en">
       <Head>
         {/* Content Security Policy */}
-        <meta httpEquiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https: wss:; font-src 'self' data:;" />
+        <meta
+          name="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss: ws:; media-src 'self' https: blob:; object-src 'none'; frame-src 'self' https:; worker-src 'self' blob:;"
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         
         {/* Favicons */}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

@@ -368,3 +368,144 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* Mobile responsive design */
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 16px;
+  }
+  
+  .card-padding {
+    padding: 16px;
+  }
+  
+  .btn-primary {
+    padding: 16px 32px;
+    font-size: 14px;
+  }
+  
+  .glass {
+    border-radius: 16px;
+    backdrop-filter: blur(16px);
+  }
+  
+  .gradient-bg {
+    background-attachment: scroll;
+  }
+  
+  .grid-auto-fit {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-padding {
+    padding: 12px;
+  }
+  
+  .card-padding {
+    padding: 12px;
+  }
+  
+  .btn-primary {
+    padding: 12px 24px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+  
+  .btn-secondary {
+    padding: 10px 20px;
+    font-size: 12px;
+  }
+  
+  .tab-button {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .card-hover:hover {
+    transform: none;
+  }
+  
+  .card-hover:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .btn-primary:hover {
+    transform: none;
+  }
+  
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+  
+  .btn-secondary:hover {
+    transform: none;
+  }
+  
+  .btn-secondary:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .btn-primary {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  .text-muted {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .gradient-bg {
+    background: linear-gradient(135deg, #000000 0%, #0f0f23 20%, #1a1a2e 40%, #16213e 60%, #0f3460 80%, #533483 100%);
+  }
+}
+
+/* Print styles */
+@media print {
+  .gradient-bg {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .glass {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #000 !important;
+  }
+}
