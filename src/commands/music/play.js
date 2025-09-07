@@ -177,21 +177,24 @@ module.exports = {
 
             console.log('🔄 Joining voice channel...');
 
-            // Join voice channel undeafened so bot can hear users
+            // Join voice channel
             const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: interaction.guild.id,
                 adapterCreator: interaction.guild.voiceAdapterCreator,
-                selfDeaf: false,  // Bot can hear users
-                selfMute: false   // Bot can speak/play music
             });
 
-            console.log('Voice channel joined successfully');
-            
-            // Create player and audio resource
-            const player = createAudioPlayer();
-            let resource; // Declare resource variable
-            let audioCreated = false; // Track if audio was successfully created
+            console.log(`🎤 Joined voice channel: ${voiceChannel.name}`);
+            console.log(`🔊 Voice connection state: ${connection.state.status}`);
+
+            const player = createAudioPlayer({
+                behaviors: {
+                    noSubscriber: AudioPlayerStatus.Idle,
+                },
+            });
+
+            console.log(`🎮 Audio player created, status: ${player.state.status}`);
+
             
             // Connection cleanup handler
             let isDestroyed = false;
@@ -295,6 +298,8 @@ module.exports = {
                     connection.subscribe(player);
                     
                     console.log('🎵 FFmpeg direct streaming started');
+                    console.log('🔊 Audio player status:', player.state.status);
+                    console.log('🔊 Voice connection status:', connection.state.status);
                     audioCreated = true;
                 }
                 
