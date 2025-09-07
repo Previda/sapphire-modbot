@@ -275,78 +275,71 @@ module.exports = {
 
             await interaction.editReply({ embeds: [playEmbed] });
 
-            // New simple direct streaming approach for Pi
-            console.log('🎵 Starting direct streaming...');
+            // Simplified streaming - start with basic ytdl-core
+            console.log('🎵 Starting simplified audio streaming...');
             
+            // Method 1: Basic ytdl-core with better options
             try {
-                // Method 1: Get direct audio URL then stream with FFmpeg
-                console.log('🔄 Method 1: Getting direct URL for FFmpeg...');
+                console.log('🔄 Method 1: Enhanced ytdl-core...');
                 
-                const urlCommand = `yt-dlp -f "bestaudio/best" --get-url "${songUrl}"`;
-                const directUrl = await new Promise((resolve, reject) => {
-                    exec(urlCommand, { timeout: 15000 }, (error, stdout, stderr) => {
-                        if (error) {
-                            reject(error);
-                        } else {
-                            resolve(stdout.trim());
+                const stream = ytdl(songUrl, {
+                    filter: 'audioonly',
+                    quality: 'highestaudio',
+                    highWaterMark: 1 << 25,
+                    requestOptions: {
+                        headers: {
+                            'Cookie': '',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                         }
-                    });
+                    }
                 });
                 
-                if (directUrl && directUrl.startsWith('http')) {
-                    console.log('🔗 Got direct URL, starting FFmpeg stream...');
-                    
-                    const ffmpegCommand = `ffmpeg -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "${directUrl}" -f s16le -ar 48000 -ac 2 pipe:1`;
-                    
-                    const ffmpegProcess = spawn('ffmpeg', [
-                        '-reconnect', '1',
-                        '-reconnect_streamed', '1', 
-                        '-reconnect_delay_max', '5',
-                        '-i', directUrl,
-                        '-f', 's16le',
-                        '-ar', '48000',
-                        '-ac', '2',
-                        'pipe:1'
-                    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-                    
-                    resource = createAudioResource(ffmpegProcess.stdout, {
-                        inputType: StreamType.Raw,
-                        inlineVolume: true
-                    });
-                    
-                    player.play(resource);
-                    connection.subscribe(player);
-                    
-                    console.log('🎵 FFmpeg streaming with direct URL started');
-                    console.log('🔊 Audio player status:', player.state.status);
-                    console.log('🔊 Voice connection status:', connection.state.status);
-                    audioCreated = true;
-                }
+                resource = createAudioResource(stream, {
+                    inlineVolume: true,
+                    inputType: 'arbitrary'
+                });
                 
-            } catch (ffmpegError) {
-                console.log('Method 1 (FFmpeg) failed:', ffmpegError.message);
+                player.play(resource);
+                connection.subscribe(player);
+                
+                console.log('🎵 Enhanced ytdl-core streaming started');
+                console.log('🔊 Audio player status:', player.state.status);
+                audioCreated = true;
+                
+            } catch (ytdlError) {
+                console.log('Method 1 (Enhanced ytdl-core) failed:', ytdlError.message);
             }
             
-            // Method 2: Simple HTTP stream for supported URLs
-            if (!audioCreated && (songUrl.includes('youtu') || songUrl.includes('soundcloud'))) {
+            // Method 2: yt-dlp direct URL with simple fetch
+            if (!audioCreated) {
                 try {
-                    console.log('🔄 Method 2: HTTP streaming...');
+                    console.log('🔄 Method 2: yt-dlp URL + fetch...');
                     
-                    // Get direct URL using yt-dlp but just for URL extraction, not download
-                    const urlCommand = `yt-dlp -g "${songUrl}"`;
+                    const urlCommand = `yt-dlp -f "bestaudio[ext=webm]/bestaudio/best" --get-url "${songUrl}"`;
                     const directUrl = await new Promise((resolve, reject) => {
-                        exec(urlCommand, { timeout: 10000 }, (error, stdout, stderr) => {
+                        exec(urlCommand, { 
+                            timeout: 10000,
+                            env: { ...process.env, PATH: process.env.PATH + ':/usr/local/bin:/usr/bin' }
+                        }, (error, stdout, stderr) => {
                             if (error) {
                                 reject(error);
                             } else {
-                                resolve(stdout.trim());
+                                const url = stdout.trim().split('\n')[0];
+                                resolve(url);
                             }
                         });
                     });
                     
                     if (directUrl && directUrl.startsWith('http')) {
-                        const response = await fetch(directUrl);
-                        if (response.ok) {
+                        console.log('🔗 Got direct URL, streaming...');
+                        
+                        const response = await fetch(directUrl, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            }
+                        });
+                        
+                        if (response.ok && response.body) {
                             resource = createAudioResource(response.body, {
                                 inlineVolume: true
                             });
@@ -354,27 +347,27 @@ module.exports = {
                             player.play(resource);
                             connection.subscribe(player);
                             
-                            console.log('🎵 HTTP streaming started');
+                            console.log('🎵 yt-dlp + fetch streaming started');
                             audioCreated = true;
                         }
                     }
                     
-                } catch (httpError) {
-                    console.log('Method 2 (HTTP) failed:', httpError.message);
+                } catch (fetchError) {
+                    console.log('Method 2 (yt-dlp + fetch) failed:', fetchError.message);
                 }
             }
             
-            // Method 3: Simple ytdl-core as final fallback
+            // Method 3: Fallback ytdl-core with lowest quality
             if (!audioCreated) {
                 try {
-                    console.log('🔄 Method 3: Basic ytdl-core...');
+                    console.log('🔄 Method 3: Fallback ytdl-core...');
                     
                     const stream = ytdl(songUrl, {
                         filter: 'audioonly',
                         quality: 'lowestaudio',
                         requestOptions: {
                             headers: {
-                                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                                'User-Agent': 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36'
                             }
                         }
                     });
@@ -386,11 +379,11 @@ module.exports = {
                     player.play(resource);
                     connection.subscribe(player);
                     
-                    console.log('🎵 Basic ytdl-core streaming started');
+                    console.log('🎵 Fallback ytdl-core streaming started');
                     audioCreated = true;
                     
-                } catch (ytdlError) {
-                    console.log('Method 3 (ytdl-core) failed:', ytdlError.message);
+                } catch (fallbackError) {
+                    console.log('Method 3 (Fallback ytdl-core) failed:', fallbackError.message);
                 }
             }
             
