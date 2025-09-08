@@ -137,18 +137,33 @@ async function deployCommands() {
         
         const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
         
-        console.log(`\n🚀 Registering ${commands.length} commands globally...`);
-        console.log('⏱️ This may take a moment...\n');
+        // Check if registering to specific guild or globally
+        const guildId = process.env.GUILD_ID;
+        const isGuildRegistration = guildId && guildId.trim() !== '';
+        
+        if (isGuildRegistration) {
+            console.log(`\n🚀 Registering ${commands.length} commands to guild ${guildId}...`);
+            console.log('⏱️ This should be instant...\n');
+        } else {
+            console.log(`\n🚀 Registering ${commands.length} commands globally...`);
+            console.log('⏱️ This may take a moment...\n');
+        }
         
         try {
-            // Try bulk registration first (faster)
-            const data = await rest.put(
-                Routes.applicationCommands(process.env.CLIENT_ID),
-                { body: commands }
-            );
+            // Use guild-specific or global registration
+            const route = isGuildRegistration 
+                ? Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId)
+                : Routes.applicationCommands(process.env.CLIENT_ID);
+                
+            const data = await rest.put(route, { body: commands });
             
-            console.log(`✅ Successfully registered ${data.length} commands globally!`);
-            console.log('🎉 All commands are now available across all servers!');
+            if (isGuildRegistration) {
+                console.log(`✅ Successfully registered ${data.length} commands to guild ${guildId}!`);
+                console.log('🎉 Commands should appear immediately in your server!');
+            } else {
+                console.log(`✅ Successfully registered ${data.length} commands globally!`);
+                console.log('🎉 All commands are now available across all servers!');
+            }
             
         } catch (bulkError) {
             console.log('❌ Bulk registration failed, using individual registration...');
