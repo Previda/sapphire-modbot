@@ -1154,6 +1154,41 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
     }
   }
   
+  const fetchLiveData = async () => {
+    try {
+      if (!selectedServer) return
+      
+      setDataLoading(true)
+      const response = await fetch(`/api/live-data?serverId=${selectedServer}`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      setLiveData(data)
+      
+      // Show success toast if data is fresh
+      if (data.stats && data.stats.memberCount > 0) {
+        showToast('Live data updated successfully', 'success')
+      }
+    } catch (error) {
+      console.error('Failed to fetch live data:', error)
+      showToast('Failed to fetch live bot data. Bot may be offline.', 'error')
+      
+      // Set fallback data to prevent UI breaks
+      setLiveData({
+        stats: { commandsToday: 0, memberCount: 0, onlineMembers: 0 },
+        moderation: { cases: [] },
+        tickets: { active: [] },
+        music: { isPlaying: false, queue: [] },
+        error: 'Bot offline or unreachable'
+      })
+    } finally {
+      setDataLoading(false)
+    }
+  }
+  
   const handleMemberSelect = (member) => {
     setSelectedUser(`${member.displayName} (${member.username}#${member.discriminator})`)
     setShowUserDropdown(false)

@@ -1,9 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior, StreamType, VoiceConnectionStatus } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior, StreamType, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 const play = require('play-dl');
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
-const spotify = require('spotify-url-info');
 const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -256,89 +255,18 @@ module.exports = {
                 }
             });
 
-            // Connection event handlers
-            connection.on(VoiceConnectionStatus.Disconnected, () => {
-                console.log('🎵 Voice connection disconnected');
-                safeDestroy();
-            });
-
-            // Method 1: Try play-dl first (most reliable)
-            let audioCreated = false;
-            let resource;
-
-            try {
-                console.log('🎵 Method 1: Attempting play-dl stream...');
-                
-                // Initialize play-dl if not done
-                if (!play.is_expired()) {
-                    await play.setToken({
-                        useragent: ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36']
-                    });
-                }
-                
-                const stream = await play.stream(songUrl, { 
-                    seek: 0,
-                    quality: 2,
-                    htmldata: false
-                });
-                
-                if (stream && stream.stream) {
-                    console.log('✅ play-dl stream successful');
-                    resource = createAudioResource(stream.stream, {
-                        inputType: stream.type,
-                        inlineVolume: true
-                    });
-                    resource.volume?.setVolume(0.5);
-                    player.play(resource);
-                    connection.subscribe(player);
-                    
-                    console.log('🎵 play-dl streaming started successfully');
-                    console.log('🔊 Audio player status:', player.state.status);
-                    audioCreated = true;
-                }
-                
-            } catch (playDlError) {
-                console.log('Method 1 (play-dl) failed:', playDlError.message);
-            }
-            
-            // Method 2: Fallback ytdl-core (simple)
-            if (!audioCreated) {
+            // Connection event handlers with enhanced error handling
+            connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
                 try {
-                    console.log('🔄 Method 2: Simple ytdl-core fallback...');
-                    
-                    const stream = ytdl(songUrl, {
-                        filter: 'audioonly',
-                        quality: 'lowestaudio'
-                    });
-                    
-                    resource = createAudioResource(stream, {
-                        inlineVolume: true
-                    });
-                    
-                    player.play(resource);
-                    connection.subscribe(player);
-                    
-                    console.log('🎵 ytdl-core fallback started');
-                    audioCreated = true;
-                    
-                } catch (ytdlError) {
-                    console.log('Method 2 (ytdl-core fallback) failed:', ytdlError.message);
+                    await Promise.race([
+                        entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+                        entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+                    ]);
+                } catch (error) {
+                    console.log('🔌 Voice connection disconnected, cleaning up');
+                    safeDestroy();
                 }
-            }
-            
-            // If all methods failed
-            if (!audioCreated) {
-                console.error('❌ All audio extraction methods failed on Pi');
-                safeDestroy();
-                
-                await interaction.followUp({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Pi Audio Extraction Failed')
-                        .setDescription(`All audio extraction methods failed on Raspberry Pi.\n\n**Solutions:**\n• Install yt-dlp: \`sudo apt install yt-dlp\`\n• Try very popular songs\n• Use official music videos\n• Avoid region-locked content\n\n**Test command:** \`/play rick roll\``)]
-                });
-                return;
-            }
+            });
 
             // Timeout to prevent hanging connections (10 minutes)
             setTimeout(() => {
@@ -353,12 +281,17 @@ module.exports = {
             if (!error.message?.includes('Could not extract functions')) {
                 console.error('❌ Play command error:', error);
             }
-            await interaction.editReply({
-                embeds: [new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle('❌ Audio Error')
-                    .setDescription('YouTube playback temporarily unavailable. Try again or use a direct audio link.')]
-            });
+            
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle('❌ Audio Error')
+                .setDescription('YouTube playback temporarily unavailable. Try again or use a direct audio link.');
+
+            if (interaction.deferred) {
+                await interaction.editReply({ embeds: [errorEmbed] });
+            } else {
+                await interaction.reply({ embeds: [errorEmbed] });
+            }
         }
     },
 
