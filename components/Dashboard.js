@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { PlayIcon, PauseIcon, CheckCircleIcon, XCircleIcon, UserGroupIcon, CommandLineIcon, MusicNoteIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { handleDiscordLogin, logout } from '../utils/auth';
 import MusicPlayer from './MusicPlayer';
 import VerificationTab from './VerificationTab';
 import VerificationPanel from './VerificationPanel';
@@ -1159,9 +1161,27 @@ function ModerationTab({ selectedServer, liveData, showModerationModal, setShowM
       if (!selectedServer) return
       
       setDataLoading(true)
-      const response = await fetch(`/api/live-data?serverId=${selectedServer}`)
+      
+      // Get Discord token from localStorage or handle auth
+      const discordToken = localStorage.getItem('discord_token')
+      if (!discordToken) {
+        handleDiscordLogin()
+        return
+      }
+      
+      const response = await fetch(`/api/live-data?serverId=${selectedServer}`, {
+        headers: {
+          'Authorization': `Bearer ${discordToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
       
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('discord_token')
+          handleDiscordLogin()
+          return
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
       

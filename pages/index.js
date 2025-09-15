@@ -1,49 +1,40 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 import Dashboard from '../components/Dashboard'
+import { getDiscordToken, getDiscordUser, handleDiscordLogin } from '../utils/auth'
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [authenticated, setAuthenticated] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     // Check authentication status (client-side only)
     if (typeof window !== 'undefined') {
       try {
-        const userDataStr = localStorage.getItem('user_data')
-        const authCompleted = localStorage.getItem('auth_completed')
-        const discordToken = localStorage.getItem('discord_token')
+        const discordToken = getDiscordToken()
+        const userData = getDiscordUser()
         
-        if (userDataStr && authCompleted === 'true' && discordToken) {
-          const userData = JSON.parse(userDataStr)
+        if (discordToken && userData) {
           setUser(userData)
-          setAuthenticated(true)
           setIsLoggedIn(true)
         }
       } catch (error) {
-        console.error('Error parsing user data:', error)
-        // Clear corrupted data and reset auth state
-        localStorage.removeItem('user_data')
-        localStorage.removeItem('auth_completed') 
+        console.error('Error checking authentication:', error)
         localStorage.removeItem('discord_token')
-        setAuthenticated(false)
-        setUser(null)
+        localStorage.removeItem('discord_user')
         setIsLoggedIn(false)
+        setUser(null)
       }
     }
     
     setIsLoading(false)
   }, [])
 
-  const handleDiscordLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222'
-    // Use the latest deployment URL
-    const redirectUri = encodeURIComponent('https://skyfall-omega.vercel.app/auth/callback')
-    // Combined OAuth flow: authenticate user AND invite bot with admin permissions
-    const discordUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&response_type=code&redirect_uri=${redirectUri}&integration_type=0&scope=identify+guilds+bot`
-    window.location.href = discordUrl
+  const handleLogin = () => {
+    router.push('/login')
   }
 
   if (isLoading) {
@@ -83,7 +74,7 @@ export default function Home() {
                   <a href="#features" className="text-white/80 hover:text-white transition-colors font-medium">Features</a>
                   <a href="#docs" className="text-white/80 hover:text-white transition-colors font-medium">Docs</a>
                   <button 
-                    onClick={handleDiscordLogin}
+                    onClick={handleLogin}
                     className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 px-6 py-3 rounded-xl text-white font-semibold transition-all duration-200 transform hover:scale-105"
                   >
                     Login with Discord
@@ -108,7 +99,7 @@ export default function Home() {
                 </p>
                 
                 <button 
-                  onClick={handleDiscordLogin}
+                  onClick={handleLogin}
                   className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white text-xl font-bold px-12 py-4 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
                 >
                   🚀 Get Started

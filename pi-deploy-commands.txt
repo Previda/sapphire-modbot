@@ -1,0 +1,50 @@
+# SSH into your Pi and run these commands:
+
+# 1. Connect to Pi
+ssh admin@192.168.1.62
+
+# 2. Create directory and clone repo
+cd /home/admin
+mkdir -p sapphire-modbot
+cd sapphire-modbot
+
+# 3. Install Node.js 18 if not installed
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# 4. Install PM2 globally
+sudo npm install -g pm2
+
+# 5. Create .env file (replace YOUR_BOT_TOKEN and YOUR_CLIENT_ID)
+cat > .env << 'EOF'
+DISCORD_TOKEN=YOUR_BOT_TOKEN
+CLIENT_ID=YOUR_CLIENT_ID
+GUILD_ID=
+PI_BOT_TOKEN=sapphire-secure-api-2024
+PI_BOT_API_URL=http://192.168.1.62:3001
+MAX_MEMORY=512
+LOG_LEVEL=info
+NODE_ENV=production
+API_PORT=3001
+EOF
+
+# 6. Install dependencies
+npm install
+
+# 7. Deploy commands
+node deploy-all-commands.js
+
+# 8. Start services
+pm2 start src/index.js --name sapphire-bot --max-memory-restart 512M
+pm2 start api-server.js --name sapphire-api --max-memory-restart 256M
+
+# 9. Save PM2 config
+pm2 save
+pm2 startup
+
+# 10. Configure firewall
+sudo ufw allow 3001/tcp
+
+# 11. Check status
+pm2 status
+curl http://192.168.1.62:3001/health

@@ -48,10 +48,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get token from Authorization header
+    // Extract token from Authorization header
     const authHeader = req.headers.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('No authorization header found:', authHeader)
+      return res.status(401).json({ error: 'Missing or invalid authorization header' })
+    }
+
+    const discordToken = authHeader.split(' ')[1]
+    if (!discordToken) {
       return res.status(401).json({ error: 'No valid token provided' })
     }
 
