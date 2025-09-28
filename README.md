@@ -1,6 +1,6 @@
-# 🚀 Sapphire Bot - Secure Standalone Discord Bot
+# 🤖 Sapphire Modbot - Professional Discord Bot & Dashboard
 
-> **Firebase-free, crash-resistant Discord bot** designed for Raspberry Pi with local storage, security hardening, and stable performance
+> **Complete Discord bot solution** with advanced music streaming, verification system, and modern web dashboard. Designed for reliable 24/7 operation on Raspberry Pi with Vercel integration.
 
 [![Node.js](https://img.shields.io/badge/Node.js-16+-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-v14-blue.svg)](https://discord.js.org/)

@@ -276,6 +276,124 @@ module.exports = {
                 }
             }, 600000);
 
+            // Now attempt to stream the audio with multiple fallback methods
+            console.log('🎵 Starting audio stream...');
+            
+            try {
+                let audioResource;
+                let streamSuccess = false;
+
+                // Method 1: Try play-dl first (most reliable)
+                try {
+                    console.log('🔄 Attempting play-dl stream...');
+                    const stream = await play.stream(songUrl, { 
+                        quality: 2,
+                        discordPlayerCompatibility: true 
+                    });
+                    
+                    audioResource = createAudioResource(stream.stream, {
+                        inputType: stream.type,
+                        inlineVolume: true
+                    });
+                    
+                    player.play(audioResource);
+                    connection.subscribe(player);
+                    streamSuccess = true;
+                    console.log('✅ play-dl stream successful');
+                    
+                } catch (playDlError) {
+                    console.log('⚠️ play-dl failed, trying ytdl-core...');
+                    
+                    // Method 2: Fallback to ytdl-core
+                    try {
+                        const ytdlStream = ytdl(songUrl, {
+                            filter: 'audioonly',
+                            quality: 'lowestaudio',
+                            highWaterMark: 1 << 25,
+                            requestOptions: {
+                                headers: {
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                                }
+                            }
+                        });
+                        
+                        audioResource = createAudioResource(ytdlStream, {
+                            inputType: StreamType.Arbitrary,
+                            inlineVolume: true
+                        });
+                        
+                        player.play(audioResource);
+                        connection.subscribe(player);
+                        streamSuccess = true;
+                        console.log('✅ ytdl-core stream successful');
+                        
+                    } catch (ytdlError) {
+                        console.log('⚠️ ytdl-core failed, trying yt-dlp...');
+                        
+                        // Method 3: Final fallback to yt-dlp
+                        try {
+                            const ytDlpProcess = spawn('yt-dlp', [
+                                '-f', 'bestaudio',
+                                '--no-playlist',
+                                '-o', '-',
+                                songUrl
+                            ]);
+                            
+                            audioResource = createAudioResource(ytDlpProcess.stdout, {
+                                inputType: StreamType.Arbitrary,
+                                inlineVolume: true
+                            });
+                            
+                            player.play(audioResource);
+                            connection.subscribe(player);
+                            streamSuccess = true;
+                            console.log('✅ yt-dlp stream successful');
+                            
+                        } catch (ytDlpError) {
+                            console.error('❌ All streaming methods failed');
+                            throw new Error('All audio streaming methods failed');
+                        }
+                    }
+                }
+
+                // If we got here, streaming started successfully
+                if (streamSuccess) {
+                    const embed = new EmbedBuilder()
+                        .setColor(0x00ff00)
+                        .setTitle('🎵 Now Playing')
+                        .setDescription(`**${songInfo.title}**\nBy: ${songInfo.artist}`)
+                        .addFields(
+                            { name: '⏱️ Duration', value: songInfo.duration, inline: true },
+                            { name: '📺 Source', value: songInfo.source, inline: true },
+                            { name: '🔊 Channel', value: voiceChannel.name, inline: true }
+                        )
+                        .setThumbnail(songInfo.thumbnail)
+                        .setFooter({ text: `Requested by ${interaction.user.username}` })
+                        .setTimestamp();
+
+                    await interaction.editReply({ embeds: [embed] });
+                    
+                    // Wait for connection to be ready
+                    try {
+                        await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+                        console.log('🔊 Voice connection ready');
+                    } catch (connectionError) {
+                        console.log('⚠️ Connection ready timeout, but continuing...');
+                    }
+                }
+
+            } catch (streamError) {
+                console.error('❌ Streaming error:', streamError);
+                
+                const errorEmbed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle('❌ Playback Failed')
+                    .setDescription('Could not start audio playback. This may be due to:\n• Video is unavailable or restricted\n• Network connectivity issues\n• YouTube rate limiting\n\nPlease try again in a few moments.');
+
+                await interaction.editReply({ embeds: [errorEmbed] });
+                safeDestroy();
+            }
+
         } catch (error) {
             // Don't spam logs with ytdl extraction errors
             if (!error.message?.includes('Could not extract functions')) {

@@ -58,63 +58,6 @@ NEXTAUTH_URL=https://your-vercel-domain.vercel.app
 ### 1. Initial Pi Setup
 ```bash
 # Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 18+
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Install PM2 for process management
-sudo npm install -g pm2
-
-# Install git
-sudo apt install -y git
-```
-
-### 2. Bot Installation
-```bash
-# Clone repository
-cd /home/pi
-git clone https://github.com/yourusername/skyfall-modbot.git
-cd skyfall-modbot
-
-# Install dependencies
-npm install
-
-# Install additional packages for Pi
-npm install sqlite3 --build-from-source
-```
-
-### 3. Environment Configuration
-```bash
-# Copy and edit environment file
-cp .env.example .env
-nano .env
-```
-
-**Required Pi Environment Variables:**
-```env
-DISCORD_TOKEN=your_bot_token_here
-DISCORD_CLIENT_ID=your_client_id
-DATABASE_URL=file:./bot.db
-PI_BOT_TOKEN=your_secure_api_token
-DISABLE_DASHBOARD=false
-MAX_MEMORY=400
-LOG_LEVEL=info
-NODE_ENV=production
-```
-
-### 4. Database Setup
-```bash
-# Initialize SQLite database
-node scripts/setup-database.js
-
-# Register slash commands
-node bot-commands/register-commands.js
-```
-
-### 5. Start Bot with PM2
-```bash
 # Create PM2 ecosystem file
 cat > ecosystem.config.js << 'EOF'
 module.exports = {

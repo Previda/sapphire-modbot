@@ -10,11 +10,14 @@ const PORT = process.env.API_PORT || 3001
 app.use(cors({
   origin: [
     'https://skyfall-omega.vercel.app',
-    'https://*.vercel.app',
+    'https://sapphire-modbot-dashboard.vercel.app',
+    /https:\/\/.*\.vercel\.app$/,
     'http://localhost:3000',
     'http://192.168.1.62:3000'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
 
 app.use(express.json())
@@ -207,6 +210,51 @@ app.post('/api/music/:action', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Music control error:', error)
     res.status(500).json({ error: 'Music control failed' })
+  }
+})
+
+// Verification logging endpoint
+app.post('/api/verification/log', authenticateToken, async (req, res) => {
+  try {
+    const { guildId, userId, username, timestamp, type } = req.body
+    
+    // Store verification log in memory (you could use a database here)
+    if (!global.verificationLogs) {
+      global.verificationLogs = []
+    }
+    
+    global.verificationLogs.unshift({
+      id: Date.now(),
+      guildId,
+      userId,
+      username,
+      timestamp,
+      type
+    })
+    
+    // Keep only last 1000 logs
+    if (global.verificationLogs.length > 1000) {
+      global.verificationLogs = global.verificationLogs.slice(0, 1000)
+    }
+    
+    console.log(`✅ Verification logged: ${username} in guild ${guildId}`)
+    res.json({ success: true, message: 'Verification logged' })
+  } catch (error) {
+    console.error('Verification logging error:', error)
+    res.status(500).json({ error: 'Failed to log verification' })
+  }
+})
+
+// Get verification logs
+app.get('/api/verification/logs/:guildId', authenticateToken, async (req, res) => {
+  try {
+    const { guildId } = req.params
+    const logs = global.verificationLogs?.filter(log => log.guildId === guildId) || []
+    
+    res.json({ logs: logs.slice(0, 50) }) // Return last 50 logs for this guild
+  } catch (error) {
+    console.error('Error fetching verification logs:', error)
+    res.status(500).json({ error: 'Failed to fetch logs' })
   }
 })
 

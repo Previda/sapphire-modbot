@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import Dashboard from '../components/Dashboard'
+import ModernDashboard from '../components/ModernDashboard'
 import { getDiscordToken, getDiscordUser, handleDiscordLogin } from '../utils/auth'
 
 export default function Home() {
@@ -42,7 +42,7 @@ export default function Home() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white/70">Loading Skyfall...</p>
+          <p className="text-white/70">Loading Sapphire...</p>
         </div>
       </div>
     )
@@ -51,13 +51,13 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Skyfall - Professional Discord Bot Dashboard</title>
-        <meta name="description" content="Advanced Discord Bot Management with Live Analytics" />
+        <title>Sapphire Modbot - Professional Discord Bot Dashboard</title>
+        <meta name="description" content="Advanced Discord Bot Management with Live Analytics, Music & Verification" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       {isLoggedIn ? (
-        <Dashboard user={user} />
+        <ModernDashboard user={user} />
       ) : (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
           {/* Landing Navigation */}
@@ -68,7 +68,7 @@ export default function Home() {
                   <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
                     <span className="text-lg font-bold text-white">S</span>
                   </div>
-                  <span className="text-xl font-bold text-white">Skyfall</span>
+                  <span className="text-xl font-bold text-white">Sapphire</span>
                 </div>
                 <div className="flex items-center space-x-8">
                   <a href="#features" className="text-white/80 hover:text-white transition-colors font-medium">Features</a>
@@ -92,7 +92,7 @@ export default function Home() {
                   <span className="text-5xl font-bold text-white">S</span>
                 </div>
                 <h1 className="text-7xl font-black bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent mb-6">
-                  Skyfall
+                  Sapphire
                 </h1>
                 <p className="text-2xl text-white/80 font-light mb-12 leading-relaxed">
                   Professional Discord Bot Management Platform

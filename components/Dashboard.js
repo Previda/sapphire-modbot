@@ -1,5 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { PlayIcon, PauseIcon, CheckCircleIcon, XCircleIcon, UserGroupIcon, CommandLineIcon, MusicNoteIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { 
+  PlayIcon, 
+  PauseIcon, 
+  CheckCircleIcon, 
+  XCircleIcon, 
+  UserGroupIcon, 
+  CommandLineIcon, 
+  MusicNoteIcon, 
+  ShieldCheckIcon,
+  ChartBarIcon,
+  CogIcon,
+  BellIcon,
+  HomeIcon,
+  ServerIcon,
+  UsersIcon,
+  ExclamationTriangleIcon,
+  ClockIcon,
+  EyeIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/outline'
 import { handleDiscordLogin, logout } from '../utils/auth';
 import MusicPlayer from './MusicPlayer';
 import VerificationTab from './VerificationTab';
