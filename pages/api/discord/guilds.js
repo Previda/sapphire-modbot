@@ -48,15 +48,52 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Extract token from Authorization header
+    // Extract token from Authorization header (optional for fallback mode)
     const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or invalid authorization header' })
+    let discordToken = null
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      discordToken = authHeader.split(' ')[1]
     }
 
-    const discordToken = authHeader.split(' ')[1]
+    // If no token provided, return fallback data
     if (!discordToken) {
-      return res.status(401).json({ error: 'No valid token provided' })
+      return res.status(200).json({
+        guilds: [
+          {
+            id: 'demo-server',
+            name: '🎮 Demo Server',
+            icon: null,
+            owner: true,
+            permissions: '8',
+            permissions_new: '8',
+            hasSkyfall: true,
+            memberCount: 1337,
+            onlineMembers: 420,
+            status: 'online',
+            canManageBot: true,
+            userRole: 'Owner',
+            botJoinedAt: new Date().toISOString(),
+            isDemo: true
+          },
+          {
+            id: 'invite-bot',
+            name: '➕ Invite Sapphire to Your Server',
+            icon: null,
+            owner: false,
+            permissions: '0',
+            permissions_new: '0',
+            hasSkyfall: false,
+            memberCount: 0,
+            onlineMembers: 0,
+            status: 'offline',
+            canManageBot: true,
+            userRole: 'Inviter',
+            botJoinedAt: null,
+            isInviteButton: true
+          }
+        ]
+      })
     }
 
     const token = authHeader.substring(7)
