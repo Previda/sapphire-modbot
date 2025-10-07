@@ -1,40 +1,33 @@
 import { useState, useEffect } from 'react'
-import Head from 'next/head'
+import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import ModernDashboard from '../components/ModernDashboard'
-import { getDiscordToken, getDiscordUser, handleDiscordLogin } from '../utils/auth'
 
 export default function Home() {
+  const { data: session, status } = useSession()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
-    // Check authentication status (client-side only)
-    if (typeof window !== 'undefined') {
-      try {
-        const discordToken = getDiscordToken()
-        const userData = getDiscordUser()
-        
-        if (discordToken && userData) {
-          setUser(userData)
-          setIsLoggedIn(true)
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error)
-        localStorage.removeItem('discord_token')
-        localStorage.removeItem('discord_user')
-        setIsLoggedIn(false)
-        setUser(null)
-      }
+    // Check NextAuth session
+    if (status === 'loading') return
+    
+    if (session) {
+      setUser(session.user)
+      setIsLoggedIn(true)
+    } else {
+      setIsLoggedIn(false)
+      setUser(null)
     }
     
     setIsLoading(false)
-  }, [])
+  }, [session, status])
 
   const handleLogin = () => {
-    router.push('/login')
+    signIn('discord')
   }
 
   if (isLoading) {
