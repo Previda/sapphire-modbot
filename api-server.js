@@ -69,75 +69,99 @@ app.get('/api/bot/status', authenticateToken, (req, res) => {
       avatar: client.user.displayAvatarURL()
     },
     guilds: client.guilds.cache.size,
-    uptime: client.uptime,
-    ping: client.ws.ping
+    uptime: formatUptime(client.uptime)
   })
 })
 
-// Live data endpoint for dashboard
+// Live data endpoint
 app.get('/api/live-data', authenticateToken, async (req, res) => {
   try {
     const { serverId } = req.query
-
+    
     if (!client.isReady()) {
-      return res.status(503).json({ error: 'Bot is not connected' })
-    }
-
-    if (!serverId) {
-      return res.status(400).json({ error: 'Server ID is required' })
+      return res.status(503).json({ error: 'Bot is not ready' })
     }
 
     const guild = client.guilds.cache.get(serverId)
     if (!guild) {
-      return res.status(404).json({ error: 'Guild not found or bot not in guild' })
+      return res.status(404).json({ error: 'Guild not found' })
     }
 
-    // Fetch guild data
-    const memberCount = guild.memberCount
+    // Get real guild data
     const onlineMembers = guild.members.cache.filter(member => 
-      member.presence?.status === 'online'
+      member.presence?.status && member.presence.status !== 'offline'
     ).size
 
-    // Mock data for demonstration (replace with real data from your bot's database)
-    const liveData = {
+    const textChannels = guild.channels.cache.filter(ch => ch.isTextBased()).size
+    const voiceChannels = guild.channels.cache.filter(ch => ch.isVoiceBased()).size
+
+    const data = {
+      serverId: guild.id,
+      lastUpdated: new Date().toISOString(),
       stats: {
-        commandsToday: Math.floor(Math.random() * 100) + 50,
-        memberCount: memberCount,
+        memberCount: guild.memberCount,
         onlineMembers: onlineMembers,
-        botUptime: Math.floor(client.uptime / 1000 / 60) // minutes
+        botUptime: formatUptime(client.uptime),
+        commandsToday: global.commandsToday || 0,
+        serverHealth: client.isReady() ? 100 : 0,
+        messagesPerHour: global.messagesPerHour || 0,
+        activeChannels: textChannels + voiceChannels
+      },
+      music: global.musicData || {
+        isPlaying: false,
+        currentSong: null,
+        queue: [],
+        volume: 75,
+        repeat: 'off',
+        shuffle: false
       },
       moderation: {
-        cases: [
-          {
-            id: 1,
-            type: 'warn',
-            user: 'User#1234',
-            reason: 'Spam',
-            timestamp: new Date().toISOString()
-          }
-        ]
+        recentActions: global.recentModerationActions || [],
+        automodStats: {
+          messagesScanned: global.messagesScanned || 0,
+          actionsToday: global.moderationActionsToday || 0,
+          blockedSpam: global.blockedSpam || 0,
+          filteredWords: global.filteredWords || 0,
+          autoTimeouts: global.autoTimeouts || 0
+        }
       },
       tickets: {
-        active: [
-          {
-            id: 1,
-            channel: 'ticket-001',
-            user: 'User#5678',
-            category: 'Support',
-            created: new Date().toISOString()
-          }
-        ]
+        active: global.activeTickets || [],
+        totalToday: global.ticketsToday || 0,
+        resolvedToday: global.resolvedTicketsToday || 0,
+        avgResponseTime: global.avgResponseTime || 0
       },
-      music: {
-        isPlaying: false,
-        queue: [],
-        currentTrack: null
-      }
+      logs: {
+        recent: global.recentLogs || [],
+        totalToday: global.logsToday || 0,
+        errorCount: global.errorCount || 0,
+        warningCount: global.warningCount || 0
+      },
+      analytics: {
+        messageActivity: global.messageActivity || [],
+        topCommands: global.topCommands || [],
+        memberGrowth: {
+          daily: global.dailyGrowth || 0,
+          weekly: global.weeklyGrowth || 0,
+          monthly: global.monthlyGrowth || 0
+        }
+      },
+      verification: {
+        recentVerifications: global.verificationLogs?.filter(log => log.guildId === serverId)?.slice(0, 10) || [],
+        totalToday: global.verificationLogs?.filter(log => 
+          log.guildId === serverId && 
+          new Date(log.timestamp).toDateString() === new Date().toDateString()
+        ).length || 0
+      },
+      commands: global.availableCommands || [],
+      responseTime: `${Date.now() - (req.startTime || Date.now())}ms`,
+      memoryUsage: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+      error: null
     }
 
-    res.json(liveData)
+    res.json(data)
   } catch (error) {
-    console.error('Error fetching live data:', error)
+    console.error('Live data error:', error)
     res.status(500).json({ error: 'Failed to fetch live data' })
   }
 })

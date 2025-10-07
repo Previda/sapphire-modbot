@@ -14,6 +14,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    const startTime = Date.now()
+    
     // Check Pi bot connection if configured
     const piApiUrl = process.env.PI_BOT_API_URL
     const piToken = process.env.PI_BOT_TOKEN
@@ -38,33 +40,31 @@ export default async function handler(req, res) {
         piStatus = 'unreachable'
       }
     }
-    
-    const healthData = {
+
+    const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      vercel: {
-        region: process.env.VERCEL_REGION || 'unknown',
-        deployment: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'local'
+      uptime: process.uptime(),
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
       },
-      pi: {
-        status: piStatus,
-        url: piApiUrl || null,
-        data: piData
+      version: '2.0.0',
+      services: {
+        dashboard: 'online',
+        pi_connection: piStatus
       },
-      environment: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        memory: process.memoryUsage()
-      }
+      pi_data: piData,
+      response_time: Date.now() - startTime
     }
-    
-    res.status(200).json(healthData)
+
+    res.status(200).json(health);
   } catch (error) {
-    console.error('Health check error:', error)
+    console.error('Health check error:', error);
     res.status(500).json({ 
-      status: 'error',
+      status: 'unhealthy',
       error: error.message,
       timestamp: new Date().toISOString()
-    })
+    });
   }
 }

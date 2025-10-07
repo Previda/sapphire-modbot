@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
-const { loadGuildConfig, saveGuildConfig } = require('../../utils/configManager');
+const { loadGuildConfig, saveGuildConfig } = require('./src/utils/configManager');
 
 module.exports = {
     data: new SlashCommandBuilder()

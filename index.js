@@ -23,8 +23,8 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error(' Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-// Memory limit protection
-const MEMORY_LIMIT = parseInt(process.env.MAX_MEMORY) || 512; // MB
+// Memory limit protection (optimized for Pi 2)
+const MEMORY_LIMIT = parseInt(process.env.MAX_MEMORY) || 200; // MB (Pi 2 optimized)
 setInterval(() => {
     const memUsage = process.memoryUsage();
     const memMB = Math.round(memUsage.heapUsed / 1024 / 1024);
@@ -52,6 +52,54 @@ const client = new Client({
 const webhookLogger = require('./src/utils/webhookLogger');
 
 client.commands = new Collection();
+
+// Global statistics tracking for API server
+global.commandsToday = 0;
+global.messagesPerHour = 0;
+global.recentModerationActions = [];
+global.messagesScanned = 0;
+global.moderationActionsToday = 0;
+global.blockedSpam = 0;
+global.filteredWords = 0;
+global.autoTimeouts = 0;
+global.activeTickets = [];
+global.ticketsToday = 0;
+global.resolvedTicketsToday = 0;
+global.avgResponseTime = 0;
+global.recentLogs = [];
+global.logsToday = 0;
+global.errorCount = 0;
+global.warningCount = 0;
+global.messageActivity = [];
+global.topCommands = [];
+global.dailyGrowth = 0;
+global.weeklyGrowth = 0;
+global.monthlyGrowth = 0;
+global.availableCommands = [];
+global.verificationLogs = [];
+global.musicData = {
+    isPlaying: false,
+    currentSong: null,
+    queue: [],
+    volume: 75,
+    repeat: 'off',
+    shuffle: false
+};
+
+// Reset daily counters at midnight
+setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 0 && now.getMinutes() === 0) {
+        global.commandsToday = 0;
+        global.moderationActionsToday = 0;
+        global.ticketsToday = 0;
+        global.resolvedTicketsToday = 0;
+        global.logsToday = 0;
+        global.errorCount = 0;
+        global.warningCount = 0;
+        console.log('🔄 Daily statistics reset');
+    }
+}, 60000); // Check every minute
 
 // Initialize modules
 const backupScheduler = new BackupScheduler(client);
@@ -100,9 +148,32 @@ if (fs.existsSync(commandsPath)) {
     loadCommands(commandsPath);
 }
 
+// Load verification command from root if it exists
+const verificationPath = path.join(__dirname, 'verification.js');
+if (fs.existsSync(verificationPath)) {
+    try {
+        const command = require(verificationPath);
+        if (command.data && command.execute) {
+            client.commands.set(command.data.name, command);
+            console.log(`✅ Loaded command: ${command.data.name} (from root)`);
+        }
+    } catch (error) {
+        console.error(`❌ Error loading verification command:`, error.message);
+    }
+}
+
 // Bot ready event (updated for Discord.js v14+ compatibility)
 client.on('ready', async () => {
     console.log(`✅ ${client.user.tag} is online!`);
+    
+    // Populate available commands list for API
+    global.availableCommands = Array.from(client.commands.values()).map(cmd => ({
+        name: cmd.data.name,
+        description: cmd.data.description,
+        category: cmd.category || 'General'
+    }));
+    
+    console.log(`📋 Loaded ${global.availableCommands.length} commands for API`);
     
     // Initialize database and services after client is ready
     try {
@@ -245,6 +316,18 @@ client.on('interactionCreate', async interaction => {
 
             await command.execute(interaction);
             clearTimeout(timeoutId);
+            
+            // Track command usage
+            global.commandsToday++;
+            const commandName = interaction.commandName;
+            const existingCommand = global.topCommands.find(cmd => cmd.name === commandName);
+            if (existingCommand) {
+                existingCommand.count++;
+            } else {
+                global.topCommands.push({ name: commandName, count: 1 });
+            }
+            // Keep only top 10 commands
+            global.topCommands.sort((a, b) => b.count - a.count).splice(10);
         } catch (error) {
             console.error('❌ Command execution error:', error);
             const reply = { 

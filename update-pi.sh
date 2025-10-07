@@ -1,12 +1,19 @@
 #!/bin/bash
+# Complete Pi Update Script - All 53 Commands Working
+# This updates your Pi with all the latest fixes and optimizations
 
-# Complete Skyfall Bot Update & Fix Script
 set -e
 
-echo "🚀 Updating Sapphire Bot on Skyfall..."
+echo "🔄 Updating Sapphire Modbot on Pi..."
+# Stop services
+echo "⏹️ Stopping services..."
+sudo systemctl stop sapphire-api sapphire-bot 2>/dev/null || true
 
-# Navigate to bot directory
-cd /home/admin/sapphire-bot
+# Backup current .env
+if [ -f .env ]; then
+    cp .env .env.backup
+    echo "💾 Backed up .env file"
+fi
 
 # Stop existing bot
 echo "⏹️ Stopping existing bot..."

@@ -58,18 +58,18 @@ export default async function handler(req, res) {
       }
     }
     
-    // Fallback to real-looking dynamic data
+    // Fallback data when Pi bot is not available
     const data = {
       serverId,
       lastUpdated: new Date().toISOString(),
       stats: {
-        memberCount: Math.floor(Math.random() * 500) + 100,
-        onlineMembers: Math.floor(Math.random() * 150) + 25,
-        botUptime: Math.floor((Date.now() - 1640995200000) / 1000),
-        commandsToday: Math.floor(Math.random() * 50) + 10,
-        serverHealth: Math.floor(Math.random() * 20) + 80,
-        messagesPerHour: Math.floor(Math.random() * 100) + 20,
-        activeChannels: Math.floor(Math.random() * 10) + 5
+        memberCount: 0,
+        onlineMembers: 0,
+        botUptime: 0,
+        commandsToday: 0,
+        serverHealth: 0,
+        messagesPerHour: 0,
+        activeChannels: 0
       },
     music: {
       isPlaying: false,
@@ -111,30 +111,14 @@ export default async function handler(req, res) {
         }
       },
       commands: [],
-      responseTime: Math.floor(Math.random() * 100) + 50 + 'ms',
-      uptime: Math.floor(Math.random() * 24) + 1 + 'h ' + Math.floor(Math.random() * 60) + 'm',
-      memoryUsage: Math.floor(Math.random() * 200) + 100 + 'MB',
+      responseTime: 'N/A',
+      uptime: 'N/A',
+      memoryUsage: 'N/A',
       verification: {
-        recentVerifications: [
-          {
-            username: 'User#1234',
-            timestamp: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-            type: 'button'
-          },
-          {
-            username: 'Member#5678',
-            timestamp: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-            type: 'captcha'
-          },
-          {
-            username: 'NewUser#9012',
-            timestamp: new Date(Date.now() - Math.random() * 3600000).toISOString(),
-            type: 'button'
-          }
-        ],
-        totalToday: Math.floor(Math.random() * 20) + 5
+        recentVerifications: [],
+        totalToday: 0
       },
-      error: null
+      error: 'Pi bot is offline or not connected. Please check your Pi deployment.'
     }
     
     return res.status(200).json(data)

@@ -2,6 +2,43 @@
 
 > **Complete Discord bot solution** with advanced music streaming, verification system, and modern web dashboard. Designed for reliable 24/7 operation on Raspberry Pi with Vercel integration.
 
+## 🚀 Quick Start
+
+### **One-Command Pi Setup (Recommended)**
+```bash
+curl -sSL https://raw.githubusercontent.com/Previda/sapphire-modbot/main/pi-factory-installer.sh | bash
+```
+*Supports Raspberry Pi 2, 3, 4, and Zero 2 W with automatic optimization*
+
+### **Manual Setup**
+```bash
+git clone https://github.com/Previda/sapphire-modbot.git
+cd sapphire-modbot
+npm run setup
+npm run deploy-commands
+npm run bot
+```
+
+### **Start Bot**
+```bash
+# Lightweight optimized start
+npm run bot
+
+# Or direct start
+npm run bot-direct
+
+# Start API server
+npm run api
+```
+
+## 📊 Dashboard Setup
+
+1. Deploy to Vercel: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Previda/sapphire-modbot)
+2. Set environment variables (see [VERCEL-SETUP.md](./VERCEL-SETUP.md))
+3. Connect to your Pi bot
+
+## 🎯 Key Features
+
 [![Node.js](https://img.shields.io/badge/Node.js-16+-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-v14-blue.svg)](https://discord.js.org/)
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Optimized-red.svg)](https://www.raspberrypi.org/)

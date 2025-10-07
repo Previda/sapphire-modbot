@@ -115,6 +115,28 @@ class CommandDeployer {
             
             this.loadCommandsFromDirectory(commandsPath);
             
+            // Load verification command from root if it exists
+            const verificationPath = path.join(__dirname, 'verification.js');
+            if (fs.existsSync(verificationPath)) {
+                try {
+                    delete require.cache[require.resolve(verificationPath)];
+                    const command = require(verificationPath);
+                    
+                    const validation = this.validateCommand(command);
+                    if (validation.valid) {
+                        const commandData = command.data.toJSON();
+                        this.commands.push(commandData);
+                        console.log(`✅ Loaded: ${commandData.name} (from verification.js)`);
+                    } else {
+                        this.skipped.push(`⚠️ verification.js: ${validation.error}`);
+                        console.log(`⚠️ Skipped verification.js: ${validation.error}`);
+                    }
+                } catch (error) {
+                    this.errors.push(`❌ verification.js: ${error.message}`);
+                    console.error(`❌ Error loading verification.js:`, error.message);
+                }
+            }
+            
             // Display summary
             console.log('\n📊 Load Summary:');
             console.log(`✅ Valid commands: ${this.commands.length}`);
