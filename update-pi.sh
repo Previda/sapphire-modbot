@@ -1,18 +1,16 @@
 #!/bin/bash
-# Complete Pi Update Script - All 53 Commands Working
 # This updates your Pi with all the latest fixes and optimizations
 
 set -e
 
-echo "🔄 Updating Sapphire Modbot on Pi..."
-# Stop services
-echo "⏹️ Stopping services..."
+echo "Updating Sapphire Modbot on Pi..."
+# We're already in the right directory, no need to cd
+# Stopping services..."
 sudo systemctl stop sapphire-api sapphire-bot 2>/dev/null || true
 
 # Backup current .env
 if [ -f .env ]; then
     cp .env .env.backup
-    echo "💾 Backed up .env file"
 fi
 
 # Stop existing bot
