@@ -1,11 +1,14 @@
 import '../styles/globals.css'
 import { SessionProvider } from 'next-auth/react'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
-    <SessionProvider session={session}>
-      <Component {...pageProps} />
-    </SessionProvider>
+    <ErrorBoundary>
+      <SessionProvider session={session}>
+        <Component {...pageProps} />
+      </SessionProvider>
+    </ErrorBoundary>
   )
 }
 

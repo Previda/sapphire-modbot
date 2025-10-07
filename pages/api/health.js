@@ -45,18 +45,17 @@ export default async function handler(req, res) {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      memory: {
-        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
-      },
-      version: '2.0.0',
-      services: {
-        dashboard: 'online',
-        pi_connection: piStatus
-      },
+      memory: process.memoryUsage(),
+      version: process.version,
+      pi_status: piStatus,
       pi_data: piData,
       response_time: Date.now() - startTime
     }
+
+    // Add cache-busting headers
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
     res.status(200).json(health);
   } catch (error) {
