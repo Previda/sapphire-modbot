@@ -139,10 +139,8 @@ export default function Home() {
             <div className="mb-6">
               <p className="text-white/60 mb-4">Ready to supercharge your Discord server?</p>
             </div>
-            <a
-              href="https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => router.push('/invite')}
               className="group relative inline-flex items-center justify-center px-12 py-5 text-xl font-bold text-white transition-all duration-700 ease-out bg-gradient-to-r from-purple-600 via-purple-500 to-blue-500 rounded-2xl hover:from-purple-500 hover:via-blue-500 hover:to-purple-600 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/40 transform hover:-translate-y-2 active:scale-95"
             >
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-400 to-blue-400 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-opacity duration-500"></span>
@@ -151,7 +149,7 @@ export default function Home() {
                 <span>Add Sapphire to Your Server</span>
                 <span className="text-lg opacity-75 group-hover:opacity-100 transition-opacity">→</span>
               </span>
-            </a>
+            </button>
             <p className="text-white/50 text-sm mt-4">
               Takes less than 30 seconds • No setup required
             </p>
@@ -213,6 +211,43 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Footer */}
+          <footer className="mt-20 border-t border-white/10 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+              <div className="text-white/50 text-sm">
+                © 2024 Sapphire Modbot. All rights reserved.
+              </div>
+              <div className="flex space-x-6 text-sm">
+                <button 
+                  onClick={() => router.push('/invite')}
+                  className="text-white/70 hover:text-white transition-colors duration-300"
+                >
+                  Terms of Service
+                </button>
+                <button 
+                  onClick={() => router.push('/invite')}
+                  className="text-white/70 hover:text-white transition-colors duration-300"
+                >
+                  Privacy Policy
+                </button>
+                <button 
+                  onClick={() => router.push('/dashboard')}
+                  className="text-white/70 hover:text-white transition-colors duration-300"
+                >
+                  Dashboard
+                </button>
+                <a 
+                  href="https://discord.gg/support" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-white transition-colors duration-300"
+                >
+                  Support
+                </a>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </>

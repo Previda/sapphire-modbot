@@ -8,16 +8,29 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate fetching user's servers
-    setTimeout(() => {
-      setServers([
-        { id: 'demo-1', name: '🎮 Gaming Hub', members: 1337, online: 420, hasSapphire: true },
-        { id: 'demo-2', name: '💼 Business Server', members: 256, online: 89, hasSapphire: true },
-        { id: 'demo-3', name: '🎨 Creative Community', members: 892, online: 234, hasSapphire: false }
-      ])
-      setLoading(false)
-    }, 1000)
-  }, [])
+    // Check if user came from successful bot invite
+    if (router.query.success === 'true') {
+      // Show success message
+      setTimeout(() => {
+        setServers([
+          { id: 'new-server', name: '✨ Your New Server', members: 1, online: 1, hasSapphire: true, isNew: true },
+          { id: 'demo-1', name: '🎮 Gaming Hub', members: 1337, online: 420, hasSapphire: true },
+          { id: 'demo-2', name: '💼 Business Server', members: 256, online: 89, hasSapphire: true }
+        ])
+        setLoading(false)
+      }, 1000)
+    } else {
+      // Regular server list
+      setTimeout(() => {
+        setServers([
+          { id: 'demo-1', name: '🎮 Gaming Hub', members: 1337, online: 420, hasSapphire: true },
+          { id: 'demo-2', name: '💼 Business Server', members: 256, online: 89, hasSapphire: true },
+          { id: 'demo-3', name: '🎨 Creative Community', members: 892, online: 234, hasSapphire: false }
+        ])
+        setLoading(false)
+      }, 1000)
+    }
+  }, [router.query])
 
   if (loading) {
     return (
