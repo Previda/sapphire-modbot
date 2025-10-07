@@ -14,15 +14,22 @@ export default function Home() {
     uptime: 2847392,
     ping: 42
   })
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     setIsLoaded(true)
     
     // Check if user came back from Discord OAuth (bot added)
     if (router.query.success === 'true' || router.query.guild_id) {
       setShowSuccess(true)
-      setTimeout(() => setShowSuccess(false), 5000)
+      const timer = setTimeout(() => setShowSuccess(false), 5000)
+      return () => clearTimeout(timer)
     }
+  }, [router.query])
+
+  useEffect(() => {
+    if (!mounted) return
 
     // Fetch live stats from Pi bot
     const fetchLiveStats = async () => {
@@ -30,7 +37,7 @@ export default function Home() {
         const response = await fetch('/api/live-stats')
         if (response.ok) {
           const stats = await response.json()
-          setLiveStats(stats)
+          setLiveStats(prev => ({ ...prev, ...stats }))
         }
       } catch (error) {
         console.log('Using fallback stats:', error)
@@ -41,7 +48,12 @@ export default function Home() {
     // Update stats every 30 seconds
     const interval = setInterval(fetchLiveStats, 30000)
     return () => clearInterval(interval)
-  }, [router.query])
+  }, [mounted])
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return null
+  }
 
   return (
     <>
@@ -101,8 +113,12 @@ export default function Home() {
               { icon: "⚙️", title: "Fully Customizable", desc: "Per-server settings, custom commands, and flexible configuration", delay: "delay-600" }
             ].map((feature, index) => (
               <div 
-                key={index}
-                className={`bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-purple-400/30 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/10 group cursor-pointer transform hover:-translate-y-2 ${isLoaded ? `opacity-100 translate-y-0 ${feature.delay}` : 'opacity-0 translate-y-10'}`}
+                key={`feature-${index}`}
+                className={`bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 hover:border-purple-400/30 transition-all duration-700 ease-out hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 group cursor-pointer transform hover:-translate-y-1 ${isLoaded ? `opacity-100 translate-y-0 ${feature.delay}` : 'opacity-0 translate-y-10'}`}
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  animationFillMode: 'forwards'
+                }}
               >
                 <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:animate-bounce">
                   {feature.icon}
@@ -124,10 +140,10 @@ export default function Home() {
               <p className="text-white/60 mb-4">Ready to supercharge your Discord server?</p>
             </div>
             <a
-              href="https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands&redirect_uri=https://skyfall-omega.vercel.app/?success=true"
+              href="https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative inline-flex items-center justify-center px-12 py-5 text-xl font-bold text-white transition-all duration-500 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-500 rounded-2xl hover:from-purple-500 hover:via-blue-500 hover:to-purple-600 hover:scale-110 hover:shadow-2xl hover:shadow-purple-500/50 transform hover:-translate-y-1"
+              className="group relative inline-flex items-center justify-center px-12 py-5 text-xl font-bold text-white transition-all duration-700 ease-out bg-gradient-to-r from-purple-600 via-purple-500 to-blue-500 rounded-2xl hover:from-purple-500 hover:via-blue-500 hover:to-purple-600 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/40 transform hover:-translate-y-2 active:scale-95"
             >
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-400 to-blue-400 rounded-2xl blur opacity-30 group-hover:opacity-60 transition-opacity duration-500"></span>
               <span className="relative flex items-center space-x-3">
