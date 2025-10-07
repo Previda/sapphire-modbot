@@ -4,8 +4,8 @@ import DiscordProvider from 'next-auth/providers/discord'
 export default NextAuth({
   providers: [
     DiscordProvider({
-      clientId: process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      clientId: process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222',
+      clientSecret: process.env.DISCORD_CLIENT_SECRET || 'dummy_secret',
       authorization: {
         params: {
           scope: 'identify email guilds'
@@ -17,20 +17,27 @@ export default NextAuth({
     async jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token
-        token.discordId = profile.id
+        token.discordId = profile?.id
       }
       return token
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken
-      session.user.discordId = token.discordId
+      if (token.accessToken) {
+        session.accessToken = token.accessToken
+      }
+      if (token.discordId) {
+        session.user.discordId = token.discordId
+      }
       return session
     }
   },
   pages: {
-    signIn: '/login',
+    signIn: '/auth/signin',
     error: '/auth/error'
   },
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development'
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-development',
+  debug: false,
+  session: {
+    strategy: 'jwt'
+  }
 })
