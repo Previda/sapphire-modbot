@@ -1,10 +1,19 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "DISCORD_CLIENT_ID": "1358527215020544222",
+    "PI_BOT_API_URL": "http://192.168.1.62:3001",
+    "DASHBOARD_API_URL": "https://skyfall-omega.vercel.app"
+  },
   "functions": {
     "pages/api/**/*.js": {
-      "maxDuration": 30,
-      "memory": 1024
+      "maxDuration": 30
     }
   },
   "headers": [
@@ -21,47 +30,9 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "s-maxage=60, stale-while-revalidate"
+          "value": "Content-Type, Authorization"
         }
       ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/health",
-      "destination": "/api/health"
-    },
-    {
-      "source": "/api/pi/(.*)",
-      "destination": "/api/live-data"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/dashboard",
-      "destination": "/",
-      "permanent": true
     }
   ]
 }

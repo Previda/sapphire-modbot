@@ -17,7 +17,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     // Report to error tracking service if needed
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined" !== 'undefined') {
       console.log('Client-side error:', error.message);
     }
   }

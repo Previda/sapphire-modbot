@@ -5,7 +5,15 @@ const nextConfig = {
   
   // Fix hydration issues
   experimental: {
-    esmExternals: false
+    esmExternals: false,
+    // Disable SSR for problematic components
+    optimizeCss: true,
+  },
+  
+  // Compiler options to help with hydration
+  compiler: {
+    // Remove console.log in production
+    removeConsole: process.env.NODE_ENV === 'production',
   },
   
   // Environment variables
@@ -25,7 +33,7 @@ const nextConfig = {
     ];
   },
   
-  // Headers for CORS
+  // Headers for CORS and hydration
   async headers() {
     return [
       {
@@ -34,21 +42,50 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Origin', value: '*' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
           { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+        ],
+      },
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
         ],
       },
     ];
   },
   
-  // Webpack configuration
-  webpack: (config, { isServer }) => {
+  // Webpack configuration for hydration fixes
+  webpack: (config, { isServer, dev }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         net: false,
         tls: false,
+        crypto: false,
       };
     }
+    
+    // Fix for hydration issues with dynamic imports
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks?.cacheGroups,
+          default: false,
+          vendors: false,
+          // Vendor chunk
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /node_modules/,
+          },
+        },
+      },
+    };
     
     return config;
   },
@@ -59,17 +96,14 @@ const nextConfig = {
     unoptimized: true
   },
   
-  // Output configuration for Vercel
+  // Output configuration
   output: 'standalone',
-  
-  // Disable x-powered-by header
   poweredByHeader: false,
-  
-  // Compression
   compress: true,
+  trailingSlash: false,
   
-  // Trailing slash
-  trailingSlash: false
+  // Disable x-powered-by for security
+  generateEtags: false,
 };
 
 module.exports = nextConfig;

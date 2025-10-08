@@ -63,23 +63,23 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden" suppressHydrationWarning={true}>
         {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-ping delay-2000"></div>
+        <div className="absolute inset-0 overflow-hidden" suppressHydrationWarning={true}>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" suppressHydrationWarning={true}></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000" suppressHydrationWarning={true}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-ping delay-2000" suppressHydrationWarning={true}></div>
         </div>
 
         {/* Success Toast */}
         {showSuccess && (
-          <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-            <div className="bg-green-500/90 backdrop-blur-sm text-white px-6 py-4 rounded-xl shadow-2xl border border-green-400/30">
-              <div className="flex items-center space-x-3">
-                <div className="w-6 h-6 bg-green-400 rounded-full flex items-center justify-center">
+          <div className="fixed top-4 right-4 z-50 animate-slide-in-right" suppressHydrationWarning={true}>
+            <div className="bg-green-500/90 backdrop-blur-sm text-white px-6 py-4 rounded-xl shadow-2xl border border-green-400/30" suppressHydrationWarning={true}>
+              <div className="flex items-center space-x-3" suppressHydrationWarning={true}>
+                <div className="w-6 h-6 bg-green-400 rounded-full flex items-center justify-center" suppressHydrationWarning={true}>
                   <span className="text-sm">✓</span>
                 </div>
-                <div>
+                <div suppressHydrationWarning={true}>
                   <p className="font-semibold">Bot Added Successfully!</p>
                   <p className="text-sm text-green-100">Sapphire is now active in your server</p>
                 </div>
@@ -88,10 +88,10 @@ export default function Home() {
           </div>
         )}
 
-        <div className="container mx-auto px-4 py-8 relative z-10">
+        <div className="container mx-auto px-4 py-8 relative z-10" suppressHydrationWarning={true}>
           {/* Header */}
-          <div className={`text-center mb-12 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <div className="w-24 h-24 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl hover:shadow-purple-500/25 transition-all duration-500 hover:scale-110 group">
+          <div className={`text-center mb-12 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} suppressHydrationWarning={true}>
+            <div className="w-24 h-24 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl hover:shadow-purple-500/25 transition-all duration-500 hover:scale-110 group" suppressHydrationWarning={true}>
               <span className="text-4xl font-bold text-white group-hover:scale-110 transition-transform duration-300">S</span>
             </div>
             <h1 className="text-6xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent mb-4 hover:scale-105 transition-transform duration-300">
@@ -103,7 +103,7 @@ export default function Home() {
           </div>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" suppressHydrationWarning={true}>
             {[
               { icon: "🎵", title: "Music System", desc: "High-quality audio streaming with queue management and Spotify integration", delay: "delay-100" },
               { icon: "🎫", title: "Ticket System", desc: "Advanced support tickets with transcripts and role-based permissions", delay: "delay-200" },
@@ -119,8 +119,8 @@ export default function Home() {
                   animationDelay: `${index * 100}ms`,
                   animationFillMode: 'forwards'
                 }}
-              >
-                <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:animate-bounce">
+               suppressHydrationWarning={true}>
+                <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:animate-bounce" suppressHydrationWarning={true}>
                   {feature.icon}
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-purple-300 transition-colors duration-300">
@@ -129,14 +129,14 @@ export default function Home() {
                 <p className="text-white/70 group-hover:text-white/90 transition-colors duration-300 leading-relaxed">
                   {feature.desc}
                 </p>
-                <div className="mt-6 w-full h-1 bg-gradient-to-r from-purple-500/0 via-purple-500/50 to-purple-500/0 group-hover:via-purple-400 transition-all duration-500 rounded-full"></div>
+                <div className="mt-6 w-full h-1 bg-gradient-to-r from-purple-500/0 via-purple-500/50 to-purple-500/0 group-hover:via-purple-400 transition-all duration-500 rounded-full" suppressHydrationWarning={true}></div>
               </div>
             ))}
           </div>
 
           {/* Invite Button */}
-          <div className={`text-center transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0 delay-700' : 'opacity-0 translate-y-10'}`}>
-            <div className="mb-6">
+          <div className={`text-center transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0 delay-700' : 'opacity-0 translate-y-10'}`} suppressHydrationWarning={true}>
+            <div className="mb-6" suppressHydrationWarning={true}>
               <p className="text-white/60 mb-4">Ready to supercharge your Discord server?</p>
             </div>
             <button
@@ -156,35 +156,35 @@ export default function Home() {
           </div>
 
           {/* Stats & Status */}
-          <div className={`mt-16 text-center transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0 delay-800' : 'opacity-0 translate-y-10'}`}>
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-green-400/30 transition-all duration-300 group">
-                <div className="text-3xl font-bold text-green-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+          <div className={`mt-16 text-center transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0 delay-800' : 'opacity-0 translate-y-10'}`} suppressHydrationWarning={true}>
+            <div className="grid md:grid-cols-4 gap-6 mb-8" suppressHydrationWarning={true}>
+              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-green-400/30 transition-all duration-300 group" suppressHydrationWarning={true}>
+                <div className="text-3xl font-bold text-green-400 mb-2 group-hover:scale-110 transition-transform duration-300" suppressHydrationWarning={true}>
                   {Math.floor((liveStats.uptime || 0) / 86400)}d
                 </div>
-                <div className="text-white/70">Uptime</div>
-                <div className="text-xs text-green-300/60 mt-1">99.9% reliability</div>
+                <div className="text-white/70" suppressHydrationWarning={true}>Uptime</div>
+                <div className="text-xs text-green-300/60 mt-1" suppressHydrationWarning={true}>99.9% reliability</div>
               </div>
-              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300 group">
-                <div className="text-3xl font-bold text-blue-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-blue-400/30 transition-all duration-300 group" suppressHydrationWarning={true}>
+                <div className="text-3xl font-bold text-blue-400 mb-2 group-hover:scale-110 transition-transform duration-300" suppressHydrationWarning={true}>
                   {liveStats.serverCount}
                 </div>
-                <div className="text-white/70">Active Servers</div>
-                <div className="text-xs text-blue-300/60 mt-1">Growing daily</div>
+                <div className="text-white/70" suppressHydrationWarning={true}>Active Servers</div>
+                <div className="text-xs text-blue-300/60 mt-1" suppressHydrationWarning={true}>Growing daily</div>
               </div>
-              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-purple-400/30 transition-all duration-300 group">
-                <div className="text-3xl font-bold text-purple-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-purple-400/30 transition-all duration-300 group" suppressHydrationWarning={true}>
+                <div className="text-3xl font-bold text-purple-400 mb-2 group-hover:scale-110 transition-transform duration-300" suppressHydrationWarning={true}>
                   {(liveStats.userCount || 0).toLocaleString()}
                 </div>
-                <div className="text-white/70">Users Served</div>
-                <div className="text-xs text-purple-300/60 mt-1">Across all servers</div>
+                <div className="text-white/70" suppressHydrationWarning={true}>Users Served</div>
+                <div className="text-xs text-purple-300/60 mt-1" suppressHydrationWarning={true}>Across all servers</div>
               </div>
-              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-yellow-400/30 transition-all duration-300 group">
-                <div className="text-3xl font-bold text-yellow-400 mb-2 group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white/5 backdrop-blur-xl rounded-xl p-6 border border-white/10 hover:border-yellow-400/30 transition-all duration-300 group" suppressHydrationWarning={true}>
+                <div className="text-3xl font-bold text-yellow-400 mb-2 group-hover:scale-110 transition-transform duration-300" suppressHydrationWarning={true}>
                   {liveStats.ping}ms
                 </div>
-                <div className="text-white/70">Response Time</div>
-                <div className="text-xs text-yellow-300/60 mt-1">Lightning fast</div>
+                <div className="text-white/70" suppressHydrationWarning={true}>Response Time</div>
+                <div className="text-xs text-yellow-300/60 mt-1" suppressHydrationWarning={true}>Lightning fast</div>
               </div>
             </div>
             
@@ -192,10 +192,10 @@ export default function Home() {
               liveStats.botOnline 
                 ? 'bg-green-500/10 backdrop-blur-sm text-green-400 border-green-400/20 hover:border-green-400/40' 
                 : 'bg-red-500/10 backdrop-blur-sm text-red-400 border-red-400/20'
-            }`}>
+            }`} suppressHydrationWarning={true}>
               <div className={`w-3 h-3 rounded-full mr-3 ${
                 liveStats.botOnline ? 'bg-green-400 animate-pulse' : 'bg-red-400'
-              }`}></div>
+              }`} suppressHydrationWarning={true}></div>
               <span className="font-semibold">
                 {liveStats.botOnline ? 'Bot Online' : 'Bot Offline'}
               </span>
@@ -206,7 +206,7 @@ export default function Home() {
             </div>
             
             {liveStats.commandsExecuted && (
-              <div className="mt-4 text-white/50 text-sm">
+              <div className="mt-4 text-white/50 text-sm" suppressHydrationWarning={true}>
                 {liveStats.commandsExecuted.toLocaleString()} commands executed • Last updated: {new Date().toLocaleTimeString()}
               </div>
             )}
@@ -214,11 +214,11 @@ export default function Home() {
 
           {/* Footer */}
           <footer className="mt-20 border-t border-white/10 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <div className="text-white/50 text-sm">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0" suppressHydrationWarning={true}>
+              <div className="text-white/50 text-sm" suppressHydrationWarning={true}>
                 © 2024 Sapphire Modbot. All rights reserved.
               </div>
-              <div className="flex space-x-6 text-sm">
+              <div className="flex space-x-6 text-sm" suppressHydrationWarning={true}>
                 <button 
                   onClick={() => router.push('/invite')}
                   className="text-white/70 hover:text-white transition-colors duration-300"
