@@ -75,13 +75,30 @@ async function deployCommands() {
             return;
         }
         
+        // Validate environment variables
+        const token = process.env.DISCORD_TOKEN;
+        const clientId = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID;
+        
+        if (!token) {
+            console.error('❌ DISCORD_TOKEN is missing from .env file!');
+            return;
+        }
+        
+        if (!clientId) {
+            console.error('❌ DISCORD_CLIENT_ID is missing from .env file!');
+            return;
+        }
+        
+        console.log(`🔑 Using Client ID: ${clientId}`);
+        console.log(`🔑 Token length: ${token.length} characters`);
+        
         // Deploy to Discord
-        const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+        const rest = new REST({ version: '10' }).setToken(token);
         
         console.log('🚀 Deploying commands to Discord...');
         
         const data = await rest.put(
-            Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
+            Routes.applicationCommands(clientId),
             { body: commands }
         );
         

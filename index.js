@@ -277,10 +277,12 @@ initializeDatabase()
         initializeServices();
 });
 
-// Global error handler for invalid commands
+// Enhanced interaction handler with better error handling
 client.on('interactionCreate', async interaction => {
     if (interaction.isCommand()) {
         const command = client.commands.get(interaction.commandName);
+        
+        console.log(`🔧 Command received: /${interaction.commandName} from ${interaction.user.tag} in ${interaction.guild?.name || 'DM'}`);
         
         // Security: Rate limiting check
         if (isRateLimited(interaction.user.id, interaction.commandName)) {
@@ -292,9 +294,9 @@ client.on('interactionCreate', async interaction => {
 
         // Global invalid command handler
         if (!command) {
-            console.log(`❌ Invalid command attempted: /${interaction.commandName} by ${interaction.user.tag}`);
+            console.log(`❌ Unknown command: /${interaction.commandName} by ${interaction.user.tag}`);
             return interaction.reply({ 
-                content: '❌ **Invalid command!** Use `/commands` to see all available commands.', 
+                content: `❌ **Unknown command:** \`/${interaction.commandName}\`\n💡 Use \`/help\` to see available commands.`, 
                 ephemeral: true 
             });
         }
