@@ -116,7 +116,7 @@ async function handleCreateCase(interaction) {
             .setThumbnail(user.displayAvatarURL())
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
 
         // Send DM to user
         try {
@@ -138,10 +138,7 @@ async function handleCreateCase(interaction) {
 
     } catch (error) {
         console.error('Error creating case:', error);
-        await interaction.reply({
-            content: '❌ Failed to create case.',
-            ephemeral: true
-        });
+        await interaction.editReply({ content: '❌ Failed to create case.' });
     }
 }
 
@@ -190,14 +187,7 @@ async function handleViewCase(interaction) {
             embed.addFields({ name: '📝 Recent Notes', value: notes, inline: false });
         }
 
-        await interaction.reply({ embeds: [embed] });
-
-    } catch (error) {
-        console.error('Error viewing case:', error);
-        await interaction.reply({
-            content: '❌ Failed to view case.',
-            ephemeral: true
-        });
+        await interaction.editReply({ content: '❌ Failed to view case.' });
     }
 }
 
@@ -239,14 +229,7 @@ async function handleListCases(interaction) {
             embed.setFooter({ text: `Showing 10 most recent cases of ${cases.length} total` });
         }
 
-        await interaction.reply({ embeds: [embed] });
-
-    } catch (error) {
-        console.error('Error listing cases:', error);
-        await interaction.reply({
-            content: '❌ Failed to list cases.',
-            ephemeral: true
-        });
+        await interaction.editReply({ content: '❌ Failed to list cases.' });
     }
 }
 
@@ -274,13 +257,6 @@ async function handleCaseStats(interaction) {
             embed.addFields({ name: '📋 Case Types', value: typesText, inline: false });
         }
 
-        await interaction.reply({ embeds: [embed] });
-
-    } catch (error) {
-        console.error('Error getting case stats:', error);
-        await interaction.reply({
-            content: '❌ Failed to get case statistics.',
-            ephemeral: true
-        });
+        await interaction.editReply({ content: '❌ Failed to get case statistics.' });
     }
 }

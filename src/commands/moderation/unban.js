@@ -202,7 +202,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Unban command error:', error);
-            await interaction.reply({
+            await interaction.editReply({
                 content: '❌ Failed to unban the user. Please check my permissions.',
                 ephemeral: true
             });

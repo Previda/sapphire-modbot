@@ -14,12 +14,28 @@ module.exports = {
                 .setRequired(false)),
     
     async execute(interaction) {
+        try {
         const targetUser = interaction.options.getUser('user') || interaction.user;
         const showServer = interaction.options.getBoolean('server') || false;
         const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
         
         // Get different avatar types (Pi optimized)
-        const globalAvatar = targetUser.displayAvatarURL({ dynamic: true, size: 1024 });
+        const globalAvatar = targetUser.displayAvatarURL({ dynamic: true, size: 1024 
+        } catch (error) {
+            console.error('Command execution error:', error);
+            
+            const errorMessage = {
+                content: '❌ An error occurred while executing this command. Please try again later.',
+                ephemeral: true
+            };
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply(errorMessage);
+            } else {
+                await interaction.reply(errorMessage);
+            }
+        }
+    });
         const serverAvatar = member ? member.displayAvatarURL({ dynamic: true, size: 1024 }) : null;
         const avatarToShow = (showServer && serverAvatar) ? serverAvatar : globalAvatar;
         

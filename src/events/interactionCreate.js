@@ -59,13 +59,14 @@ module.exports = {
     },
 };
 
+
 async function handleSlashCommand(interaction) {
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
         console.error(`No command matching ${interaction.commandName} was found.`);
         return await interaction.reply({
-            content: `❌ Command \`${interaction.commandName}\` not found.`,
+            content: `❌ Command \`${interaction.commandName}\` not found. Use \`/help\` to see available commands.`,
             ephemeral: true
         });
     }
@@ -76,7 +77,9 @@ async function handleSlashCommand(interaction) {
             options: interaction.options.data
         });
         
+        // Execute the command
         await command.execute(interaction);
+        
     } catch (error) {
         console.error('Error executing command:', error);
         
@@ -84,14 +87,18 @@ async function handleSlashCommand(interaction) {
         await dashboardLogger.logError(error, interaction);
 
         const errorMessage = {
-            content: '❌ There was an error while executing this command!',
+            content: '❌ There was an error while executing this command! Please try again or contact support.',
             ephemeral: true
         };
 
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp(errorMessage);
-        } else {
-            await interaction.reply(errorMessage);
+        try {
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(errorMessage);
+            } else {
+                await interaction.reply(errorMessage);
+            }
+        } catch (replyError) {
+            console.error('Failed to send error message:', replyError);
         }
     }
 }
@@ -107,6 +114,12 @@ async function handleButtonInteraction(interaction) {
     // Handle ticket-related buttons
     if (customId.startsWith('ticket_') || customId.includes('close') || customId.includes('transcript')) {
         return await handleTicketMenu(interaction);
+    }
+    
+    // Handle new ticket button system
+    if (customId === 'close_ticket' || customId === 'generate_transcript') {
+        const { handleTicketButtons } = require('../utils/ticketButtons');
+        return await handleTicketButtons(interaction);
     }
     
     // Handle other button interactions

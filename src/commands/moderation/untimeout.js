@@ -117,7 +117,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Untimeout command error:', error);
-            await interaction.reply({
+            await interaction.editReply({
                 content: '❌ Failed to remove timeout. Please check my permissions.',
                 ephemeral: true
             });

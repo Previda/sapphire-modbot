@@ -33,7 +33,7 @@ module.exports = {
             subcommand
                 .setName('status')
                 .setDescription('View current music bot settings'))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        .setDefaultMemberPermissions(null) // Allow all users,
 
     async execute(interaction) {
         try {
@@ -202,7 +202,7 @@ module.exports = {
         // Check role requirement
         if (guildSettings.requiredRole) {
             const hasRole = interaction.member.roles.cache.has(guildSettings.requiredRole);
-            const isAdmin = interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+            const isAdmin = (interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers) || interaction.guild.ownerId === interaction.user.id);
             
             if (!hasRole && !isAdmin) {
                 const role = interaction.guild.roles.cache.get(guildSettings.requiredRole);

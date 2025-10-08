@@ -6,6 +6,7 @@ module.exports = {
         .setDescription('📊 Display detailed server information and bot statistics'),
     
     async execute(interaction) {
+        try {
         await interaction.deferReply();
         
         const guild = interaction.guild;
@@ -41,7 +42,22 @@ module.exports = {
         const uptimeHours = Math.floor((uptimeMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         
         const embed = new EmbedBuilder()
-            .setTitle(`📊 ${guild.name} Server Information`)
+            .setTitle(`📊 ${guild.name
+        } catch (error) {
+            console.error('Command execution error:', error);
+            
+            const errorMessage = {
+                content: '❌ An error occurred while executing this command. Please try again later.',
+                ephemeral: true
+            };
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply(errorMessage);
+            } else {
+                await interaction.reply(errorMessage);
+            }
+        }
+    } Server Information`)
             .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
             .setColor(0x0099ff)
             .addFields(

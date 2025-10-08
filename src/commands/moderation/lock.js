@@ -77,7 +77,7 @@ module.exports = {
         } catch (error) {
             console.error('Error in lock command:', error);
             
-            await interaction.reply({
+            await interaction.editReply({
                 content: '❌ **Error:** Failed to execute lock command. Please try again.',
                 flags: 64
             }).catch(() => {});
@@ -136,7 +136,7 @@ module.exports = {
             });
 
             // Confirm to user
-            await interaction.reply({
+            await interaction.editReply({
                 content: `✅ **Successfully locked** ${targetChannel}`,
                 embeds: [lockEmbed],
                 flags: 64
@@ -144,7 +144,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Error locking channel:', error);
-            await interaction.reply({
+            await interaction.editReply({
                 content: `❌ **Failed to lock** ${targetChannel}. Check permissions.`,
                 flags: 64
             });
@@ -155,9 +155,9 @@ module.exports = {
         const reason = interaction.options.getString('reason') || 'Emergency server lockdown';
 
         // Extra confirmation for server lock
-        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator) && 
+        if (!(interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers) || interaction.guild.ownerId === interaction.user.id) && 
             !isSuperuser(interaction.user.id)) {
-            return await interaction.reply({
+            return await interaction.editReply({
                 content: '❌ **Administrator** permissions required for server lockdown.',
                 flags: 64
             });
@@ -294,7 +294,7 @@ module.exports = {
                 timestamp: new Date()
             });
 
-            await interaction.reply({
+            await interaction.editReply({
                 content: `🔓 **Successfully unlocked** ${targetChannel}`,
                 embeds: [unlockEmbed],
                 flags: 64
@@ -302,7 +302,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Error unlocking channel:', error);
-            await interaction.reply({
+            await interaction.editReply({
                 content: `❌ **Failed to unlock** ${targetChannel}. Check permissions.`,
                 flags: 64
             });
@@ -359,14 +359,14 @@ module.exports = {
                 .setTimestamp()
                 .setFooter({ text: 'Use /lock unlock to restore locked channels' });
 
-            await interaction.reply({
+            await interaction.editReply({
                 embeds: [statusEmbed],
                 flags: 64
             });
 
         } catch (error) {
             console.error('Error checking lock status:', error);
-            await interaction.reply({
+            await interaction.editReply({
                 content: '❌ **Error:** Failed to check channel lock status.',
                 flags: 64
             });

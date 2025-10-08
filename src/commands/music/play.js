@@ -6,6 +6,7 @@ const ytSearch = require('yt-search');
 const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const spotify = require('../../utils/spotifyHandler');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -408,7 +409,7 @@ module.exports = {
             if (interaction.deferred) {
                 await interaction.editReply({ embeds: [errorEmbed] });
             } else {
-                await interaction.reply({ embeds: [errorEmbed] });
+                await interaction.editReply({ embeds: [errorEmbed] });
             }
         }
     },

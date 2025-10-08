@@ -110,6 +110,9 @@ module.exports = {
         
         try {
             switch (subcommand) {
+                case 'open':
+                    await handleOpenTicket(interaction);
+                    break;
                 case 'transcript':
                     await handleTranscript(interaction); 
                     break;
@@ -167,7 +170,7 @@ module.exports = {
             await dashboardLogger.logError(error, interaction);
             
             if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
+                await interaction.editReply({
                     content: `❌ Failed to execute ticket ${subcommand} command. Please try again later.`,
                     ephemeral: true
                 });
@@ -184,7 +187,7 @@ async function handleOpenTicket(interaction) {
 
     try {
         // Check if user is blacklisted
-        const { isUserBlacklisted } = require('./blacklist.js');
+        const { isUserBlacklisted } = require('../moderation/blacklist.js');
         const isBlacklisted = await isUserBlacklisted(interaction.guild.id, user.id);
         
         if (isBlacklisted) {
@@ -322,7 +325,7 @@ async function handleOpenTicket(interaction) {
             components: [controlRow] 
         });
 
-        await interaction.reply({
+        await interaction.editReply({
             content: `✅ Ticket created successfully! ${channel}`,
             ephemeral: true
         });
@@ -349,7 +352,7 @@ async function handleOpenTicket(interaction) {
 
     } catch (error) {
         console.error('Error creating ticket:', error);
-        await interaction.reply({
+        await interaction.editReply({
             content: '❌ Failed to create ticket. Please try again later.',
             flags: 64
         });
@@ -397,7 +400,7 @@ async function handleTicketAdmin(interaction) {
                     .setColor(0xff0000)
                     .setTimestamp();
 
-                await interaction.reply({ embeds: [closeEmbed] });
+                await interaction.editReply({ embeds: [closeEmbed] });
                 
                 // Delete channel after 10 seconds
                 setTimeout(async () => {
@@ -445,7 +448,7 @@ async function handleTicketAdmin(interaction) {
                     .setColor(0x3498db)
                     .setTimestamp();
 
-                await interaction.reply({ embeds: [transferEmbed] });
+                await interaction.editReply({ embeds: [transferEmbed] });
                 break;
 
             case 'priority':
@@ -472,7 +475,7 @@ async function handleTicketAdmin(interaction) {
                     .setColor(0xff9500)
                     .setTimestamp();
 
-                await interaction.reply({ embeds: [priorityEmbed] });
+                await interaction.editReply({ embeds: [priorityEmbed] });
                 break;
 
             case 'bulk_add':
@@ -513,13 +516,13 @@ async function handleTicketAdmin(interaction) {
                     .setColor(0x00ff00)
                     .setTimestamp();
 
-                await interaction.reply({ embeds: [bulkEmbed] });
+                await interaction.editReply({ embeds: [bulkEmbed] });
                 break;
         }
 
     } catch (error) {
         console.error('Error with admin ticket command:', error);
-        await interaction.reply({
+        await interaction.editReply({
             content: '❌ Failed to execute admin command. Please try again later.',
             flags: 64
         });
@@ -579,7 +582,7 @@ async function handleCloseTicket(interaction) {
             });
         }
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
 
         // Log to mod channel if configured
         const modLogChannelId = process.env.MOD_LOG_CHANNEL_ID;
@@ -624,7 +627,7 @@ async function handleCloseTicket(interaction) {
 
     } catch (error) {
         console.error('Error closing ticket:', error);
-        await interaction.reply({
+        await interaction.editReply({
             content: '❌ Failed to close ticket. Please try again later.',
             ephemeral: true
         });
@@ -683,7 +686,7 @@ async function handleAddUser(interaction) {
             .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
 
         // Send notification to added user
         try {
@@ -705,7 +708,7 @@ async function handleAddUser(interaction) {
 
     } catch (error) {
         console.error('Error adding user to ticket:', error);
-        await interaction.reply({
+        await interaction.editReply({
             content: '❌ Failed to add user to ticket. Please check permissions.',
             ephemeral: true
         });
@@ -765,7 +768,7 @@ async function handleRemoveUser(interaction) {
             .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
 
         // Send notification to removed user
         try {
@@ -786,7 +789,7 @@ async function handleRemoveUser(interaction) {
 
     } catch (error) {
         console.error('Error removing user from ticket:', error);
-        await interaction.reply({
+        await interaction.editReply({
             content: '❌ Failed to remove user from ticket. Please check permissions.',
             ephemeral: true
         });
@@ -829,7 +832,7 @@ async function handleTranscript(interaction) {
                 content: '❌ An error occurred while generating the transcript. Please try again later.'
             });
         } else {
-            await interaction.reply({
+            await interaction.editReply({
                 content: '❌ An error occurred while generating the transcript. Please try again later.',
                 ephemeral: true
             });

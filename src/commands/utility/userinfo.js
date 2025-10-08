@@ -10,6 +10,7 @@ module.exports = {
                 .setRequired(false)),
     
     async execute(interaction) {
+        try {
         const targetUser = interaction.options.getUser('user') || interaction.user;
         const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
         
@@ -24,7 +25,22 @@ module.exports = {
             idle: '🟡', 
             dnd: '🔴',
             offline: '⚫'
-        };
+        
+        } catch (error) {
+            console.error('Command execution error:', error);
+            
+            const errorMessage = {
+                content: '❌ An error occurred while executing this command. Please try again later.',
+                ephemeral: true
+            };
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply(errorMessage);
+            } else {
+                await interaction.reply(errorMessage);
+            }
+        }
+    };
         
         // Role information (limited for memory)
         const roles = member ? member.roles.cache

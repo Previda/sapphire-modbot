@@ -15,7 +15,14 @@
     "setup": "node setup-environment.js",
     "vercel-build": "next build",
     "pi-install": "bash pi-factory-installer.sh",
-    "health": "curl http://localhost:3001/health"
+    "health": "curl http://localhost:3001/health",
+    "deploy:pi": "./deploy-pi.sh",
+    "deploy:vercel": "./deploy-vercel.sh",
+    "fix:all": "node fix-all-issues.js",
+    "fix:bot": "node fix-bot.js",
+    "fix:tickets": "node fix-ticket-system.js",
+    "bot:start": "node index.js",
+    "bot:deploy": "node deploy-commands-clean.js"
   },
   "dependencies": {
     "next": "14.2.3",

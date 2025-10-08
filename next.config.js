@@ -2,12 +2,44 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  images: {
-    domains: ['cdn.discordapp.com', 'discord.com'],
-  },
+  
+  // Fix hydration issues
   experimental: {
-    serverComponentsExternalPackages: ['discord.js', '@discordjs/voice']
+    esmExternals: false
   },
+  
+  // Environment variables
+  env: {
+    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
+    PI_BOT_API_URL: process.env.PI_BOT_API_URL,
+    DASHBOARD_API_URL: process.env.DASHBOARD_API_URL,
+  },
+  
+  // API routes configuration
+  async rewrites() {
+    return [
+      {
+        source: '/api/bot/:path*',
+        destination: process.env.PI_BOT_API_URL + '/:path*'
+      }
+    ];
+  },
+  
+  // Headers for CORS
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+        ],
+      },
+    ];
+  },
+  
+  // Webpack configuration
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -15,41 +47,29 @@ const nextConfig = {
         fs: false,
         net: false,
         tls: false,
-        crypto: false,
       };
     }
+    
     return config;
   },
-  async headers() {
-    return [
-      {
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization'
-          }
-        ]
-      },
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss: data: blob:; media-src 'self' blob: data: https:; frame-src 'self' https:; object-src 'none';"
-          }
-        ]
-      }
-    ]
-  }
-}
+  
+  // Image optimization
+  images: {
+    domains: ['cdn.discordapp.com', 'i.ytimg.com'],
+    unoptimized: true
+  },
+  
+  // Output configuration for Vercel
+  output: 'standalone',
+  
+  // Disable x-powered-by header
+  poweredByHeader: false,
+  
+  // Compression
+  compress: true,
+  
+  // Trailing slash
+  trailingSlash: false
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
