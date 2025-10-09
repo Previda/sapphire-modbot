@@ -1,19 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Disable strict mode to prevent hydration issues
   swcMinify: true,
   
-  // Fix hydration issues
+  // Experimental features to help with hydration
   experimental: {
     esmExternals: false,
-    // Disable SSR for problematic components
-    optimizeCss: true,
+    // Force client-side rendering for problematic components
+    forceSwcTransforms: true,
   },
   
-  // Compiler options to help with hydration
+  // Compiler options
   compiler: {
-    // Remove console.log in production
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
   },
   
   // Environment variables
@@ -21,6 +20,51 @@ const nextConfig = {
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
     PI_BOT_API_URL: process.env.PI_BOT_API_URL,
     DASHBOARD_API_URL: process.env.DASHBOARD_API_URL,
+  },
+  
+  // Webpack configuration to prevent hydration issues
+  webpack: (config, { isServer, dev }) => {
+    // Client-side fallbacks
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+    }
+    
+    // Prevent hydration issues with dynamic imports
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      },
+    };
+    
+    return config;
+  },
+  
+  // Image configuration
+  images: {
+    domains: ['cdn.discordapp.com', 'i.ytimg.com'],
+    unoptimized: true,
   },
   
   // API routes configuration
@@ -33,67 +77,23 @@ const nextConfig = {
     ];
   },
   
-  // Headers for CORS and hydration
+  // Headers to prevent caching issues
   async headers() {
     return [
       {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
-        ],
-      },
-      {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
         ],
       },
     ];
-  },
-  
-  // Webpack configuration for hydration fixes
-  webpack: (config, { isServer, dev }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        crypto: false,
-      };
-    }
-    
-    // Fix for hydration issues with dynamic imports
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        ...config.optimization.splitChunks,
-        cacheGroups: {
-          ...config.optimization.splitChunks?.cacheGroups,
-          default: false,
-          vendors: false,
-          // Vendor chunk
-          vendor: {
-            name: 'vendor',
-            chunks: 'all',
-            test: /node_modules/,
-          },
-        },
-      },
-    };
-    
-    return config;
-  },
-  
-  // Image optimization
-  images: {
-    domains: ['cdn.discordapp.com', 'i.ytimg.com'],
-    unoptimized: true
   },
   
   // Output configuration
@@ -102,7 +102,7 @@ const nextConfig = {
   compress: true,
   trailingSlash: false,
   
-  // Disable x-powered-by for security
+  // Disable x-powered-by
   generateEtags: false,
 };
 
