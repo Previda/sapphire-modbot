@@ -64,9 +64,7 @@ module.exports = {
             .setTitle(`👤 ${targetUser.username}'s Profile`)
             .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 256 }))
             .setColor(member?.displayColor || 0x0099ff)
-            .addFields(
-                {
-                    name: '📊 Account Info',
+            .addFields({ name: '📊 Account Info',
                     value: `**Username:** ${targetUser.username}\n**Display Name:** ${targetUser.displayName}\n**ID:** \`${targetUser.id}\`\n**Bot:** ${targetUser.bot ? '🤖 Yes' : '👤 No'}`,
                     inline: true
                 },
@@ -84,8 +82,7 @@ module.exports = {
 
         // Add roles if user is in server
         if (member && roles.length > 0) {
-            embed.addFields({
-                name: `🎭 Roles (${member.roles.cache.size - 1})`,
+            embed.addFields({ name: `🎭 Roles (${member.roles.cache.size - 1})`,
                 value: roles.length >= 10 ? 
                     `${roles.join(' ')}\n*+${member.roles.cache.size - 11} more...*` : 
                     roles.join(' ') || 'None',
@@ -95,8 +92,7 @@ module.exports = {
         
         // Add key permissions
         if (keyPerms.length > 0) {
-            embed.addFields({
-                name: '🔑 Key Permissions',
+            embed.addFields({ name: '🔑 Key Permissions',
                 value: keyPerms.join('\n'),
                 inline: false
             });
@@ -104,8 +100,7 @@ module.exports = {
         
         // Add server-specific info
         if (member) {
-            embed.addFields({
-                name: '📈 Server Stats',
+            embed.addFields({ name: '📈 Server Stats',
                 value: `**Highest Role:** ${member.roles.highest}\n**Nickname:** ${member.nickname || 'None'}\n**Booster:** ${member.premiumSince ? '💎 Yes' : '❌ No'}`,
                 inline: true
             });

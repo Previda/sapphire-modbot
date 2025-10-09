@@ -60,9 +60,7 @@ module.exports = {
     } Server Information`)
             .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
             .setColor(0x0099ff)
-            .addFields(
-                {
-                    name: '🏰 Server Details',
+            .addFields({ name: '🏰 Server Details',
                     value: `**Name:** ${guild.name}\n**ID:** \`${guild.id}\`\n**Owner:** <@${guild.ownerId}>\n**Created:** <t:${Math.floor(guild.createdTimestamp / 1000)}:F>\n**Verification:** ${guild.verificationLevel}`,
                     inline: true
                 },
@@ -101,8 +99,7 @@ module.exports = {
 
         // Add features if not too long
         if (features.length <= 1024) {
-            embed.addFields({
-                name: '🌟 Server Features',
+            embed.addFields({ name: '🌟 Server Features',
                 value: features,
                 inline: false
             });

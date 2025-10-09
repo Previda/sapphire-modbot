@@ -49,9 +49,7 @@ module.exports = {
                 `**Global Avatar** for ${targetUser.displayName}`)
             .setColor(member?.displayColor || 0x0099ff)
             .setImage(avatarToShow)
-            .addFields(
-                { 
-                    name: '🔗 Direct Links', 
+            .addFields({ name: '🔗 Direct Links', 
                     value: `[PNG](${avatarToShow.replace(/\.(webp|gif)(\?.*)?$/, '.png$2')}) • [JPG](${avatarToShow.replace(/\.(webp|gif)(\?.*)?$/, '.jpg$2')}) • [WEBP](${avatarToShow.replace(/\.(gif)(\?.*)?$/, '.webp$2')})${avatarToShow.includes('.gif') ? ` • [GIF](${avatarToShow})` : ''}`, 
                     inline: false 
                 },
@@ -69,8 +67,7 @@ module.exports = {
 
         // Add server avatar option if available
         if (hasDifferentServerAvatar && !showServer) {
-            embed.addFields({
-                name: '🎭 Server Avatar Available',
+            embed.addFields({ name: '🎭 Server Avatar Available',
                 value: 'This user has a different avatar in this server!\nUse `/avatar server:true` to see it.',
                 inline: true
             });
@@ -78,8 +75,7 @@ module.exports = {
         
         // Add avatar history note
         if (showServer && hasDifferentServerAvatar) {
-            embed.addFields({
-                name: '🌐 Global Avatar',
+            embed.addFields({ name: '🌐 Global Avatar',
                 value: `[View Global Avatar](${globalAvatar})\nUse \`/avatar server:false\` to see global avatar.`,
                 inline: true
             });

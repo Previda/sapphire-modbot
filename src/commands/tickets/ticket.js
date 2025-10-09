@@ -83,97 +83,46 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            // Log command usage to dashboard
-            const subcommand = interaction.options.getSubcommand();
-            await dashboardLogger.logCommand(`ticket-${subcommand}`, interaction.user, interaction.guild, {
-                subcommand: subcommand
-            });
-        } catch (error) {
-            // No subcommand provided, show available actions
-            const embed = new EmbedBuilder()
-                .setTitle('🎫 Ticket System')
-                .setColor(0x3498db)
-                .setDescription('Available ticket commands:')
-                .addFields(
-                    { name: '/ticket open', value: 'Open a support ticket', inline: false },
-                    { name: '/ticket close', value: 'Close the current ticket', inline: false },
-                    { name: '/ticket add', value: 'Add user to ticket', inline: false },
-                    { name: '/ticket remove', value: 'Remove user from ticket', inline: false },
-                    { name: '/ticket transcript', value: 'Generate ticket transcript', inline: false }
-                )
-                .setTimestamp();
-            
-            return interaction.reply({ embeds: [embed], flags: 64 });
-        }
+            await interaction.deferReply({ ephemeral: true });
 
-        const subcommand = interaction.options.getSubcommand();
-        
-        try {
+            if (!interaction.guild) {
+                return interaction.editReply({
+                    content: '❌ This command must be used in a server.'
+                });
+            }
+
+            const subcommand = interaction.options.getSubcommand();
+            
             switch (subcommand) {
                 case 'open':
                     await handleOpenTicket(interaction);
                     break;
-                case 'transcript':
-                    await handleTranscript(interaction); 
-                    break;
-                case 'admin':
-                    // Only admins/mods can use admin commands
-                    if (!interaction.member.permissions.has('ManageChannels') && 
-                        interaction.guild.ownerId !== interaction.user.id) {
-                        return interaction.reply({
-                            content: '❌ You need **Manage Channels** permission to use admin ticket commands.',
-                            flags: 64
-                        });
-                    }
-                    await handleTicketAdmin(interaction);
-                    break;
                 case 'close':
-                    // Only admins can close tickets manually
-                    if (interaction.guild.ownerId !== interaction.user.id && 
-                        !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-                        return interaction.reply({
-                            content: '❌ You need the "Manage Channels" permission or be the server owner to close tickets.',
-                            flags: 64
-                        });
-                    }
                     await handleCloseTicket(interaction);
                     break;
-                case 'add':
-                    // Only admins can add users
-                    if (interaction.guild.ownerId !== interaction.user.id && 
-                        !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-                        return interaction.reply({
-                            content: '❌ You need the "Manage Channels" permission or be the server owner to add users to tickets.',
-                            flags: 64
-                        });
-                    }
-                    await handleAddUser(interaction);
-                    break;
-                case 'remove':
-                    // Only admins can remove users
-                    if (interaction.guild.ownerId !== interaction.user.id && 
-                        !interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
-                        return interaction.reply({
-                            content: '❌ You need the "Manage Channels" permission or be the server owner to remove users from tickets.',
-                            flags: 64
-                        });
-                    }
-                    await handleRemoveUser(interaction);
-                    break;
                 case 'transcript':
-                    // Anyone can generate transcript of their own ticket
                     await handleTranscript(interaction);
                     break;
+                case 'admin':
+                    await handleTicketAdmin(interaction);
+                    break;
+                default:
+                    await interaction.editReply({
+                        content: '❌ Unknown subcommand.'
+                    });
             }
         } catch (error) {
-            console.error(`Ticket ${subcommand} command error:`, error);
-            await dashboardLogger.logError(error, interaction);
+            console.error('Ticket command error:', error);
             
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.editReply({
-                    content: `❌ Failed to execute ticket ${subcommand} command. Please try again later.`,
-                    ephemeral: true
-                });
+            const errorMessage = {
+                content: '❌ An error occurred while executing this command. Please try again.',
+                ephemeral: true
+            };
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply(errorMessage);
+            } else {
+                await interaction.reply(errorMessage);
             }
         }
     }

@@ -35,7 +35,7 @@ module.exports = {
                 .setDescription('View current music bot settings'))
         .setDefaultMemberPermissions(null) // Allow all users,
 
-    async execute(interaction) {
+    async function execute(interaction) {
         try {
             await interaction.deferReply();
 
@@ -164,7 +164,7 @@ module.exports = {
     },
 
     // Helper functions
-    async ensureDataDir() {
+    async function ensureDataDir() {
         const dataDir = path.dirname(MUSIC_SETTINGS_FILE);
         try {
             await fs.access(dataDir);
@@ -173,7 +173,7 @@ module.exports = {
         }
     },
 
-    async loadSettings() {
+    async function loadSettings() {
         try {
             const data = await fs.readFile(MUSIC_SETTINGS_FILE, 'utf8');
             return JSON.parse(data);
@@ -182,12 +182,12 @@ module.exports = {
         }
     },
 
-    async saveSettings(settings) {
+    async function saveSettings(settings) {
         await fs.writeFile(MUSIC_SETTINGS_FILE, JSON.stringify(settings, null, 2));
     },
 
     // Function to check if music is enabled and user has permission
-    async checkMusicPermission(interaction) {
+    async function checkMusicPermission(interaction) {
         const settings = await this.loadSettings();
         const guildSettings = settings[interaction.guild.id];
         
