@@ -134,6 +134,8 @@ module.exports = {
         }
     }
 
+
+
 async function handleOpenTicket(interaction) {
     const reason = interaction.options.getString('reason');
     const category = interaction.options.getString('category') || 'general';

@@ -29,8 +29,8 @@ export default function Invite() {
   return (
     <>
       <Head>
-        <title>Invite Sapphire - Discord Bot</title>
-        <meta name="description" content="Add Sapphire to your Discord server" />
+        <title>Invite Skyfall - Discord Bot</title>
+        <meta name="description" content="Add Skyfall to your Discord server" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
@@ -49,7 +49,7 @@ export default function Invite() {
                 <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
                   <span className="text-3xl font-bold text-white">S</span>
                 </div>
-                <h1 className="text-4xl font-bold text-white mb-4">Add Sapphire to Your Server</h1>
+                <h1 className="text-4xl font-bold text-white mb-4">Add Skyfall to Your Server</h1>
                 <p className="text-white/70">Please review our terms before adding the bot</p>
               </div>
 
@@ -60,12 +60,12 @@ export default function Invite() {
                 <div className="space-y-4 text-white/80 text-sm max-h-96 overflow-y-auto">
                   <div>
                     <h3 className="font-semibold text-white mb-2">1. Bot Usage</h3>
-                    <p>By adding Sapphire to your Discord server, you agree to use the bot responsibly and in accordance with Discord's Terms of Service.</p>
+                    <p>By adding Skyfall to your Discord server, you agree to use the bot responsibly and in accordance with Discord's Terms of Service.</p>
                   </div>
                   
                   <div>
                     <h3 className="font-semibold text-white mb-2">2. Data Collection</h3>
-                    <p>Sapphire may collect and store server configuration data, user IDs, and message content for moderation purposes. We do not store personal information beyond what's necessary for bot functionality.</p>
+                    <p>Skyfall may collect and store server configuration data, user IDs, and message content for moderation purposes. We do not store personal information beyond what's necessary for bot functionality.</p>
                   </div>
                   
                   <div>
@@ -154,7 +154,7 @@ export default function Invite() {
                       : 'bg-gray-500 text-gray-300 cursor-not-allowed'
                   }`}
                 >
-                  Add Sapphire to Server
+                  Add Skyfall to Server
                 </button>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function Invite() {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Bot Added Successfully!</h2>
                 <p className="text-white/70 mb-6">
-                  Sapphire has been added to your server. You'll be redirected to the dashboard in a moment.
+                  Skyfall has been added to your server. You'll be redirected to the dashboard in a moment.
                 </p>
                 <div className="w-full bg-gray-700 rounded-full h-2">
                   <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full animate-pulse" style={{width: '100%'}}></div>

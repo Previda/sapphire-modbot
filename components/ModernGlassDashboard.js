@@ -51,16 +51,16 @@ const ModernGlassDashboard = () => {
       } else {
         // Fallback to demo data if API fails
         setUserGuilds([
-          { id: 'demo-1', name: '🎮 Gaming Hub', members: 1337, online: 420, hasSapphire: true, icon: null },
-          { id: 'demo-2', name: '💼 Business Server', members: 256, online: 89, hasSapphire: true, icon: null },
-          { id: 'demo-3', name: '🎨 Creative Community', members: 892, online: 234, hasSapphire: false, icon: null }
+          { id: 'demo-1', name: '🎮 Gaming Hub', members: 1337, online: 420, hasSkyfall: true, icon: null },
+          { id: 'demo-2', name: '💼 Business Server', members: 256, online: 89, hasSkyfall: true, icon: null },
+          { id: 'demo-3', name: '🎨 Creative Community', members: 892, online: 234, hasSkyfall: false, icon: null }
         ])
       }
     } catch (error) {
       console.error('Error fetching guilds:', error)
       // Fallback data
       setUserGuilds([
-        { id: 'demo-1', name: '🎮 Gaming Hub', members: 1337, online: 420, hasSapphire: true, icon: null }
+        { id: 'demo-1', name: '🎮 Gaming Hub', members: 1337, online: 420, hasSkyfall: true, icon: null }
       ])
     } finally {
       setLoading(false)
@@ -93,7 +93,7 @@ const ModernGlassDashboard = () => {
           <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
             <span className="text-3xl font-bold text-white">S</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-4">Welcome to Sapphire</h1>
+          <h1 className="text-3xl font-bold text-white mb-4">Welcome to Skyfall</h1>
           <p className="text-white/70 mb-8">Sign in with Discord to manage your servers</p>
           <button
             onClick={() => signIn('discord')}
@@ -136,7 +136,7 @@ const ModernGlassDashboard = () => {
             <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
               <span className="text-xl font-bold text-white">S</span>
             </div>
-            <span className="text-xl font-bold text-white">Sapphire</span>
+            <span className="text-xl font-bold text-white">Skyfall</span>
           </div>
 
           {/* User Profile */}
@@ -213,7 +213,7 @@ const ModernGlassDashboard = () => {
                 <h1 className="text-2xl font-bold text-white">
                   {navigation.find(nav => nav.id === activeTab)?.name || 'Dashboard'}
                 </h1>
-                <p className="text-white/60">Manage your Discord servers with Sapphire</p>
+                <p className="text-white/60">Manage your Discord servers with Skyfall</p>
               </div>
             </div>
             
@@ -260,7 +260,7 @@ const ModernGlassDashboard = () => {
                           <p className="text-white/60 text-sm">{guild.members?.toLocaleString() || 0} members</p>
                         </div>
                       </div>
-                      <div className={`w-3 h-3 rounded-full ${guild.hasSapphire ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
+                      <div className={`w-3 h-3 rounded-full ${guild.hasSkyfall ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
                     </div>
                     
                     <div className="space-y-3 mb-4">
@@ -270,13 +270,13 @@ const ModernGlassDashboard = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-white/70">Status</span>
-                        <span className={`font-semibold ${guild.hasSapphire ? 'text-green-400' : 'text-gray-400'}`}>
-                          {guild.hasSapphire ? 'Active' : 'Not Added'}
+                        <span className={`font-semibold ${guild.hasSkyfall ? 'text-green-400' : 'text-gray-400'}`}>
+                          {guild.hasSkyfall ? 'Active' : 'Not Added'}
                         </span>
                       </div>
                     </div>
 
-                    {guild.hasSapphire ? (
+                    {guild.hasSkyfall ? (
                       <button className="w-full glass-button py-3 px-4 text-white font-semibold rounded-xl hover:scale-105 transition-all duration-300">
                         Manage Server
                       </button>
@@ -287,7 +287,7 @@ const ModernGlassDashboard = () => {
                         rel="noopener noreferrer"
                         className="block w-full text-center glass-button-secondary py-3 px-4 text-white font-semibold rounded-xl hover:scale-105 transition-all duration-300"
                       >
-                        Add Sapphire
+                        Add Skyfall
                       </a>
                     )}
                   </div>
@@ -313,7 +313,7 @@ const ModernGlassDashboard = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white/60 text-sm">Active Bots</p>
-                      <p className="text-2xl font-bold text-white">{userGuilds.filter(g => g.hasSapphire).length}</p>
+                      <p className="text-2xl font-bold text-white">{userGuilds.filter(g => g.hasSkyfall).length}</p>
                     </div>
                     <ShieldCheckIcon className="w-8 h-8 text-green-400" />
                   </div>

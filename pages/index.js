@@ -20,8 +20,8 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Sapphire Modbot - Advanced Discord Management</title>
-        <meta name="description" content="Advanced Discord moderation bot with comprehensive features" />
+        <title>Skyfall - Advanced Discord Management</title>
+        <meta name="description" content="Skyfall - Advanced Discord Management with comprehensive features" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -35,7 +35,7 @@ export default function Home() {
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">S</span>
                 </div>
-                <span className="text-white font-semibold text-lg">Sapphire Modbot</span>
+                <span className="text-white font-semibold text-lg">Skyfall</span>
               </div>
               
               <div className="flex items-center space-x-4">
@@ -155,7 +155,7 @@ export default function Home() {
         <footer className="bg-black/20 backdrop-blur-md border-t border-white/10 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center text-white/60">
-              <p>&copy; 2024 Sapphire Modbot. Advanced Discord server management.</p>
+              <p>&copy; 2024 Skyfall. Advanced Discord server management.</p>
             </div>
           </div>
         </footer>
