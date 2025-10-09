@@ -14,7 +14,7 @@ module.exports = {
             });
             
             const embed = new EmbedBuilder()
-                .setTitle('🏓 Pong!')
+                .setTitle('🏓 Skyfall Ping')
                 .setColor(0x00ff00)
                 .addFields(
                     { 
