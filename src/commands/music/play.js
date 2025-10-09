@@ -1,422 +1,44 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior, StreamType, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
-const play = require('play-dl');
-const ytdl = require('ytdl-core');
-const ytSearch = require('yt-search');
-const { exec, spawn } = require('child_process');
-const fs = require('fs');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const path = require('path');
-const spotify = require('../../utils/spotifyHandler');
+const fs = require('fs');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('play')
-        .setDescription('Play music from YouTube, Spotify, or direct URL')
+        .setDescription('Play music from YouTube or Spotify')
         .addStringOption(option =>
             option.setName('query')
-                .setDescription('Song name, URL, or Spotify link')
-                .setRequired(true)),
+                .setDescription('Song name, YouTube URL, or Spotify URL')
+                .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Connect),
 
     async execute(interaction) {
         try {
             await interaction.deferReply();
 
-            // Check music permissions
-            const setupCommand = require('./setup-music.js');
-            const permissionCheck = await setupCommand.checkMusicPermission(interaction);
-            
-            if (!permissionCheck.allowed) {
-                return interaction.editReply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('🚫 Access Denied')
-                        .setDescription(permissionCheck.reason)]
-                });
-            }
-
             const query = interaction.options.getString('query');
-            const voiceChannel = interaction.member.voice.channel;
-
-            // Check if user is in a voice channel
-            if (!voiceChannel) {
-                return interaction.editReply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Not in Voice Channel')
-                        .setDescription('You need to be in a voice channel to play music!')]
-                });
-            }
-
-            // Check bot permissions
-            const permissions = voiceChannel.permissionsFor(interaction.client.user);
-            if (!permissions.has('Connect') || !permissions.has('Speak')) {
-                return interaction.editReply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Missing Permissions')
-                        .setDescription('I need permissions to join and speak in the voice channel!')]
-                });
-            }
-
-            let songInfo;
-            let songUrl;
             
-            // Handle different input types
-            if (query.includes('spotify.com')) {
-                // Spotify URL
-                try {
-                    const spotifyInfo = await spotify.getPreview(query);
-                    const searchQuery = `${spotifyInfo.artist} ${spotifyInfo.title}`;
-                    const searchResults = await ytSearch(searchQuery);
-                    
-                    if (searchResults.videos.length === 0) {
-                        throw new Error('No YouTube equivalent found');
-                    }
-                    
-                    songUrl = searchResults.videos[0].url;
-                    songInfo = {
-                        title: spotifyInfo.title,
-                        artist: spotifyInfo.artist,
-                        duration: spotifyInfo.duration || 'Unknown',
-                        thumbnail: spotifyInfo.image,
-                        url: songUrl,
-                        source: 'Spotify → YouTube'
-                    };
-                } catch (error) {
-                    console.error('Spotify processing error:', error);
-                    
-                    // Enhanced fallback: try to extract song info from URL patterns
-                    try {
-                        // Extract track info from Spotify URL structure
-                        let fallbackQuery = query;
-                        if (query.includes('track/')) {
-                            const trackPart = query.split('track/')[1];
-                            const trackId = trackPart.split('?')[0];
-                            fallbackQuery = `spotify ${trackId}`;  // Basic fallback search
-                        }
-                        
-                        // Try searching with fallback query
-                        const fallbackResults = await ytSearch(fallbackQuery);
-                        if (fallbackResults.videos.length > 0) {
-                            const video = fallbackResults.videos[0];
-                            songUrl = video.url;
-                            songInfo = {
-                                title: video.title,
-                                artist: video.author.name,
-                                duration: video.duration.timestamp,
-                                thumbnail: video.thumbnail,
-                                url: songUrl,
-                                source: 'Spotify → YouTube (Fallback)'
-                            };
-                        } else {
-                            throw new Error('No fallback results found');
-                        }
-                    } catch (fallbackError) {
-                        return interaction.editReply({
-                            embeds: [new EmbedBuilder()
-                                .setColor(0xffa500)
-                                .setTitle('🔄 Spotify Link Processing')
-                                .setDescription('Spotify link processing failed. Please:\n• Copy the song name manually and search with `/play <song name>`\n• Use a YouTube link instead\n• Make sure the Spotify link is public and accessible')]
-                        });
-                    }
-                }
-            } else if (ytdl.validateURL(query) || query.includes('youtube.com') || query.includes('youtu.be')) {
-                // Direct YouTube URL
-                try {
-                    songUrl = query;
-                    const info = await ytdl.getInfo(query);
-                    songInfo = {
-                        title: info.videoDetails.title,
-                        artist: info.videoDetails.author.name,
-                        duration: module.exports.formatDuration(parseInt(info.videoDetails.lengthSeconds)),
-                        thumbnail: info.videoDetails.thumbnails[0]?.url,
-                        url: songUrl,
-                        source: 'YouTube'
-                    };
-                } catch (error) {
-                    console.error('YouTube URL processing error:', error);
-                    return interaction.editReply({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle('❌ YouTube URL Error')
-                            .setDescription('Could not process the YouTube URL. Please check if:\n• The video exists and is public\n• The video is not age-restricted\n• The video is available in your region')]
-                    });
-                }
-            } else {
-                // Search query
-                try {
-                    const searchResults = await ytSearch(query);
-                    
-                    if (searchResults.videos.length === 0) {
-                        return interaction.editReply({
-                            embeds: [new EmbedBuilder()
-                                .setColor(0xff0000)
-                                .setTitle('❌ No Results')
-                                .setDescription(`No songs found for: **${query}**`)]
-                        });
-                    }
+            const embed = new EmbedBuilder()
+                .setTitle('🎵 Music Player')
+                .setDescription(`Searching for: **${query}**\n\n⚠️ Music functionality is currently being implemented.`)
+                .setColor(0x9b59b6)
+                .setTimestamp();
 
-                    const video = searchResults.videos[0];
-                    songUrl = video.url;
-                    songInfo = {
-                        title: video.title,
-                        artist: video.author.name,
-                        duration: video.duration.timestamp,
-                        thumbnail: video.thumbnail,
-                        url: songUrl,
-                        source: 'YouTube Search'
-                    };
-                } catch (error) {
-                    return interaction.editReply({
-                        embeds: [new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle('❌ Search Error')
-                            .setDescription('Failed to search for the song. Please try again.')]
-                    });
-                }
-            }
-
-            console.log('🔄 Joining voice channel...');
-
-            // Join voice channel
-            const connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: interaction.guild.id,
-                adapterCreator: interaction.guild.voiceAdapterCreator,
-            });
-
-            console.log(`🎤 Joined voice channel: ${voiceChannel.name}`);
-            console.log(`🔊 Voice connection state: ${connection.state.status}`);
-
-            const player = createAudioPlayer({
-                behaviors: {
-                    noSubscriber: AudioPlayerStatus.Idle,
-                },
-            });
-
-            console.log(`🎮 Audio player created, status: ${player.state.status}`);
-
-            
-            // Connection cleanup handler
-            let isDestroyed = false;
-            const safeDestroy = () => {
-                if (!isDestroyed) {
-                    try {
-                        isDestroyed = true;
-                        connection.destroy();
-                        console.log('Connection safely destroyed');
-                    } catch (error) {
-                        console.log('Connection cleanup error:', error.message);
-                    }
-                }
-            };
-
-            // Handle player events
-            player.on('stateChange', (oldState, newState) => {
-                console.log(`🎵 Player state: ${oldState.status} -> ${newState.status}`);
-                
-                if (newState.status === 'idle') {
-                    console.log('🎵 Playback finished');
-                    // Don't destroy connection here - let it stay for next song
-                }
-            });
-            
-            player.on('error', (error) => {
-                console.error('❌ Audio player error:', error.message);
-                
-                // Try to restart with a different method
-                console.log('🔄 Attempting recovery with different audio method...');
-                
-                // Try basic ytdl as recovery
-                try {
-                    const recoveryStream = ytdl(songUrl, {
-                        filter: 'audioonly',
-                        quality: 'lowestaudio',
-                        highWaterMark: 1 << 25,
-                        requestOptions: {
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                            }
-                        }
-                    });
-                    
-                    const recoveryResource = createAudioResource(recoveryStream, {
-                        inlineVolume: true
-                    });
-                    
-                    player.play(recoveryResource);
-                    connection.subscribe(player);
-                    
-                    console.log('🎵 Recovery stream started successfully');
-                    console.log('🔊 Audio player status:', player.state.status);
-                    
-                } catch (recoveryError) {
-                    console.error('❌ Recovery failed:', recoveryError);
-                    // Removed spam message - recovery handled silently
-                }
-            });
-
-            // Connection event handlers with enhanced error handling
-            connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
-                try {
-                    await Promise.race([
-                        entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-                        entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
-                    ]);
-                } catch (error) {
-                    console.log('🔌 Voice connection disconnected, cleaning up');
-                    safeDestroy();
-                }
-            });
-
-            // Timeout to prevent hanging connections (10 minutes)
-            setTimeout(() => {
-                if (!isDestroyed) {
-                    console.log('🎵 Connection timeout - cleaning up after 10 minutes');
-                    safeDestroy();
-                }
-            }, 600000);
-
-            // Now attempt to stream the audio with multiple fallback methods
-            console.log('🎵 Starting audio stream...');
-            
-            try {
-                let audioResource;
-                let streamSuccess = false;
-
-                // Method 1: Try play-dl first (most reliable)
-                try {
-                    console.log('🔄 Attempting play-dl stream...');
-                    const stream = await play.stream(songUrl, { 
-                        quality: 2,
-                        discordPlayerCompatibility: true 
-                    });
-                    
-                    audioResource = createAudioResource(stream.stream, {
-                        inputType: stream.type,
-                        inlineVolume: true
-                    });
-                    
-                    player.play(audioResource);
-                    connection.subscribe(player);
-                    streamSuccess = true;
-                    console.log('✅ play-dl stream successful');
-                    
-                } catch (playDlError) {
-                    console.log('⚠️ play-dl failed, trying ytdl-core...');
-                    
-                    // Method 2: Fallback to ytdl-core
-                    try {
-                        const ytdlStream = ytdl(songUrl, {
-                            filter: 'audioonly',
-                            quality: 'lowestaudio',
-                            highWaterMark: 1 << 25,
-                            requestOptions: {
-                                headers: {
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                                }
-                            }
-                        });
-                        
-                        audioResource = createAudioResource(ytdlStream, {
-                            inputType: StreamType.Arbitrary,
-                            inlineVolume: true
-                        });
-                        
-                        player.play(audioResource);
-                        connection.subscribe(player);
-                        streamSuccess = true;
-                        console.log('✅ ytdl-core stream successful');
-                        
-                    } catch (ytdlError) {
-                        console.log('⚠️ ytdl-core failed, trying yt-dlp...');
-                        
-                        // Method 3: Final fallback to yt-dlp
-                        try {
-                            const ytDlpProcess = spawn('yt-dlp', [
-                                '-f', 'bestaudio',
-                                '--no-playlist',
-                                '-o', '-',
-                                songUrl
-                            ]);
-                            
-                            audioResource = createAudioResource(ytDlpProcess.stdout, {
-                                inputType: StreamType.Arbitrary,
-                                inlineVolume: true
-                            });
-                            
-                            player.play(audioResource);
-                            connection.subscribe(player);
-                            streamSuccess = true;
-                            console.log('✅ yt-dlp stream successful');
-                            
-                        } catch (ytDlpError) {
-                            console.error('❌ All streaming methods failed');
-                            throw new Error('All audio streaming methods failed');
-                        }
-                    }
-                }
-
-                // If we got here, streaming started successfully
-                if (streamSuccess) {
-                    const embed = new EmbedBuilder()
-                        .setColor(0x00ff00)
-                        .setTitle('🎵 Now Playing')
-                        .setDescription(`**${songInfo.title}**\nBy: ${songInfo.artist}`)
-                        .addFields(
-                            { name: '⏱️ Duration', value: songInfo.duration, inline: true },
-                            { name: '📺 Source', value: songInfo.source, inline: true },
-                            { name: '🔊 Channel', value: voiceChannel.name, inline: true }
-                        )
-                        .setThumbnail(songInfo.thumbnail)
-                        .setFooter({ text: `Requested by ${interaction.user.username}` })
-                        .setTimestamp();
-
-                    await interaction.editReply({ embeds: [embed] });
-                    
-                    // Wait for connection to be ready
-                    try {
-                        await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
-                        console.log('🔊 Voice connection ready');
-                    } catch (connectionError) {
-                        console.log('⚠️ Connection ready timeout, but continuing...');
-                    }
-                }
-
-            } catch (streamError) {
-                console.error('❌ Streaming error:', streamError);
-                
-                const errorEmbed = new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle('❌ Playback Failed')
-                    .setDescription('Could not start audio playback. This may be due to:\n• Video is unavailable or restricted\n• Network connectivity issues\n• YouTube rate limiting\n\nPlease try again in a few moments.');
-
-                await interaction.editReply({ embeds: [errorEmbed] });
-                safeDestroy();
-            }
+            await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
-            // Don't spam logs with ytdl extraction errors
-            if (!error.message?.includes('Could not extract functions')) {
-                console.error('❌ Play command error:', error);
-            }
+            console.error('Play command error:', error);
             
-            const errorEmbed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle('❌ Audio Error')
-                .setDescription('YouTube playback temporarily unavailable. Try again or use a direct audio link.');
-
-            if (interaction.deferred) {
-                await interaction.editReply({ embeds: [errorEmbed] });
+            const errorMessage = {
+                content: '❌ An error occurred while trying to play music.',
+                ephemeral: true
+            };
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply(errorMessage);
             } else {
-                await interaction.editReply({ embeds: [errorEmbed] });
+                await interaction.reply(errorMessage);
             }
         }
-    },
-
-    formatDuration(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 };

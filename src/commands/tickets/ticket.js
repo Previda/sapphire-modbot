@@ -83,7 +83,10 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            await interaction.deferReply({ ephemeral: true });
+            // Always defer first to prevent timeout
+            if (!interaction.deferred && !interaction.replied) {
+                await interaction.deferReply({ ephemeral: true });
+            }
 
             if (!interaction.guild) {
                 return interaction.editReply({
@@ -119,14 +122,17 @@ module.exports = {
                 ephemeral: true
             };
             
-            if (interaction.deferred || interaction.replied) {
-                await interaction.editReply(errorMessage);
-            } else {
-                await interaction.reply(errorMessage);
+            try {
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.editReply(errorMessage);
+                } else {
+                    await interaction.reply(errorMessage);
+                }
+            } catch (replyError) {
+                console.error('Failed to send error message:', replyError);
             }
         }
     }
-};
 
 async function handleOpenTicket(interaction) {
     const reason = interaction.options.getString('reason');
