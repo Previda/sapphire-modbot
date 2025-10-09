@@ -1,30 +1,50 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false, // Disable strict mode to prevent hydration issues
+  reactStrictMode: false,
   swcMinify: true,
   
-  // Experimental features to help with hydration
   experimental: {
     esmExternals: false,
-    // Force client-side rendering for problematic components
     forceSwcTransforms: true,
   },
   
-  // Compiler options
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
   },
   
-  // Environment variables
   env: {
-    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
-    PI_BOT_API_URL: process.env.PI_BOT_API_URL,
-    DASHBOARD_API_URL: process.env.DASHBOARD_API_URL,
+    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || '1358527215020544222',
+    PI_BOT_API_URL: process.env.PI_BOT_API_URL || 'http://192.168.1.62:3004',
+    PI_BOT_TOKEN: process.env.PI_BOT_TOKEN || '95f57d784517dc85fae9e8f2fed3155a8296deadd5e2b2484d83bd1e777771af',
+    DASHBOARD_API_URL: process.env.DASHBOARD_API_URL || 'https://skyfall-omega.vercel.app',
+    NEXT_PUBLIC_BOT_NAME: 'Skyfall',
   },
   
-  // Webpack configuration to prevent hydration issues
-  webpack: (config, { isServer, dev }) => {
-    // Client-side fallbacks
+  async rewrites() {
+    return [
+      {
+        source: '/api/bot/:path*',
+        destination: process.env.PI_BOT_API_URL + '/:path*'
+      }
+    ];
+  },
+  
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Requested-With' },
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+        ],
+      },
+    ];
+  },
+  
+  webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -43,66 +63,18 @@ const nextConfig = {
       };
     }
     
-    // Prevent hydration issues with dynamic imports
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      },
-    };
-    
     return config;
   },
   
-  // Image configuration
   images: {
     domains: ['cdn.discordapp.com', 'i.ytimg.com'],
     unoptimized: true,
   },
   
-  // API routes configuration
-  async rewrites() {
-    return [
-      {
-        source: '/api/bot/:path*',
-        destination: process.env.PI_BOT_API_URL + '/:path*'
-      }
-    ];
-  },
-  
-  // Headers to prevent caching issues
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, must-revalidate',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-        ],
-      },
-    ];
-  },
-  
-  // Output configuration
   output: 'standalone',
   poweredByHeader: false,
   compress: true,
   trailingSlash: false,
-  
-  // Disable x-powered-by
   generateEtags: false,
 };
 
