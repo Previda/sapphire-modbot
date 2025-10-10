@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import EnhancedDashboard from '../components/EnhancedDashboard';
+import AdvancedDashboard from '../components/AdvancedDashboard';
 
 export default function Dashboard() {
   return (
@@ -11,7 +11,7 @@ export default function Dashboard() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <EnhancedDashboard />
+      <AdvancedDashboard />
     </>
   )
 }
