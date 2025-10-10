@@ -3,15 +3,6 @@ const nextConfig = {
   reactStrictMode: false,
   swcMinify: true,
   
-  experimental: {
-    esmExternals: false,
-    forceSwcTransforms: true,
-  },
-  
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
-  },
-  
   env: {
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || '1358527215020544222',
     PI_BOT_API_URL: process.env.PI_BOT_API_URL || 'http://192.168.1.62:3004',
@@ -36,8 +27,7 @@ const nextConfig = {
         headers: [
           { key: 'Access-Control-Allow-Origin', value: '*' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Requested-With' },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
           { key: 'Cache-Control', value: 'no-store, must-revalidate' },
         ],
       },
@@ -52,17 +42,8 @@ const nextConfig = {
         net: false,
         tls: false,
         crypto: false,
-        stream: false,
-        url: false,
-        zlib: false,
-        http: false,
-        https: false,
-        assert: false,
-        os: false,
-        path: false,
       };
     }
-    
     return config;
   },
   
@@ -75,7 +56,6 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   trailingSlash: false,
-  generateEtags: false,
 };
 
 module.exports = nextConfig;

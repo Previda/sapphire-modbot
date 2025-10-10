@@ -30,7 +30,7 @@ module.exports = {
             option.setName('server_id')
                 .setDescription('Server ID (required for DMs)')
                 .setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
         const targetUser = interaction.options.getUser('user');
