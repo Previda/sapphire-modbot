@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import ModernSleekDashboard from '../components/ModernSleekDashboard';
+import EnhancedDashboard from '../components/EnhancedDashboard';
 
 export default function Dashboard() {
   return (
@@ -11,7 +11,7 @@ export default function Dashboard() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <ModernSleekDashboard />
+      <EnhancedDashboard />
     </>
   )
 }
