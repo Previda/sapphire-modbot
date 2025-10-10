@@ -1,10 +1,41 @@
 export default async function handler(req, res) {
-  const PI_BOT_API_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3005';
-  const PI_BOT_TOKEN = process.env.PI_BOT_TOKEN;
+  const PI_BOT_API_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
+  const PI_BOT_TOKEN = process.env.PI_BOT_TOKEN || '95f57d784517dc85fae9e8f2fed3155a8296deadd5e2b2484d83bd1e777771af';
 
   try {
     if (req.method === 'GET') {
-      // Fetch appeals from Pi bot or return mock data
+      // Get 100% real appeals data from Pi bot
+      try {
+        const response = await fetch(`${PI_BOT_API_URL}/api/appeals`, {
+          headers: {
+            'Authorization': `Bearer ${PI_BOT_TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const realAppealsData = await response.json();
+          return res.status(200).json({
+            success: true,
+            appeals: realAppealsData.appeals || [],
+            totalAppeals: realAppealsData.totalAppeals || 0,
+            pendingAppeals: realAppealsData.pendingAppeals || 0,
+            source: 'REAL_PI_BOT_DATA'
+          });
+        }
+      } catch (botError) {
+        console.error('Pi bot appeals API failed:', botError.message);
+      }
+
+      // NO FALLBACK - Return error if Pi bot unavailable
+      return res.status(503).json({
+        success: false,
+        error: 'Pi bot unavailable - Cannot fetch real appeals data',
+        message: 'Real appeals data unavailable. Please check Pi bot connection.',
+        source: 'ERROR_NO_FALLBACK'
+      });
+
+      // Remove mock data - keeping for reference
       const mockAppeals = [
         {
           id: 1,
