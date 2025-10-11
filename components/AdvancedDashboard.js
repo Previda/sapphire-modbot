@@ -88,26 +88,42 @@ const AdvancedDashboard = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5, scale: 1.02 }}
+      whileHover={{ y: -8, scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 p-6 shadow-2xl hover:shadow-3xl transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
+      className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-2xl border border-white/20 p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 ${onClick ? 'cursor-pointer' : ''} group`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-50"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`p-3 rounded-xl bg-gradient-to-r from-${color}-500/20 to-${color}-600/20 backdrop-blur-sm`}>
-            <span className="text-2xl">{icon}</span>
-          </div>
+        <div className="flex items-center justify-between mb-6">
+          <motion.div 
+            whileHover={{ rotate: 360, scale: 1.1 }}
+            transition={{ duration: 0.6 }}
+            className={`p-4 rounded-2xl bg-gradient-to-r from-${color}-500/30 to-${color}-600/20 backdrop-blur-sm shadow-lg`}
+          >
+            <span className="text-3xl filter drop-shadow-lg">{icon}</span>
+          </motion.div>
           {trend && (
-            <div className={`flex items-center text-sm font-medium ${trend > 0 ? 'text-green-400' : 'text-red-400'}`}>
-              <span className="mr-1">{trend > 0 ? '↗' : '↘'}</span>
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className={`flex items-center px-4 py-2 rounded-full text-sm font-bold shadow-lg ${trend > 0 ? 'bg-green-500/20 text-green-300 shadow-green-500/20' : 'bg-red-500/20 text-red-300 shadow-red-500/20'}`}
+            >
+              <span className="mr-2 text-lg">{trend > 0 ? '↗' : '↘'}</span>
               {Math.abs(trend)}%
-            </div>
+            </motion.div>
           )}
         </div>
-        <div className="space-y-1">
-          <p className="text-3xl font-bold text-white">{value}</p>
-          <p className="text-sm text-white/70 font-medium">{title}</p>
+        <div className="space-y-3">
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl font-black text-white tracking-tight"
+          >
+            {value}
+          </motion.p>
+          <p className="text-lg font-semibold text-white/90">{title}</p>
         </div>
       </div>
     </motion.div>
@@ -117,37 +133,68 @@ const AdvancedDashboard = () => {
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.05, y: -10 }}
+      whileTap={{ scale: 0.95 }}
       onClick={() => onSelect(server)}
-      className={`bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-xl border ${
-        isSelected ? 'border-purple-500/50 ring-2 ring-purple-500/30' : 'border-white/20'
-      } p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer`}
+      className={`bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-2xl rounded-3xl border transition-all duration-500 cursor-pointer shadow-2xl hover:shadow-3xl group ${
+        isSelected ? 'border-purple-500/50 ring-2 ring-purple-400/30 shadow-purple-500/20' : 'border-white/20 hover:border-white/30'
+      } p-8`}
     >
-      <div className="flex items-center space-x-4 mb-4">
-        <div className="w-16 h-16 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl flex items-center justify-center">
-          <span className="text-2xl">{server.icon}</span>
-        </div>
+      <div className="flex items-center space-x-6 mb-6">
+        <motion.div 
+          whileHover={{ rotate: 360, scale: 1.1 }}
+          transition={{ duration: 0.6 }}
+          className="w-20 h-20 bg-gradient-to-r from-purple-500/30 to-blue-500/30 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg"
+        >
+          <span className="text-3xl filter drop-shadow-lg">{server.icon}</span>
+        </motion.div>
         <div className="flex-1">
-          <h3 className="text-white font-bold text-lg">{server.name}</h3>
-          <p className="text-white/60">{server.members.toLocaleString()} members</p>
+          <h3 className="text-2xl font-black text-white mb-2 group-hover:text-purple-300 transition-colors">{server.name}</h3>
+          <p className="text-white/70 font-semibold text-lg">{server.members.toLocaleString()} members</p>
         </div>
-        <div className={`w-3 h-3 rounded-full ${server.status === 'online' ? 'bg-green-400' : 'bg-gray-400'} animate-pulse`}></div>
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className={`w-4 h-4 rounded-full shadow-lg ${server.status === 'online' ? 'bg-green-400 shadow-green-400/50' : 'bg-gray-400'}`}
+        />
       </div>
       
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-white">{server.commandsUsed.toLocaleString()}</p>
-          <p className="text-white/60 text-sm">Commands Used</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-white">{server.activeTickets}</p>
-          <p className="text-white/60 text-sm">Active Tickets</p>
-        </div>
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          className="text-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all duration-300"
+        >
+          <p className="text-3xl font-black text-white mb-2">{server.commandsUsed.toLocaleString()}</p>
+          <p className="text-white/70 text-sm font-semibold">Commands Used</p>
+        </motion.div>
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          className="text-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all duration-300"
+        >
+          <p className="text-3xl font-black text-white mb-2">{server.activeTickets}</p>
+          <p className="text-white/70 text-sm font-semibold">Active Tickets</p>
+        </motion.div>
       </div>
       
       <div className="flex justify-between items-center">
-        <span className="text-green-400 text-sm font-medium">✓ Connected</span>
-        {isSelected && <span className="text-purple-400 text-sm font-medium">Selected</span>}
+        <span className="text-green-400 text-sm font-bold flex items-center">
+          <motion.span 
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-2 h-2 bg-green-400 rounded-full mr-2"
+          />
+          Connected
+        </span>
+        {isSelected && (
+          <motion.span 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-purple-400 text-sm font-bold flex items-center"
+          >
+            <span className="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse"/>
+            Selected
+          </motion.span>
+        )}
       </div>
     </motion.div>
   );
@@ -156,43 +203,64 @@ const AdvancedDashboard = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-colors"
+      whileHover={{ scale: 1.02, y: -5 }}
+      className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:border-white/30 shadow-xl hover:shadow-2xl transition-all duration-500 group"
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <code className="text-purple-400 font-mono font-bold">/{command.name}</code>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            command.category === 'moderation' ? 'bg-red-500/20 text-red-400' :
-            command.category === 'utility' ? 'bg-blue-500/20 text-blue-400' :
-            command.category === 'music' ? 'bg-green-500/20 text-green-400' :
-            'bg-gray-500/20 text-gray-400'
-          }`}>
-            {command.category}
-          </span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => onToggle(command.id, !command.enabled)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              command.enabled ? 'bg-green-500' : 'bg-gray-600'
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-4">
+          <motion.code 
+            whileHover={{ scale: 1.05 }}
+            className="text-purple-400 font-black text-lg bg-purple-500/20 px-4 py-2 rounded-xl border border-purple-500/30"
+          >
+            /{command.name}
+          </motion.code>
+          <motion.span 
+            whileHover={{ scale: 1.1 }}
+            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg ${
+              command.category === 'moderation' ? 'bg-red-500/30 text-red-300 shadow-red-500/20' :
+              command.category === 'utility' ? 'bg-blue-500/30 text-blue-300 shadow-blue-500/20' :
+              command.category === 'music' ? 'bg-green-500/30 text-green-300 shadow-green-500/20' :
+              'bg-gray-500/30 text-gray-300 shadow-gray-500/20'
             }`}
           >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              command.enabled ? 'translate-x-6' : 'translate-x-1'
-            }`} />
-          </button>
-          <button
+            {command.category}
+          </motion.span>
+        </div>
+        <div className="flex items-center space-x-3">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => onToggle(command.id, !command.enabled)}
+            className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 shadow-lg ${
+              command.enabled ? 'bg-green-500 shadow-green-500/30' : 'bg-gray-600 shadow-gray-600/30'
+            }`}
+          >
+            <motion.span 
+              animate={{ x: command.enabled ? 24 : 4 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className="inline-block h-6 w-6 transform rounded-full bg-white shadow-lg"
+            />
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => onEdit(command)}
-            className="p-1 text-white/60 hover:text-white transition-colors"
+            className="p-3 text-white/60 hover:text-white transition-colors bg-white/10 rounded-xl backdrop-blur-sm border border-white/20 hover:bg-white/20"
           >
             ⚙️
-          </button>
+          </motion.button>
         </div>
       </div>
-      <p className="text-white/80 text-sm mb-2">{command.description}</p>
-      <div className="flex justify-between text-xs text-white/60">
-        <span>Used {command.usageCount} times</span>
-        <span>{command.enabled ? 'Enabled' : 'Disabled'}</span>
+      <p className="text-white/90 text-sm mb-4 font-medium leading-relaxed group-hover:text-white transition-colors">{command.description}</p>
+      <div className="flex justify-between items-center text-xs">
+        <span className="text-white/60 font-semibold">Used {command.usageCount} times</span>
+        <motion.span 
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className={`font-bold px-3 py-1 rounded-full ${command.enabled ? 'text-green-400 bg-green-500/20' : 'text-red-400 bg-red-500/20'}`}
+        >
+          {command.enabled ? 'Enabled' : 'Disabled'}
+        </motion.span>
       </div>
     </motion.div>
   );
@@ -242,53 +310,82 @@ const AdvancedDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Animated Background */}
+      {/* Ultra Modern Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -inset-10 opacity-50">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
-          <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
-          <div className="absolute bottom-1/4 left-1/2 w-96 h-96 bg-pink-500/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-2000"></div>
-        </div>
+        <motion.div 
+          animate={{ 
+            rotate: [0, 360],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10 rounded-full blur-3xl"
+        />
+        <motion.div 
+          animate={{ 
+            rotate: [360, 0],
+            scale: [1.2, 1, 1.2]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-l from-blue-500/10 via-purple-500/10 to-cyan-500/10 rounded-full blur-3xl"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-900/20 to-transparent"></div>
       </div>
 
       <div className="relative z-10">
-        {/* Header */}
+        {/* Ultra Modern Header */}
         <motion.header
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-black/20 backdrop-blur-xl border-b border-white/10"
+          className="bg-black/30 backdrop-blur-2xl border-b border-white/20 shadow-2xl"
         >
-          <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="max-w-7xl mx-auto px-8 py-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-6">
                 <motion.div
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.5 }}
-                  className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg"
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  transition={{ duration: 0.6 }}
+                  className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-purple-500/30"
                 >
-                  <span className="text-white font-bold text-xl">S</span>
+                  <span className="text-white font-black text-2xl">S</span>
                 </motion.div>
                 <div>
-                  <h1 className="text-3xl font-bold text-white">Skyfall Dashboard</h1>
-                  <p className="text-white/60">Advanced Discord Management System</p>
+                  <motion.h1 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-4xl font-black text-white bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent"
+                  >
+                    Skyfall Dashboard
+                  </motion.h1>
+                  <p className="text-white/70 font-semibold text-lg">Ultra Modern Discord Management</p>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <img src={user.avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
-                  <span className="text-white font-medium">{user.username}</span>
-                </div>
-                <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
-                  botData?.success ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                }`}>
-                  <div className={`w-2 h-2 rounded-full ${
-                    botData?.success ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-pulse'
-                  }`}></div>
-                  <span className="text-sm font-medium">
+              <div className="flex items-center space-x-6">
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-3 border border-white/20"
+                >
+                  <img src={user.avatar} alt="Avatar" className="w-10 h-10 rounded-full shadow-lg" />
+                  <span className="text-white font-bold text-lg">{user.username}</span>
+                </motion.div>
+                <motion.div 
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className={`flex items-center space-x-3 px-6 py-3 rounded-2xl shadow-lg ${
+                    botData?.success ? 'bg-green-500/20 text-green-300 shadow-green-500/20' : 'bg-yellow-500/20 text-yellow-300 shadow-yellow-500/20'
+                  }`}
+                >
+                  <motion.div 
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className={`w-3 h-3 rounded-full ${
+                      botData?.success ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-yellow-400 shadow-lg shadow-yellow-400/50'
+                    }`}
+                  />
+                  <span className="text-sm font-bold uppercase tracking-wider">
                     {botData?.success ? 'Connected' : 'Fallback Mode'}
                   </span>
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
