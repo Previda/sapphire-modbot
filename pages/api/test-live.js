@@ -1,4 +1,4 @@
-// 100% REAL DATA API - No Fallback Mode
+// REAL DISCORD DATA API - Connects to actual Discord bot
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -8,11 +8,11 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Use port 3001 from memory - your working Pi bot setup
+  // Connect to your real Pi bot
   const PI_BOT_API_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
   const PI_BOT_TOKEN = process.env.PI_BOT_TOKEN || '95f57d784517dc85fae9e8f2fed3155a8296deadd5e2b2484d83bd1e777771af';
   
-  console.log('🔍 Attempting connection to:', PI_BOT_API_URL);
+  console.log('🔍 Fetching REAL Discord data from Pi bot:', PI_BOT_API_URL);
 
   try {
     // Try real data endpoints from your Pi bot

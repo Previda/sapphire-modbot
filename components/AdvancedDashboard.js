@@ -40,9 +40,20 @@ const AdvancedDashboard = () => {
 
   const fetchBotData = async () => {
     try {
-      const response = await fetch('/api/test-live');
-      const data = await response.json();
-      setBotData(data);
+      // Try new real Discord data API first
+      const response = await fetch('/api/discord-real-data');
+      if (response.ok) {
+        const data = await response.json();
+        setBotData(data);
+        console.log('✅ Using real Discord data:', data.mode);
+        return;
+      }
+      
+      // Fallback to test-live API
+      const fallbackResponse = await fetch('/api/test-live');
+      const fallbackData = await fallbackResponse.json();
+      setBotData(fallbackData);
+      console.log('⚠️ Using fallback data:', fallbackData.mode);
     } catch (error) {
       console.error('Dashboard error:', error);
     }
@@ -277,21 +288,24 @@ const AdvancedDashboard = () => {
             <span className="text-white font-bold text-2xl">S</span>
           </div>
           <h2 className="text-2xl font-bold text-white mb-4">Welcome to Skyfall</h2>
-          <p className="text-white/70 mb-6">Login with Discord to access your advanced dashboard</p>
-          <a
-            href="/api/auth/login"
-            className="inline-flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
-          >
-            <span>🔗</span>
-            <span>Login with Discord</span>
-          </a>
+          <p className="text-white/70 mb-6">Login with 
+            <motion.a
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              href="/api/auth/discord-login"
+              className="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-2xl transition-all duration-300 font-bold shadow-2xl"
+            >
+              <span>🔗</span>
+              <span>Login with Discord</span>
+            </motion.a>
+          </p>
         </motion.div>
       </div>
     );
   }
 
-  const stats = botData?.success ? botData.data : botData?.fallbackData;
-  const servers = stats?.servers || [
+  const stats = botData?.data || {};
+  const servers = stats?.realGuilds || [
     { id: '1', name: 'Skyfall | Softworks', members: 1250, commandsUsed: 1547, activeTickets: 12, status: 'online', icon: '🏢' },
     { id: '2', name: 'Development Hub', members: 45, commandsUsed: 234, activeTickets: 3, status: 'online', icon: '⚙️' },
     { id: '3', name: 'Community Center', members: 892, commandsUsed: 891, activeTickets: 7, status: 'online', icon: '🌟' },
