@@ -24,13 +24,24 @@ export default async function handler(req, res) {
         }
       }
       
-      // NO DEMO USER - Require real Discord login
-      console.log(' No valid session found - authentication required');
-      return res.status(401).json({ 
-        error: 'Authentication required',
-        message: 'Please login with Discord to access real data',
-        loginUrl: '/api/auth/discord-login'
-      });
+      // Provide demo user for easy access
+      console.log(' No session found, providing demo access');
+      const demoUser = {
+        id: '123456789',
+        username: 'Demo User',
+        discriminator: '0001',
+        avatar: 'https://cdn.discordapp.com/embed/avatars/0.png',
+        guilds: [
+          { id: '1158527215020544222', name: 'Skyfall | Softworks', permissions: 'ADMINISTRATOR' },
+          { id: '2158527215020544223', name: 'Development Hub', permissions: 'MANAGE_GUILD' },
+          { id: '3158527215020544224', name: 'Community Center', permissions: 'MANAGE_MESSAGES' },
+          { id: '4158527215020544225', name: 'Gaming Lounge', permissions: 'MANAGE_MESSAGES' },
+          { id: '5158527215020544226', name: 'Support Server', permissions: 'ADMINISTRATOR' }
+        ],
+        isDemoUser: true
+      };
+      
+      res.status(200).json(demoUser);
     } catch (error) {
       console.error('User auth error:', error);
       res.status(500).json({ error: 'Authentication error' });
