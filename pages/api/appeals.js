@@ -27,49 +27,12 @@ export default async function handler(req, res) {
         console.error('Pi bot appeals API failed:', botError.message);
       }
 
-      // TEMPORARY: Return real appeals structure while Pi bot is being configured
-      const realAppeals = [
-        {
-          id: 1,
-          type: 'Ban',
-          reason: 'I was wrongfully banned for spam. I was just sharing helpful links.',
-          status: 'pending',
-          userId: '123456789',
-          username: 'User123',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          serverId: '1158527215020544222',
-          serverName: 'Skyfall | Softworks'
-        },
-        {
-          id: 2,
-          type: 'Mute',
-          reason: 'The mute was too harsh for a minor offense. I apologize for my behavior.',
-          status: 'approved',
-          userId: '987654321',
-          username: 'User456',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-          serverId: '2158527215020544223',
-          serverName: 'Development Hub'
-        },
-        {
-          id: 3,
-          type: 'Kick',
-          reason: 'I was kicked by mistake during a raid cleanup.',
-          status: 'denied',
-          userId: '456789123',
-          username: 'User789',
-          createdAt: new Date(Date.now() - 259200000).toISOString(),
-          serverId: '3158527215020544224',
-          serverName: 'Community Center'
-        }
-      ];
-
-      return res.status(200).json({
-        success: true,
-        appeals: realAppeals,
-        totalAppeals: realAppeals.length,
-        pendingAppeals: realAppeals.filter(appeal => appeal.status === 'pending').length,
-        source: 'REAL_APPEALS_STRUCTURE'
+      // NO FAKE DATA - Return error if Pi bot unavailable
+      return res.status(503).json({
+        success: false,
+        error: 'Pi bot unavailable - Cannot fetch real appeals data',
+        message: 'Real appeals data unavailable. Pi bot must be online at ' + PI_BOT_API_URL,
+        source: 'ERROR_REAL_DATA_ONLY'
       });
 
       // Remove mock data - keeping for reference

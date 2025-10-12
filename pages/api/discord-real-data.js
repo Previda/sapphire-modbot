@@ -56,119 +56,29 @@ export default async function handler(req, res) {
       });
     }
 
-    // If Pi bot not available, try alternative real data sources
-    console.log('⚠️ Pi bot not available, using real Discord structure');
+    // NO FALLBACK - Only real Pi bot data allowed
+    console.log('❌ Pi bot unavailable - cannot provide real data');
     
-    // Return real Discord server structure based on your actual servers
-    const realDiscordData = {
-      status: 'online',
-      guilds: 5,
-      users: 3988,
-      commands: 60,
-      uptime: Math.floor(process.uptime()),
-      version: '1.0.0',
-      apiPort: 3001,
-      lastUpdate: new Date().toISOString(),
-      realGuilds: [
-        {
-          id: '1158527215020544222',
-          name: 'Skyfall | Softworks',
-          members: 1250,
-          commandsUsed: Math.floor(Math.random() * 2000) + 1000,
-          activeTickets: Math.floor(Math.random() * 20) + 5,
-          status: 'online',
-          icon: '🏢',
-          channels: 45,
-          roles: 23,
-          boosts: 12
-        },
-        {
-          id: '2158527215020544223',
-          name: 'Development Hub',
-          members: 45,
-          commandsUsed: Math.floor(Math.random() * 500) + 200,
-          activeTickets: Math.floor(Math.random() * 5) + 1,
-          status: 'online',
-          icon: '⚙️',
-          channels: 12,
-          roles: 8,
-          boosts: 3
-        },
-        {
-          id: '3158527215020544224',
-          name: 'Community Center',
-          members: 892,
-          commandsUsed: Math.floor(Math.random() * 1500) + 500,
-          activeTickets: Math.floor(Math.random() * 15) + 3,
-          status: 'online',
-          icon: '🌟',
-          channels: 28,
-          roles: 15,
-          boosts: 8
-        },
-        {
-          id: '4158527215020544225',
-          name: 'Gaming Lounge',
-          members: 567,
-          commandsUsed: Math.floor(Math.random() * 800) + 300,
-          activeTickets: Math.floor(Math.random() * 8) + 1,
-          status: 'online',
-          icon: '🎮',
-          channels: 18,
-          roles: 12,
-          boosts: 5
-        },
-        {
-          id: '5158527215020544226',
-          name: 'Support Server',
-          members: 234,
-          commandsUsed: Math.floor(Math.random() * 400) + 100,
-          activeTickets: Math.floor(Math.random() * 25) + 10,
-          status: 'online',
-          icon: '🎫',
-          channels: 15,
-          roles: 10,
-          boosts: 2
-        }
-      ]
-    };
-
-    return res.status(200).json({
-      success: true,
-      message: 'Real Discord server structure - Live data simulation',
-      botName: 'Skyfall',
-      data: realDiscordData,
+    return res.status(503).json({
+      success: false,
+      error: 'Pi bot unavailable',
+      message: 'Real Discord data unavailable. Pi bot must be online at ' + PI_BOT_API_URL,
+      piUrl: PI_BOT_API_URL,
       timestamp: new Date().toISOString(),
-      mode: 'REAL_STRUCTURE_LIVE'
+      mode: 'ERROR_NO_REAL_DATA'
     });
 
   } catch (error) {
     console.error('🔴 Discord API Error:', error.message);
     
-    // Return real structure even on error
-    return res.status(200).json({
-      success: true,
-      message: 'Real Discord structure - System operational',
-      botName: 'Skyfall',
-      data: {
-        status: 'online',
-        guilds: 5,
-        users: 3988,
-        commands: 60,
-        uptime: Math.floor(process.uptime()),
-        version: '1.0.0',
-        apiPort: 3001,
-        lastUpdate: new Date().toISOString(),
-        realGuilds: [
-          { id: '1', name: 'Skyfall | Softworks', members: 1250, commandsUsed: 1547, activeTickets: 12, status: 'online', icon: '🏢' },
-          { id: '2', name: 'Development Hub', members: 45, commandsUsed: 234, activeTickets: 3, status: 'online', icon: '⚙️' },
-          { id: '3', name: 'Community Center', members: 892, commandsUsed: 891, activeTickets: 7, status: 'online', icon: '🌟' },
-          { id: '4', name: 'Gaming Lounge', members: 567, commandsUsed: 445, activeTickets: 2, status: 'online', icon: '🎮' },
-          { id: '5', name: 'Support Server', members: 234, commandsUsed: 123, activeTickets: 18, status: 'online', icon: '🎫' }
-        ]
-      },
+    // NO FAKE DATA - Return error if Pi bot unavailable
+    return res.status(503).json({
+      success: false,
+      error: 'Pi bot connection failed',
+      message: 'Cannot provide real Discord data. Pi bot must be online.',
+      piUrl: PI_BOT_API_URL,
       timestamp: new Date().toISOString(),
-      mode: 'REAL_STRUCTURE'
+      mode: 'ERROR_REAL_DATA_ONLY'
     });
   }
 }

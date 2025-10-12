@@ -32,30 +32,43 @@ const AdvancedDashboard = () => {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        console.log('✅ Real Discord user authenticated:', userData.username);
+      } else if (response.status === 401) {
+        console.log('❌ Authentication required - redirecting to login');
+        setUser(null);
       }
     } catch (error) {
       console.error('Failed to fetch user data:', error);
+      setUser(null);
     }
   };
 
   const fetchBotData = async () => {
     try {
-      // Try new real Discord data API first
+      // Only try real Discord data from Pi bot
       const response = await fetch('/api/discord-real-data');
       if (response.ok) {
         const data = await response.json();
         setBotData(data);
-        console.log('✅ Using real Discord data:', data.mode);
+        console.log('✅ Using REAL Discord data from Pi bot:', data.mode);
         return;
+      } else {
+        console.log('❌ Pi bot unavailable - no real data available');
+        setBotData({ 
+          success: false, 
+          error: 'Pi bot offline',
+          message: 'Real Discord data unavailable. Pi bot must be online.',
+          mode: 'ERROR_NO_PI_BOT'
+        });
       }
-      
-      // Fallback to test-live API
-      const fallbackResponse = await fetch('/api/test-live');
-      const fallbackData = await fallbackResponse.json();
-      setBotData(fallbackData);
-      console.log('⚠️ Using fallback data:', fallbackData.mode);
     } catch (error) {
       console.error('Dashboard error:', error);
+      setBotData({ 
+        success: false, 
+        error: 'Connection failed',
+        message: 'Cannot connect to Pi bot for real data.',
+        mode: 'ERROR_CONNECTION'
+      });
     }
   };
 
@@ -278,40 +291,71 @@ const AdvancedDashboard = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8 text-center max-w-md"
+          className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-10 text-center max-w-lg"
         >
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">S</span>
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-4">Welcome to Skyfall</h2>
-          <p className="text-white/70 mb-6">Login with 
-            <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              href="/api/auth/discord-login"
-              className="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-2xl transition-all duration-300 font-bold shadow-2xl"
-            >
-              <span>🔗</span>
-              <span>Login with Discord</span>
-            </motion.a>
-          </p>
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="w-20 h-20 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl"
+          >
+            <span className="text-white font-black text-3xl">S</span>
+          </motion.div>
+          <h2 className="text-3xl font-black text-white mb-4">Skyfall Dashboard</h2>
+          <p className="text-white/70 mb-8 text-lg">Real Discord Authentication Required</p>
+          <motion.a
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            href="/api/auth/discord-login"
+            className="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-2xl transition-all duration-300 font-bold shadow-2xl"
+          >
+            <span>🔗</span>
+            <span>Login with Discord</span>
+          </motion.a>
+          <p className="text-white/50 text-sm mt-4">Only real Discord users can access real data</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Show error if Pi bot is offline
+  if (botData && !botData.success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-red-500/10 backdrop-blur-xl rounded-3xl border border-red-500/20 p-10 text-center max-w-lg"
+        >
+          <motion.div 
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl"
+          >
+            <span className="text-red-400 font-black text-3xl">⚠️</span>
+          </motion.div>
+          <h2 className="text-3xl font-black text-white mb-4">Pi Bot Offline</h2>
+          <p className="text-red-300 mb-6 text-lg">{botData.message}</p>
+          <p className="text-white/70 mb-8">Real Discord data unavailable. Please start your Pi bot to access live data.</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center space-x-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-8 py-4 rounded-2xl transition-all duration-300 font-bold shadow-2xl"
+          >
+            <span>🔄</span>
+            <span>Retry Connection</span>
+          </motion.button>
         </motion.div>
       </div>
     );
   }
 
   const stats = botData?.data || {};
-  const servers = stats?.realGuilds || [
-    { id: '1', name: 'Skyfall | Softworks', members: 1250, commandsUsed: 1547, activeTickets: 12, status: 'online', icon: '🏢' },
-    { id: '2', name: 'Development Hub', members: 45, commandsUsed: 234, activeTickets: 3, status: 'online', icon: '⚙️' },
-    { id: '3', name: 'Community Center', members: 892, commandsUsed: 891, activeTickets: 7, status: 'online', icon: '🌟' },
-    { id: '4', name: 'Gaming Lounge', members: 567, commandsUsed: 445, activeTickets: 2, status: 'online', icon: '🎮' },
-    { id: '5', name: 'Support Server', members: 234, commandsUsed: 123, activeTickets: 18, status: 'online', icon: '🎫' }
-  ];
+  const servers = stats?.realGuilds || [];
 
   const mockCommands = [
     { id: 1, name: 'ban', description: 'Ban members from the server', category: 'moderation', enabled: true, usageCount: 45 },
