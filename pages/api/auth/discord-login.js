@@ -5,9 +5,7 @@ export default async function handler(req, res) {
   }
 
   const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
-  const REDIRECT_URI = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}/api/auth/callback`
-    : 'https://skyfall-omega.vercel.app/api/auth/callback';
+  const REDIRECT_URI = 'https://skyfall-omega.vercel.app/api/auth/callback';
 
   // Discord OAuth URL
   const discordAuthUrl = `https://discord.com/api/oauth2/authorize?` +

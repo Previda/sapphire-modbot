@@ -17,10 +17,8 @@ export default async function handler(req, res) {
 
   try {
     const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
-    const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-    const REDIRECT_URI = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}/api/auth/callback`
-      : 'https://skyfall-omega.vercel.app/api/auth/callback';
+    const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'YOUR_DISCORD_CLIENT_SECRET';
+    const REDIRECT_URI = 'https://skyfall-omega.vercel.app/api/auth/callback';
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
