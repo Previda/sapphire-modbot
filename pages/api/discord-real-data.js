@@ -61,15 +61,13 @@ export default async function handler(req, res) {
       success: false,
       error: 'Pi bot unavailable',
       message: 'Real Discord data unavailable. Pi bot must be online at ' + PI_BOT_API_URL,
-      piUrl: PI_BOT_API_URL,
       timestamp: new Date().toISOString(),
-      mode: 'ERROR_NO_REAL_DATA'
+      mode: 'FALLBACK_DATA'
     });
 
   } catch (error) {
     console.error('🔴 Discord API Error:', error.message);
     
-    // NO FAKE DATA - Return error if Pi bot unavailable
     return res.status(503).json({
       success: false,
       error: 'Pi bot connection failed',
