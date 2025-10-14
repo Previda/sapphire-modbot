@@ -21,6 +21,8 @@ export default async function handler(req, res) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'User-Agent': 'Skyfall-Dashboard/1.0'
       },
       signal: controller.signal
     });

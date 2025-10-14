@@ -13,11 +13,15 @@ export default async function handler(req, res) {
   console.log('🔄 Attempting to fetch from Pi bot:', PI_BOT_URL);
 
   try {
-    // Get guilds data from Pi bot
+    // Get guilds data from Pi bot via ngrok
     const guildsResponse = await fetch(`${PI_BOT_URL}/api/guilds`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(5000)
+      headers: { 
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'User-Agent': 'Skyfall-Dashboard/1.0'
+      },
+      signal: AbortSignal.timeout(10000)
     });
 
     if (guildsResponse.ok) {
