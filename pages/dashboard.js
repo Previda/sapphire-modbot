@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import ServerSelector from '../components/ServerSelector';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -10,6 +11,8 @@ export default function Dashboard() {
   const [logs, setLogs] = useState([]);
   const [appeals, setAppeals] = useState([]);
   const [statusData, setStatusData] = useState(null);
+  const [servers, setServers] = useState([]);
+  const [selectedServer, setSelectedServer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [notifications, setNotifications] = useState([]);
@@ -18,12 +21,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     checkAuthentication();
-    fetchAllData();
+    fetchServers();
     
     // Set up real-time updates
-    const interval = setInterval(fetchAllData, 30000);
+    const interval = setInterval(() => {
+      if (selectedServer) {
+        fetchServerData(selectedServer.id);
+      }
+      fetchStatusData();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (selectedServer) {
+      fetchServerData(selectedServer.id);
+    }
+  }, [selectedServer]);
 
   const checkAuthentication = async () => {
     try {
@@ -52,47 +66,67 @@ export default function Dashboard() {
     }
   };
 
-  const fetchAllData = async () => {
+  const fetchServers = async () => {
     try {
-      const [discordRes, commandsRes, logsRes, appealsRes, statusRes] = await Promise.all([
-        fetch('/api/discord-real-data').catch(() => null),
-        fetch('/api/commands/manage').catch(() => null),
-        fetch('/api/logs').catch(() => null),
-        fetch('/api/appeals').catch(() => null),
-        fetch('/api/status/live').catch(() => null)
-      ]);
-
-      if (discordRes?.ok) {
-        const discordData = await discordRes.json();
-        setDiscordData(discordData);
+      const response = await fetch('/api/servers/list');
+      if (response.ok) {
+        const data = await response.json();
+        setServers(data.servers || []);
+        
+        // Auto-select first server if none selected
+        if (data.servers?.length > 0 && !selectedServer) {
+          setSelectedServer(data.servers[0]);
+        }
+        
+        if (data.source === 'fallback') {
+          addNotification('Using demo servers - connect Pi bot for real data', 'info');
+        }
       }
-
-      if (commandsRes?.ok) {
-        const commandsData = await commandsRes.json();
-        setCommands(commandsData.commands || []);
-      }
-
-      if (logsRes?.ok) {
-        const logsData = await logsRes.json();
-        setLogs(logsData.logs || []);
-      }
-
-      if (appealsRes?.ok) {
-        const appealsData = await appealsRes.json();
-        setAppeals(appealsData.appeals || []);
-      }
-
-      if (statusRes?.ok) {
-        const statusData = await statusRes.json();
-        setStatusData(statusData);
-      }
-
-      setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch data:', error);
-      addNotification('Failed to fetch some data', 'warning');
-      setLoading(false);
+      console.error('Failed to fetch servers:', error);
+      addNotification('Failed to load servers', 'error');
     }
+  };
+
+  const fetchServerData = async (serverId) => {
+    if (!serverId) return;
+    
+    try {
+      const response = await fetch(`/api/servers/${serverId}/data`);
+      if (response.ok) {
+        const data = await response.json();
+        setCommands(data.data.commands || []);
+        setLogs(data.data.logs || []);
+        setAppeals(data.data.appeals || []);
+        
+        if (data.source === 'fallback') {
+          addNotification(`Using demo data for ${selectedServer?.name}`, 'info');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch server data:', error);
+      addNotification('Failed to load server data', 'error');
+    }
+  };
+
+  const fetchStatusData = async () => {
+    try {
+      const response = await fetch('/api/status/live');
+      if (response.ok) {
+        const data = await response.json();
+        setStatusData(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch status:', error);
+    }
+  };
+
+  const fetchAllData = async () => {
+    await Promise.all([
+      fetchServers(),
+      fetchStatusData()
+    ]);
+    setLoading(false);
   };
 
   const addNotification = (message, type = 'info') => {
@@ -321,47 +355,80 @@ export default function Dashboard() {
 
           {/* Main Content Area */}
           <main className="p-6">
+            {/* Server Selector */}
+            <div className="mb-8">
+              <ServerSelector
+                servers={servers}
+                selectedServer={selectedServer}
+                onServerSelect={setSelectedServer}
+                className="max-w-md"
+              />
+            </div>
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm">Total Guilds</p>
-                        <p className="text-3xl font-bold text-white">{discordData?.guilds?.length || 0}</p>
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Server Members</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                          {selectedServer?.memberCount?.toLocaleString() || 0}
+                        </p>
+                        <p className="text-sm text-green-400 mt-1">
+                          {selectedServer?.onlineMembers?.toLocaleString() || 0} online
+                        </p>
                       </div>
-                      <div className="text-4xl">🏰</div>
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">👥</div>
                     </div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm">Active Commands</p>
-                        <p className="text-3xl font-bold text-white">{commands.filter(cmd => cmd.enabled).length}</p>
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Active Commands</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                          {commands.filter(cmd => cmd.enabled).length}
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          of {commands.length} total
+                        </p>
                       </div>
-                      <div className="text-4xl">⚡</div>
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
                     </div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm">Pending Appeals</p>
-                        <p className="text-3xl font-bold text-white">{appeals.filter(appeal => appeal.status === 'pending').length}</p>
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Pending Appeals</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                          {appeals.filter(appeal => appeal.status === 'pending').length}
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          {appeals.length} total appeals
+                        </p>
                       </div>
-                      <div className="text-4xl">⚖️</div>
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚖️</div>
                     </div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm">System Health</p>
-                        <p className="text-3xl font-bold text-white">{statusData?.overall?.healthPercentage || 100}%</p>
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Server Boost</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                          Level {selectedServer?.boostLevel || 0}
+                        </p>
+                        <p className="text-sm text-purple-400 mt-1">
+                          {selectedServer?.boostCount || 0} boosts
+                        </p>
                       </div>
-                      <div className="text-4xl">💚</div>
+                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">
+                        {selectedServer?.boostLevel >= 3 ? '💎' : 
+                         selectedServer?.boostLevel >= 2 ? '🚀' : 
+                         selectedServer?.boostLevel >= 1 ? '⭐' : '📈'}
+                      </div>
                     </div>
                   </div>
                 </div>
