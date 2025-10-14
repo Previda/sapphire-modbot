@@ -12,12 +12,7 @@ const nextConfig = {
   },
   
   async rewrites() {
-    return [
-      {
-        source: '/api/bot/:path*',
-        destination: process.env.PI_BOT_API_URL + '/:path*'
-      }
-    ];
+    return [];
   },
   
   async headers() {
