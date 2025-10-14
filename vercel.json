@@ -7,12 +7,7 @@
     }
   ],
   "env": {
-    "DISCORD_CLIENT_ID": "1358527215020544222",
-    "PI_BOT_API_URL": "http://192.168.1.62:3001",
-    "PI_BOT_TOKEN": "95f57d784517dc85fae9e8f2fed3155a8296deadd5e2b2484d83bd1e777771af",
-    "DASHBOARD_API_URL": "https://skyfall-omega.vercel.app",
-    "NEXT_PUBLIC_BOT_NAME": "Skyfall",
-    "NEXT_PUBLIC_API_URL": "http://192.168.1.62:3001"
+    "NEXT_PUBLIC_BOT_NAME": "Skyfall"
   },
   "headers": [
     {
@@ -37,10 +32,5 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/api/bot/:path*",
-      "destination": "http://192.168.1.62:3001/:path*"
-    }
-  ]
+  "rewrites": []
 }
