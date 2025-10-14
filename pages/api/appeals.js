@@ -1,107 +1,48 @@
+// Appeals API - Gets appeals from Pi bot
 export default async function handler(req, res) {
-  const PI_BOT_API_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
-  const PI_BOT_TOKEN = process.env.PI_BOT_TOKEN || '95f57d784517dc85fae9e8f2fed3155a8296deadd5e2b2484d83bd1e777771af';
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   try {
-    if (req.method === 'GET') {
-      // Get 100% real appeals data from Pi bot
-      try {
-        const response = await fetch(`${PI_BOT_API_URL}/api/appeals`, {
-          headers: {
-            'Authorization': `Bearer ${PI_BOT_TOKEN}`,
-            'Content-Type': 'application/json'
-          }
-        });
+    // Try to get real appeals from Pi bot
+    const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
+    
+    console.log('🔄 Fetching appeals from Pi bot:', PI_BOT_URL);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(`${PI_BOT_URL}/api/appeals`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
 
-        if (response.ok) {
-          const realAppealsData = await response.json();
-          return res.status(200).json({
-            success: true,
-            appeals: realAppealsData.appeals || [],
-            totalAppeals: realAppealsData.totalAppeals || 0,
-            pendingAppeals: realAppealsData.pendingAppeals || 0,
-            source: 'REAL_PI_BOT_DATA'
-          });
-        }
-      } catch (botError) {
-        console.error('Pi bot appeals API failed:', botError.message);
-      }
-
-      // NO FAKE DATA - Return error if Pi bot unavailable
-      return res.status(503).json({
-        success: false,
-        error: 'Pi bot unavailable - Cannot fetch real appeals data',
-        message: 'Real appeals data unavailable. Pi bot must be online at ' + PI_BOT_API_URL,
-        source: 'ERROR_REAL_DATA_ONLY'
-      });
-
-      // Remove mock data - keeping for reference
-      const mockAppeals = [
-        {
-          id: 1,
-          type: 'Ban',
-          reason: 'I was wrongfully banned for spam. I was just sharing helpful links.',
-          status: 'pending',
-          userId: '123456789',
-          username: 'User123',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          serverId: '1',
-          serverName: 'Skyfall | Softworks'
-        },
-        {
-          id: 2,
-          type: 'Mute',
-          reason: 'The mute was too harsh for a minor offense. I apologize for my behavior.',
-          status: 'approved',
-          userId: '987654321',
-          username: 'User456',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-          serverId: '1',
-          serverName: 'Skyfall | Softworks'
-        },
-        {
-          id: 3,
-          type: 'Kick',
-          reason: 'I was kicked by mistake during a raid cleanup.',
-          status: 'denied',
-          userId: '456789123',
-          username: 'User789',
-          createdAt: new Date(Date.now() - 259200000).toISOString(),
-          serverId: '2',
-          serverName: 'Development Hub'
-        }
-      ];
-
-      res.status(200).json({ success: true, appeals: mockAppeals });
-
-    } else if (req.method === 'POST') {
-      // Submit new appeal
-      const { type, reason, serverId } = req.body;
-      
-      if (!type || !reason || !serverId) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-
-      // In production, save to database via Pi bot API
-      const newAppeal = {
-        id: Date.now(),
-        type,
-        reason,
-        status: 'pending',
-        userId: '123456789', // Get from auth
-        username: 'Current User',
-        createdAt: new Date().toISOString(),
-        serverId,
-        serverName: 'Server Name'
-      };
-
-      res.status(201).json({ success: true, appeal: newAppeal });
-
-    } else {
-      res.status(405).json({ error: 'Method not allowed' });
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Got real appeals from Pi bot');
+      return res.status(200).json(data);
     }
+
+    throw new Error('Pi bot unavailable');
+
   } catch (error) {
-    console.error('Appeals API error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Appeals API Error:', error.message);
+    
+    return res.status(503).json({
+      success: false,
+      error: 'Pi bot unavailable',
+      message: 'Cannot fetch appeals. Pi bot must be online.',
+      timestamp: new Date().toISOString()
+    });
   }
 }

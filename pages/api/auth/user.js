@@ -24,24 +24,24 @@ export default async function handler(req, res) {
         }
       }
       
-      // Provide demo user for easy access
-      console.log(' No session found, providing demo access');
-      const demoUser = {
+      // Provide admin user for direct access
+      console.log(' No session found, providing admin access');
+      const adminUser = {
         id: '123456789',
-        username: 'Demo User',
+        username: 'Admin',
         discriminator: '0001',
         avatar: 'https://cdn.discordapp.com/embed/avatars/0.png',
         guilds: [
           { id: '1158527215020544222', name: 'Skyfall | Softworks', permissions: 'ADMINISTRATOR' },
-          { id: '2158527215020544223', name: 'Development Hub', permissions: 'MANAGE_GUILD' },
-          { id: '3158527215020544224', name: 'Community Center', permissions: 'MANAGE_MESSAGES' },
-          { id: '4158527215020544225', name: 'Gaming Lounge', permissions: 'MANAGE_MESSAGES' },
+          { id: '2158527215020544223', name: 'Development Hub', permissions: 'ADMINISTRATOR' },
+          { id: '3158527215020544224', name: 'Community Center', permissions: 'ADMINISTRATOR' },
+          { id: '4158527215020544225', name: 'Gaming Lounge', permissions: 'ADMINISTRATOR' },
           { id: '5158527215020544226', name: 'Support Server', permissions: 'ADMINISTRATOR' }
         ],
-        isDemoUser: true
+        isAdmin: true
       };
       
-      res.status(200).json(demoUser);
+      res.status(200).json(adminUser);
     } catch (error) {
       console.error('User auth error:', error);
       res.status(500).json({ error: 'Authentication error' });
