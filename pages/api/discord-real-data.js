@@ -8,22 +8,20 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const PI_BOT_API_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
+  const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
   const PI_BOT_TOKEN = process.env.PI_BOT_TOKEN || '95f57d784517dc85fae9e8f2fed3155a8296deadd5e2b2484d83bd1e777771af';
   
-  console.log('🔍 Connecting to REAL Discord bot at:', PI_BOT_API_URL);
+  console.log('🔄 Attempting to fetch from Pi bot:', PI_BOT_URL);
 
   try {
     // First try to get real data from your Pi bot
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch(`${PI_BOT_API_URL}/api/guilds`, {
+    const response = await fetch(`${PI_BOT_URL}/api/status`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${PI_BOT_TOKEN}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'Skyfall-Dashboard/1.0'
       },
       signal: controller.signal
     });
