@@ -16,8 +16,8 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredServers = servers.filter(server =>
-    server.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredServers = (servers || []).filter(server =>
+    server?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getServerIcon = (server) => {

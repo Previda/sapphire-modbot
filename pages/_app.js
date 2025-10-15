@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import '../styles/premium-animations.css'
 import { SessionProvider } from 'next-auth/react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import { useState, useEffect } from 'react'
