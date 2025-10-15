@@ -21,8 +21,13 @@
     "fix:all": "node fix-all-issues.js",
     "fix:bot": "node fix-bot.js",
     "fix:tickets": "node fix-ticket-system.js",
-    "bot:start": "node index.js",
-    "bot:deploy": "node deploy-commands-clean.js"
+    "bot:start": "node src/index.js",
+    "bot:deploy": "node deploy-commands-clean.js",
+    "pi:start": "node src/index.js",
+    "pi:pm2": "pm2 start src/index.js --name skyfall-bot",
+    "pi:restart": "pm2 restart skyfall-bot",
+    "pi:stop": "pm2 stop skyfall-bot",
+    "pi:logs": "pm2 logs skyfall-bot"
   },
   "dependencies": {
     "next": "14.2.3",
