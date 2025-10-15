@@ -199,6 +199,21 @@ export default function Dashboard() {
 
   const fetchStatusData = async () => {
     try {
+      // First check Pi bot connection
+      const piResponse = await fetch('/api/pi-bot/status');
+      if (piResponse.ok) {
+        const piData = await piResponse.json();
+        setStatusData(piData);
+        
+        if (piData.overall.status === 'online') {
+          addNotification('Pi bot connected successfully!', 'success');
+        } else if (piData.overall.status === 'degraded') {
+          addNotification('Pi bot partially connected', 'warning');
+        }
+        return;
+      }
+      
+      // Fallback to regular status
       const response = await fetch('/api/status/live');
       if (response.ok) {
         const data = await response.json();
@@ -206,6 +221,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch status:', error);
+      addNotification('Status check failed - using demo data', 'warning');
     }
   };
 
@@ -246,6 +262,30 @@ export default function Dashboard() {
       addNotification('Using demo data - loading timeout', 'warning');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const testPiBotConnection = async () => {
+    addNotification('Testing Pi bot connection...', 'info');
+    
+    try {
+      const response = await fetch('/api/pi-bot/connect');
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.connected) {
+          addNotification(`Pi bot connected! ${data.bestConnection.url}`, 'success');
+          // Refresh status data
+          await fetchStatusData();
+        } else {
+          addNotification('No Pi bot connections found', 'warning');
+        }
+      } else {
+        addNotification('Connection test failed', 'error');
+      }
+    } catch (error) {
+      console.error('Pi bot connection test failed:', error);
+      addNotification('Connection test error', 'error');
     }
   };
 
@@ -483,6 +523,54 @@ export default function Dashboard() {
                 onServerSelect={setSelectedServer}
                 className="max-w-md"
               />
+            </div>
+
+            {/* Pi Bot Connection Status */}
+            <div className="mb-8">
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-white">Pi Bot Connection</h3>
+                  <button
+                    onClick={testPiBotConnection}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  >
+                    Test Connection
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className={`text-4xl mb-2 ${statusData?.overall?.status === 'online' ? 'text-green-400' : statusData?.overall?.status === 'degraded' ? 'text-yellow-400' : 'text-red-400'}`}>
+                      {statusData?.overall?.status === 'online' ? '✅' : 
+                       statusData?.overall?.status === 'degraded' ? '⚠️' : '❌'}
+                    </div>
+                    <p className="text-white font-medium">
+                      {statusData?.overall?.status === 'online' ? 'Connected' : 
+                       statusData?.overall?.status === 'degraded' ? 'Partial' : 'Offline'}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      {statusData?.overall?.healthPercentage || 0}% Health
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2 text-blue-400">🏰</div>
+                    <p className="text-white font-medium">
+                      {statusData?.piBot?.guilds || 0} Servers
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      {statusData?.piBot?.responseTime || 0}ms response
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2 text-purple-400">⚡</div>
+                    <p className="text-white font-medium">
+                      {statusData?.endpoints?.filter(e => e.status === 'online').length || 0} APIs
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      {statusData?.piBot?.version || 'v1.0.0'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
             {activeTab === 'overview' && (
               <div className="space-y-6">

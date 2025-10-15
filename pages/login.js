@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 
 export default function Login() {
   const router = useRouter()
@@ -37,11 +38,47 @@ export default function Login() {
       const data = await response.json()
       
       // Store token and user data
+      localStorage.setItem('discord_token', data.access_token)
+      localStorage.setItem('skyfall_auth', JSON.stringify(data))
+      
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (error) {
-      console.error('Quick access error:', error);
+      console.error('OAuth callback error:', error);
+      alert('Authentication failed. Please try again.')
     }
     
     setLoading(false);
+  };
+
+  const handleDiscordLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222'
+    const redirectUri = encodeURIComponent(`${window.location.origin}/login`)
+    const scope = encodeURIComponent('identify guilds')
+    
+    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`
+    
+    window.location.href = discordAuthUrl
+  };
+
+  const handleQuickAccess = () => {
+    setLoading(true)
+    
+    // Create demo user for quick access
+    const demoUser = {
+      id: 'demo_user',
+      username: 'Demo Admin',
+      discriminator: '0001',
+      avatar: null,
+      isAdmin: true,
+      access_token: 'demo_token'
+    }
+    
+    localStorage.setItem('skyfall_auth', JSON.stringify(demoUser))
+    
+    setTimeout(() => {
+      router.push('/dashboard')
+    }, 1000)
   };
 
   return (

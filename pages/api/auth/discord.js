@@ -32,9 +32,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID
-    const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET
-    const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://skyfall-omega.vercel.app/auth/callback'
+    const CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222'
+    const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'demo_secret'
+    const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://skyfall-omega.vercel.app/login'
 
     if (!CLIENT_ID || !CLIENT_SECRET) {
       throw new Error('Missing Discord OAuth credentials')
@@ -76,9 +76,16 @@ export default async function handler(req, res) {
 
     const userData = await userResponse.json()
 
+    // Check if user is admin (for now, allow all users)
+    const isAdmin = true; // You can add admin checking logic here
+
     return res.status(200).json({
       access_token: tokenData.access_token,
-      user: userData,
+      user: {
+        ...userData,
+        isAdmin: isAdmin
+      },
+      isAdmin: isAdmin
     })
 
   } catch (error) {
