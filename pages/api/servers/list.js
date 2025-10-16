@@ -9,7 +9,46 @@ export default async function handler(req, res) {
   }
 
   try {
-    const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
+    // First, check if user is authenticated and has guilds in session
+    const cookies = req.headers.cookie || '';
+    const authCookie = cookies.split(';').find(c => c.trim().startsWith('skyfall_auth='));
+    
+    if (authCookie) {
+      try {
+        const authData = JSON.parse(decodeURIComponent(authCookie.split('=')[1]));
+        
+        // Check if session is still valid (24 hours)
+        const sessionAge = Date.now() - (authData.timestamp || 0);
+        if (sessionAge < 86400000 && authData.guilds && authData.guilds.length > 0) {
+          console.log('✅ Returning guilds from session:', authData.guilds.length);
+          
+          // Return user's guilds from OAuth session
+          return res.status(200).json({
+            success: true,
+            servers: authData.guilds.map(guild => ({
+              id: guild.id,
+              name: guild.name,
+              icon: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : null,
+              memberCount: guild.memberCount || 0,
+              onlineMembers: 0,
+              botPermissions: ['ADMINISTRATOR'],
+              features: [],
+              isOwner: guild.owner,
+              canManage: true,
+              hasBot: guild.hasBot || false,
+              botOnline: guild.botOnline || false,
+            })),
+            totalServers: authData.guilds.length,
+            source: 'user_session',
+            user: authData.user
+          });
+        }
+      } catch (error) {
+        console.error('Session parse error:', error);
+      }
+    }
+    
+    const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3004';
     
     // Try to get real server data from Pi bot
     try {
