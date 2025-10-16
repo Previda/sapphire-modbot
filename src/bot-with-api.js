@@ -112,6 +112,7 @@ client.once('clientReady', async (c) => {
 const verification = require('./systems/verification');
 const tickets = require('./systems/tickets');
 const advancedTickets = require('./systems/advanced-tickets');
+const appeals = require('./systems/appeals');
 
 // Handle slash commands and button interactions
 client.on('interactionCreate', async (interaction) => {
@@ -125,6 +126,8 @@ client.on('interactionCreate', async (interaction) => {
                 if (subcommand === 'setup') {
                     await advancedTickets.setupTicketSystem(interaction);
                 }
+            } else if (interaction.commandName === 'appeal' && interaction.options.getSubcommand() === 'setup') {
+                await appeals.setupAppealsSystem(interaction);
             } else {
                 // Handle regular commands
                 await handleCommand(interaction);
@@ -153,6 +156,19 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.customId.startsWith('ticket_close_')) {
                 const ticketId = interaction.customId.replace('ticket_close_', '');
                 await advancedTickets.closeTicket(interaction, ticketId);
+            } else if (interaction.customId === 'appeal_submit') {
+                await appeals.showAppealModal(interaction);
+            } else if (interaction.customId.startsWith('appeal_accept_')) {
+                const appealId = interaction.customId.replace('appeal_accept_', '');
+                await appeals.acceptAppeal(interaction, appealId);
+            } else if (interaction.customId.startsWith('appeal_deny_')) {
+                const appealId = interaction.customId.replace('appeal_deny_', '');
+                await appeals.denyAppeal(interaction, appealId);
+            }
+        } else if (interaction.isModalSubmit()) {
+            // Handle modal submissions
+            if (interaction.customId === 'appeal_modal') {
+                await appeals.handleAppealSubmission(interaction);
             }
         } else if (interaction.isStringSelectMenu()) {
             // Handle select menu interactions
