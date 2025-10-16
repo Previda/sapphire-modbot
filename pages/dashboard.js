@@ -83,22 +83,18 @@ export default function Dashboard() {
             addNotification(`Logged in as ${data.user.username}`, 'success');
           }
           return true;
-        } else if (data.expired) {
-          addNotification('Session expired - please login again', 'warning');
-          router.push('/login');
-          return false;
         }
       }
 
-      // No session - redirect to login
-      addNotification('Please login with Discord to continue', 'warning');
-      router.push('/login');
-      return false;
+      // Not authenticated - show login prompt but don't redirect immediately
+      setUser({ username: 'Guest', id: 'guest', isGuest: true });
+      addNotification('Login with Discord to manage your servers', 'info');
+      return true;
     } catch (error) {
       console.error('Authentication check failed:', error);
-      addNotification('Authentication required', 'error');
-      router.push('/login');
-      return false;
+      setUser({ username: 'Guest', id: 'guest', isGuest: true });
+      addNotification('Login with Discord to access all features', 'info');
+      return true;
     }
   };
 
@@ -512,16 +508,25 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {/* Logout */}
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('skyfall_auth');
-                    router.push('/login');
-                  }}
-                  className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
-                >
-                  Logout
-                </button>
+                {/* Login/Logout */}
+                {user?.isGuest ? (
+                  <Link
+                    href="/login"
+                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
+                  >
+                    Login with Discord
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      fetch('/api/auth/logout', { method: 'POST' });
+                      router.push('/login');
+                    }}
+                    className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                  >
+                    Logout
+                  </button>
+                )}
               </div>
             </div>
           </header>
