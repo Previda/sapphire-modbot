@@ -19,6 +19,24 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
 
+  // Suppress browser extension errors
+  useEffect(() => {
+    const originalError = console.error;
+    console.error = (...args) => {
+      if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('message channel closed') ||
+         args[0].includes('Extension context invalidated'))
+      ) {
+        return; // Ignore browser extension errors
+      }
+      originalError.apply(console, args);
+    };
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
+
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
