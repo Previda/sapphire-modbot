@@ -99,108 +99,64 @@ export default function Dashboard() {
   };
 
   const fetchServers = async () => {
+    // Only fetch servers if user is authenticated
+    if (user?.isGuest) {
+      setServers([]);
+      return;
+    }
+
     try {
       const response = await fetch('/api/servers/list', {
         method: 'GET',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
       });
       
       if (response.ok) {
         const data = await response.json();
-        setServers(data.servers || []);
-        
-        // Auto-select first server if none selected
-        if (data.servers?.length > 0 && !selectedServer) {
-          setSelectedServer(data.servers[0]);
-        }
-        
-        if (data.source === 'fallback') {
-          addNotification('Using demo servers - connect Pi bot for real data', 'info');
+        if (data.servers && data.servers.length > 0) {
+          setServers(data.servers);
+          
+          // Auto-select first server if none selected
+          if (!selectedServer) {
+            setSelectedServer(data.servers[0]);
+          }
+        } else {
+          setServers([]);
+          addNotification('No servers found - add the bot to your Discord servers', 'info');
         }
       } else {
-        // Use fallback servers if API fails
-        const fallbackServers = [
-          {
-            id: '1234567890123456789',
-            name: 'Demo Server',
-            memberCount: 1247,
-            onlineMembers: 342,
-            boostLevel: 2,
-            boostCount: 14,
-            isOwner: true,
-            canManage: true
-          }
-        ];
-        setServers(fallbackServers);
-        setSelectedServer(fallbackServers[0]);
-        addNotification('Using fallback demo server', 'info');
+        setServers([]);
       }
     } catch (error) {
       console.error('Failed to fetch servers:', error);
-      // Use fallback servers on error
-      const fallbackServers = [
-        {
-          id: '1234567890123456789',
-          name: 'Demo Server',
-          memberCount: 1247,
-          onlineMembers: 342,
-          boostLevel: 2,
-          boostCount: 14,
-          isOwner: true,
-          canManage: true
-        }
-      ];
-      setServers(fallbackServers);
-      setSelectedServer(fallbackServers[0]);
-      addNotification('Using fallback demo server - API error', 'warning');
+      setServers([]);
     }
   };
 
   const fetchServerData = async (serverId) => {
-    if (!serverId) return;
+    if (!serverId || user?.isGuest) return;
     
     try {
-      const response = await fetch(`/api/servers/${serverId}/data`);
+      const response = await fetch(`/api/servers/${serverId}/data`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setCommands(data.data.commands || []);
         setLogs(data.data.logs || []);
         setAppeals(data.data.appeals || []);
-        
-        if (data.source === 'fallback') {
-          addNotification(`Using demo data for ${selectedServer?.name}`, 'info');
-        }
       } else {
-        // Use fallback data
-        setFallbackData();
+        setCommands([]);
+        setLogs([]);
+        setAppeals([]);
       }
     } catch (error) {
       console.error('Failed to fetch server data:', error);
-      setFallbackData();
-      addNotification('Using fallback data - API error', 'warning');
+      setCommands([]);
+      setLogs([]);
+      setAppeals([]);
     }
-  };
-
-  const setFallbackData = () => {
-    const fallbackCommands = [
-      { id: 'ban', name: 'ban', description: 'Ban a user from the server', category: 'moderation', enabled: true, usageCount: 45, cooldown: 5 },
-      { id: 'kick', name: 'kick', description: 'Kick a user from the server', category: 'moderation', enabled: true, usageCount: 78, cooldown: 3 },
-      { id: 'mute', name: 'mute', description: 'Mute a user in the server', category: 'moderation', enabled: true, usageCount: 156, cooldown: 2 },
-      { id: 'ping', name: 'ping', description: 'Check bot latency and status', category: 'utility', enabled: true, usageCount: 567, cooldown: 0 }
-    ];
-    
-    const fallbackLogs = [
-      { id: 1, action: 'User banned', user: 'Moderator#1234', details: 'Banned @Spammer#5678 for spam', type: 'moderation', timestamp: new Date(Date.now() - 300000).toISOString(), guild: 'Demo Server' },
-      { id: 2, action: 'Command executed', user: 'User#9876', details: 'Used /ping command', type: 'command', timestamp: new Date(Date.now() - 600000).toISOString(), guild: 'Demo Server' }
-    ];
-    
-    const fallbackAppeals = [
-      { id: 1, username: 'ApologeticUser#1234', banReason: 'Spam in multiple channels', appealMessage: 'I apologize for my behavior and promise to follow the rules.', status: 'pending', submittedAt: new Date(Date.now() - 86400000).toISOString() }
-    ];
-    
-    setCommands(fallbackCommands);
-    setLogs(fallbackLogs);
-    setAppeals(fallbackAppeals);
   };
 
   const fetchStatusData = async () => {
@@ -233,39 +189,13 @@ export default function Dashboard() {
 
   const fetchAllData = async () => {
     try {
-      // Set a maximum timeout for loading
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Loading timeout')), 10000)
-      );
-      
-      await Promise.race([
-        Promise.all([
-          fetchServers(),
-          fetchStatusData()
-        ]),
-        timeout
+      await Promise.all([
+        fetchServers(),
+        fetchStatusData()
       ]);
     } catch (error) {
       console.error('Fetch all data error:', error);
-      // Ensure we have fallback data
-      if (servers.length === 0) {
-        const fallbackServers = [
-          {
-            id: '1234567890123456789',
-            name: 'Demo Server',
-            memberCount: 1247,
-            onlineMembers: 342,
-            boostLevel: 2,
-            boostCount: 14,
-            isOwner: true,
-            canManage: true
-          }
-        ];
-        setServers(fallbackServers);
-        setSelectedServer(fallbackServers[0]);
-        setFallbackData();
-      }
-      addNotification('Using demo data - loading timeout', 'warning');
+      addNotification('Failed to load data', 'error');
     } finally {
       setLoading(false);
     }
