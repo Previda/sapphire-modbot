@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
     const userData = await userResponse.json();
 
-    // Get user's guilds
+    // Get user's guilds with full details
     const guildsResponse = await fetch('https://discord.com/api/users/@me/guilds', {
       headers: {
         Authorization: `${token_type} ${access_token}`,
@@ -62,15 +62,46 @@ export default async function handler(req, res) {
     
     console.log('✅ Fetched guilds from Discord:', guildsData.length);
 
-    // Filter guilds where user has admin permissions
-    const adminGuilds = guildsData.filter(guild => {
+    // Get detailed guild member data for each guild
+    const detailedGuilds = await Promise.all(
+      guildsData.map(async (guild) => {
+        try {
+          // Try to get member data (roles, etc.)
+          const memberResponse = await fetch(
+            `https://discord.com/api/users/@me/guilds/${guild.id}/member`,
+            {
+              headers: {
+                Authorization: `${token_type} ${access_token}`,
+              },
+            }
+          );
+          
+          if (memberResponse.ok) {
+            const memberData = await memberResponse.json();
+            return {
+              ...guild,
+              roles: memberData.roles || [],
+              joinedAt: memberData.joined_at,
+              nick: memberData.nick
+            };
+          }
+        } catch (error) {
+          console.log(`Could not fetch member data for guild ${guild.id}`);
+        }
+        return guild;
+      })
+    );
+
+    // Filter guilds where user has manage permissions (admin or manage server)
+    const manageableGuilds = detailedGuilds.filter(guild => {
       const permissions = parseInt(guild.permissions);
-      const hasAdmin = (permissions & 0x8) === 0x8; // Administrator permission
-      const hasManageGuild = (permissions & 0x20) === 0x20; // Manage Server permission
-      return hasAdmin || hasManageGuild;
+      const hasAdmin = (permissions & 0x8) === 0x8; // Administrator
+      const hasManageGuild = (permissions & 0x20) === 0x20; // Manage Server
+      const hasManageRoles = (permissions & 0x10000000) === 0x10000000; // Manage Roles
+      return hasAdmin || hasManageGuild || hasManageRoles;
     });
     
-    console.log('✅ Admin guilds:', adminGuilds.length);
+    console.log('✅ Manageable guilds:', manageableGuilds.length, 'out of', guildsData.length);
     
     // Fetch bot guilds from Pi to get additional data
     let botGuilds = [];
@@ -98,7 +129,14 @@ export default async function handler(req, res) {
         avatar: userData.avatar,
         email: userData.email,
       },
-      guilds: adminGuilds.map(guild => {
+      allGuilds: guildsData.map(guild => ({
+        id: guild.id,
+        name: guild.name,
+        icon: guild.icon,
+        owner: guild.owner,
+        permissions: guild.permissions
+      })),
+      guilds: manageableGuilds.map(guild => {
         // Find matching bot guild for additional data
         const botGuild = botGuilds.find(bg => bg.id === guild.id);
         return {
@@ -107,14 +145,18 @@ export default async function handler(req, res) {
           icon: guild.icon,
           owner: guild.owner,
           permissions: guild.permissions,
+          roles: guild.roles || [],
+          joinedAt: guild.joinedAt,
+          nick: guild.nick,
           // Add bot data if available
           memberCount: botGuild?.memberCount || 0,
           hasBot: !!botGuild,
           botOnline: !!botGuild,
+          canManage: true
         };
       }),
       accessToken: access_token,
-      isAdmin: adminGuilds.length > 0,
+      isAdmin: manageableGuilds.length > 0,
       timestamp: Date.now(),
     };
 
