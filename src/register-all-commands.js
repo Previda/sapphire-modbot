@@ -162,6 +162,23 @@ const commands = [
       ]
     }
   ]},
+
+  // === TICKET & VERIFICATION (2) ===
+  { name: 'ticket', description: 'Ticket system management',
+    options: [
+      { name: 'setup', type: 1, description: 'Setup ticket system', options: [
+        { name: 'category', type: 7, description: 'Category for tickets', required: true }
+      ]},
+      { name: 'close', type: 1, description: 'Close current ticket' },
+      { name: 'add', type: 1, description: 'Add user to ticket', options: [
+        { name: 'user', type: 6, description: 'User to add', required: true }
+      ]},
+      { name: 'remove', type: 1, description: 'Remove user from ticket', options: [
+        { name: 'user', type: 6, description: 'User to remove', required: true }
+      ]}
+    ]
+  },
+  { name: 'verify', description: 'Setup verification system' },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
@@ -182,7 +199,8 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN)
     console.log('  🎮 Fun: 10 commands');
     console.log('  👑 Admin: 10 commands');
     console.log('  🎵 Music: 10 commands');
-    console.log('\n✨ All commands are now available in Discord!');
+    console.log('  🎫 Tickets & Verification: 2 commands');
+    console.log('\n✨ All 62 commands are now available in Discord!');
   } catch (error) {
     console.error('❌ Error registering commands:', error);
   }
