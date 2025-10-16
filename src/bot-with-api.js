@@ -1,5 +1,7 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const axios = require('axios');
+const { handleCommand } = require('./handlers/commandHandler');
+const { handleButtonInteraction } = require('./handlers/buttonHandler');
 require('dotenv').config();
 
 // Initialize Discord client
@@ -106,76 +108,32 @@ client.once('ready', async () => {
     setInterval(updateAPIData, 30000);
 });
 
-// Handle slash commands
+// Handle slash commands and button interactions
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const { commandName } = interaction;
-
     try {
-        if (commandName === 'ping') {
-            const ping = client.ws.ping;
-            await interaction.reply({
-                content: `🏓 Pong! Latency: ${ping}ms`,
-                ephemeral: true
-            });
-        } else if (commandName === 'help') {
-            await interaction.reply({
-                content: '📚 **Skyfall Bot Commands**\n\n' +
-                    '`/ping` - Check bot latency\n' +
-                    '`/help` - Show this help menu\n' +
-                    '`/serverinfo` - Display server information\n' +
-                    '`/userinfo` - Display user information\n' +
-                    '`/ban` - Ban a user (Admin only)\n' +
-                    '`/kick` - Kick a user (Admin only)\n' +
-                    '`/mute` - Mute a user (Admin only)\n\n' +
-                    '🌐 Dashboard: https://skyfall-omega.vercel.app',
-                ephemeral: true
-            });
-        } else if (commandName === 'serverinfo') {
-            const guild = interaction.guild;
-            await interaction.reply({
-                content: `📊 **Server Information**\n\n` +
-                    `**Name:** ${guild.name}\n` +
-                    `**Members:** ${guild.memberCount}\n` +
-                    `**Boost Level:** ${guild.premiumTier}\n` +
-                    `**Boosts:** ${guild.premiumSubscriptionCount || 0}\n` +
-                    `**Created:** <t:${Math.floor(guild.createdTimestamp / 1000)}:R>`,
-                ephemeral: true
-            });
-        } else if (commandName === 'userinfo') {
-            const user = interaction.options.getUser('user') || interaction.user;
-            const member = await interaction.guild.members.fetch(user.id);
-            await interaction.reply({
-                content: `👤 **User Information**\n\n` +
-                    `**Username:** ${user.tag}\n` +
-                    `**ID:** ${user.id}\n` +
-                    `**Joined:** <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n` +
-                    `**Roles:** ${member.roles.cache.size - 1}`,
-                ephemeral: true
-            });
-        } else {
-            await interaction.reply({
-                content: '⚠️ This command is not yet implemented. Check the dashboard for more features!',
-                ephemeral: true
-            });
+        if (interaction.isChatInputCommand()) {
+            // Handle slash commands
+            await handleCommand(interaction);
+            
+            // Log command usage to API
+            await axios.post(`${config.apiUrl}/api/internal/add-log`, {
+                action: 'Command executed',
+                user: interaction.user.tag,
+                details: `Used /${interaction.commandName}`,
+                type: 'command'
+            }).catch(() => {});
+            
+        } else if (interaction.isButton()) {
+            // Handle button interactions (verify, tickets)
+            await handleButtonInteraction(interaction);
         }
-
-        // Log command usage to API
-        await axios.post(`${config.apiUrl}/api/internal/add-log`, {
-            action: 'Command executed',
-            user: interaction.user.tag,
-            details: `Used /${commandName}`,
-            type: 'command'
-        }).catch(() => {});
-
     } catch (error) {
-        console.error('Command error:', error);
-        if (!interaction.replied) {
+        console.error('Interaction error:', error);
+        if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({
-                content: '❌ An error occurred while executing this command.',
+                content: '❌ An error occurred while processing this interaction.',
                 ephemeral: true
-            });
+            }).catch(() => {});
         }
     }
 });
