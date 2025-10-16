@@ -52,13 +52,9 @@ export default function Login() {
   };
 
   const handleDiscordLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1358527215020544222'
-    const redirectUri = encodeURIComponent(`${window.location.origin}/login`)
-    const scope = encodeURIComponent('identify guilds')
-    
-    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`
-    
-    window.location.href = discordAuthUrl
+    setLoading(true)
+    // Redirect to our OAuth endpoint
+    window.location.href = '/api/auth/discord-oauth'
   };
 
   const handleQuickAccess = () => {

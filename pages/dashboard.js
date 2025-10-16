@@ -50,44 +50,56 @@ export default function Dashboard() {
 
   const checkAuthentication = async () => {
     try {
-      const storedAuth = localStorage.getItem('skyfall_auth');
-      if (storedAuth) {
-        const authData = JSON.parse(storedAuth);
-        setUser(authData.user);
-        return true;
-      }
-
-      const response = await fetch('/api/auth/check-admin', {
+      // Check session from server
+      const response = await fetch('/api/auth/session', {
         method: 'GET',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
       });
       
       if (response.ok) {
         const data = await response.json();
-        if (data.isAdmin) {
+        
+        if (data.authenticated && data.user) {
           setUser(data.user);
-          localStorage.setItem('skyfall_auth', JSON.stringify(data));
+          // Set servers from user's Discord guilds
+          if (data.guilds && data.guilds.length > 0) {
+            const userServers = data.guilds.map(guild => ({
+              id: guild.id,
+              name: guild.name,
+              icon: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : null,
+              memberCount: 0, // Will be updated from Pi bot
+              onlineMembers: 0,
+              boostLevel: 0,
+              boostCount: 0,
+              isOwner: guild.owner,
+              canManage: true,
+              permissions: guild.permissions
+            }));
+            setServers(userServers);
+            if (!selectedServer && userServers.length > 0) {
+              setSelectedServer(userServers[0]);
+            }
+            addNotification(`Logged in as ${data.user.username}`, 'success');
+          }
           return true;
-        } else {
-          // Set a demo user for now to prevent loading issues
-          const demoUser = { username: 'Demo Admin', id: 'demo', isAdmin: true };
-          setUser(demoUser);
-          addNotification('Using demo mode - login for full access', 'info');
-          return true;
+        } else if (data.expired) {
+          addNotification('Session expired - please login again', 'warning');
+          router.push('/login');
+          return false;
         }
-      } else {
-        // Set demo user instead of redirecting
-        const demoUser = { username: 'Demo Admin', id: 'demo', isAdmin: true };
-        setUser(demoUser);
-        addNotification('Using demo mode - login for full access', 'info');
-        return true;
       }
+
+      // No session - use demo mode
+      const demoUser = { username: 'Demo User', id: 'demo', isAdmin: false };
+      setUser(demoUser);
+      addNotification('Using demo mode - Login with Discord for full access', 'info');
+      return true;
     } catch (error) {
       console.error('Authentication check failed:', error);
-      // Set demo user on error
-      const demoUser = { username: 'Demo Admin', id: 'demo', isAdmin: true };
+      const demoUser = { username: 'Demo User', id: 'demo', isAdmin: false };
       setUser(demoUser);
-      addNotification('Using demo mode - authentication failed', 'warning');
+      addNotification('Using demo mode - authentication error', 'warning');
       return true;
     }
   };
