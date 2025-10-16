@@ -113,6 +113,7 @@ const verification = require('./systems/verification');
 const tickets = require('./systems/tickets');
 const advancedTickets = require('./systems/advanced-tickets');
 const appeals = require('./systems/appeals');
+const music = require('./systems/music');
 
 // Handle slash commands and button interactions
 client.on('interactionCreate', async (interaction) => {
@@ -128,6 +129,26 @@ client.on('interactionCreate', async (interaction) => {
                 }
             } else if (interaction.commandName === 'appeal' && interaction.options.getSubcommand() === 'setup') {
                 await appeals.setupAppealsSystem(interaction);
+            } else if (interaction.commandName === 'play') {
+                await music.play(interaction);
+            } else if (interaction.commandName === 'pause') {
+                await music.pause(interaction);
+            } else if (interaction.commandName === 'resume') {
+                await music.resume(interaction);
+            } else if (interaction.commandName === 'skip') {
+                await music.skip(interaction);
+            } else if (interaction.commandName === 'stop') {
+                await music.stop(interaction);
+            } else if (interaction.commandName === 'queue') {
+                await music.showQueue(interaction);
+            } else if (interaction.commandName === 'nowplaying') {
+                await music.nowPlaying(interaction);
+            } else if (interaction.commandName === 'volume') {
+                await music.setVolume(interaction);
+            } else if (interaction.commandName === 'loop') {
+                await music.toggleLoop(interaction);
+            } else if (interaction.commandName === 'shuffle') {
+                await music.shuffle(interaction);
             } else {
                 // Handle regular commands
                 await handleCommand(interaction);
