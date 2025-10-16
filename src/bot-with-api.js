@@ -111,6 +111,7 @@ client.once('clientReady', async (c) => {
 // Import systems
 const verification = require('./systems/verification');
 const tickets = require('./systems/tickets');
+const advancedTickets = require('./systems/advanced-tickets');
 
 // Handle slash commands and button interactions
 client.on('interactionCreate', async (interaction) => {
@@ -119,8 +120,11 @@ client.on('interactionCreate', async (interaction) => {
             // Handle special commands
             if (interaction.commandName === 'verify') {
                 await verification.setupVerification(interaction);
-            } else if (interaction.commandName === 'ticket' && interaction.options.getSubcommand() === 'setup') {
-                await tickets.setupTicketSystem(interaction);
+            } else if (interaction.commandName === 'ticket') {
+                const subcommand = interaction.options.getSubcommand();
+                if (subcommand === 'setup') {
+                    await advancedTickets.setupTicketSystem(interaction);
+                }
             } else {
                 // Handle regular commands
                 await handleCommand(interaction);
@@ -138,11 +142,23 @@ client.on('interactionCreate', async (interaction) => {
             // Handle button interactions
             if (interaction.customId === 'verify_button') {
                 await verification.handleVerificationButton(interaction);
-            } else if (interaction.customId === 'create_ticket') {
-                await tickets.createTicket(interaction);
-            } else if (interaction.customId.startsWith('close_ticket_')) {
-                const ticketId = interaction.customId.replace('close_ticket_', '');
-                await tickets.closeTicket(interaction, ticketId);
+            } else if (interaction.customId === 'ticket_create') {
+                await advancedTickets.createTicket(interaction);
+            } else if (interaction.customId.startsWith('ticket_claim_')) {
+                const ticketId = interaction.customId.replace('ticket_claim_', '');
+                await advancedTickets.claimTicket(interaction, ticketId);
+            } else if (interaction.customId.startsWith('ticket_pause_')) {
+                const ticketId = interaction.customId.replace('ticket_pause_', '');
+                await advancedTickets.pauseTicket(interaction, ticketId);
+            } else if (interaction.customId.startsWith('ticket_close_')) {
+                const ticketId = interaction.customId.replace('ticket_close_', '');
+                await advancedTickets.closeTicket(interaction, ticketId);
+            }
+        } else if (interaction.isStringSelectMenu()) {
+            // Handle select menu interactions
+            if (interaction.customId === 'ticket_category') {
+                const category = interaction.values[0];
+                await advancedTickets.handleCategorySelection(interaction, category);
             }
         }
     } catch (error) {
