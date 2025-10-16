@@ -97,12 +97,87 @@ const allCommands = [
 client.once('ready', async () => {
     console.log(`✅ Discord bot online! Logged in as ${client.user.tag}`);
     console.log(`🏰 Serving ${client.guilds.cache.size} guilds`);
+    console.log(`👥 Total users: ${client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)}`);
     
     // Send initial data to API
     await updateAPIData();
     
     // Update API every 30 seconds
     setInterval(updateAPIData, 30000);
+});
+
+// Handle slash commands
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+
+    const { commandName } = interaction;
+
+    try {
+        if (commandName === 'ping') {
+            const ping = client.ws.ping;
+            await interaction.reply({
+                content: `🏓 Pong! Latency: ${ping}ms`,
+                ephemeral: true
+            });
+        } else if (commandName === 'help') {
+            await interaction.reply({
+                content: '📚 **Skyfall Bot Commands**\n\n' +
+                    '`/ping` - Check bot latency\n' +
+                    '`/help` - Show this help menu\n' +
+                    '`/serverinfo` - Display server information\n' +
+                    '`/userinfo` - Display user information\n' +
+                    '`/ban` - Ban a user (Admin only)\n' +
+                    '`/kick` - Kick a user (Admin only)\n' +
+                    '`/mute` - Mute a user (Admin only)\n\n' +
+                    '🌐 Dashboard: https://skyfall-omega.vercel.app',
+                ephemeral: true
+            });
+        } else if (commandName === 'serverinfo') {
+            const guild = interaction.guild;
+            await interaction.reply({
+                content: `📊 **Server Information**\n\n` +
+                    `**Name:** ${guild.name}\n` +
+                    `**Members:** ${guild.memberCount}\n` +
+                    `**Boost Level:** ${guild.premiumTier}\n` +
+                    `**Boosts:** ${guild.premiumSubscriptionCount || 0}\n` +
+                    `**Created:** <t:${Math.floor(guild.createdTimestamp / 1000)}:R>`,
+                ephemeral: true
+            });
+        } else if (commandName === 'userinfo') {
+            const user = interaction.options.getUser('user') || interaction.user;
+            const member = await interaction.guild.members.fetch(user.id);
+            await interaction.reply({
+                content: `👤 **User Information**\n\n` +
+                    `**Username:** ${user.tag}\n` +
+                    `**ID:** ${user.id}\n` +
+                    `**Joined:** <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n` +
+                    `**Roles:** ${member.roles.cache.size - 1}`,
+                ephemeral: true
+            });
+        } else {
+            await interaction.reply({
+                content: '⚠️ This command is not yet implemented. Check the dashboard for more features!',
+                ephemeral: true
+            });
+        }
+
+        // Log command usage to API
+        await axios.post(`${config.apiUrl}/api/internal/add-log`, {
+            action: 'Command executed',
+            user: interaction.user.tag,
+            details: `Used /${commandName}`,
+            type: 'command'
+        }).catch(() => {});
+
+    } catch (error) {
+        console.error('Command error:', error);
+        if (!interaction.replied) {
+            await interaction.reply({
+                content: '❌ An error occurred while executing this command.',
+                ephemeral: true
+            });
+        }
+    }
 });
 
 // Update API with real Discord data
