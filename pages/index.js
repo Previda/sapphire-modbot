@@ -120,8 +120,14 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
                 <Link
-                  href="/dashboard"
+                  href="/invite"
                   className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                >
+                  🤖 Add Bot to Server
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="px-8 py-4 bg-white/10 backdrop-blur-lg text-white font-bold text-lg rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
                 >
                   🚀 Launch Dashboard
                 </Link>

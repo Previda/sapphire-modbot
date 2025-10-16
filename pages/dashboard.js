@@ -463,6 +463,10 @@ export default function Dashboard() {
             {/* Quick Links */}
             <div className="px-4 py-4 border-t border-white/10">
               <div className="space-y-2">
+                <Link href="/invite" className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all">
+                  <span className="text-lg mr-3">🤖</span>
+                  Add Bot to Server
+                </Link>
                 <Link href="/status" className="flex items-center px-4 py-2 text-gray-300 hover:text-white transition-colors">
                   <span className="text-lg mr-3">🔍</span>
                   System Status
