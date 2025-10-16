@@ -18,22 +18,13 @@ const port = process.env.PORT || 3004;
 // Bot data storage
 let botData = {
     guilds: [],
-    commands: [
-        { id: 'ping', name: 'ping', description: 'Check bot latency', category: 'utility', enabled: true, usageCount: 0, cooldown: 0 },
-        { id: 'ban', name: 'ban', description: 'Ban a user from the server', category: 'moderation', enabled: true, usageCount: 0, cooldown: 5 },
-        { id: 'kick', name: 'kick', description: 'Kick a user from the server', category: 'moderation', enabled: true, usageCount: 0, cooldown: 3 },
-        { id: 'mute', name: 'mute', description: 'Mute a user', category: 'moderation', enabled: true, usageCount: 0, cooldown: 2 },
-        { id: 'warn', name: 'warn', description: 'Warn a user', category: 'moderation', enabled: true, usageCount: 0, cooldown: 1 },
-        { id: 'purge', name: 'purge', description: 'Delete multiple messages', category: 'moderation', enabled: true, usageCount: 0, cooldown: 5 },
-        { id: 'userinfo', name: 'userinfo', description: 'Get user information', category: 'utility', enabled: true, usageCount: 0, cooldown: 0 },
-        { id: 'serverinfo', name: 'serverinfo', description: 'Get server information', category: 'utility', enabled: true, usageCount: 0, cooldown: 0 }
-    ],
+    commands: [],
     logs: [
         { id: 1, action: 'Bot started', user: 'System', details: 'Pi bot API server started', type: 'system', timestamp: new Date().toISOString() }
     ],
     appeals: [],
     startTime: Date.now(),
-    botStatus: 'online'
+    botStatus: 'waiting for Discord bot'
 };
 
 // Status endpoint
@@ -167,6 +158,15 @@ app.get('/health', (req, res) => {
 app.post('/api/internal/update-guilds', (req, res) => {
     botData.guilds = req.body.guilds || [];
     botData.botStatus = 'online';
+    console.log(`📊 Updated guilds: ${botData.guilds.length} guilds`);
+    res.json({ success: true });
+});
+
+app.post('/api/internal/update-commands', (req, res) => {
+    if (req.body.commands && Array.isArray(req.body.commands)) {
+        botData.commands = req.body.commands;
+        console.log(`📝 Updated commands: ${botData.commands.length} commands`);
+    }
     res.json({ success: true });
 });
 
