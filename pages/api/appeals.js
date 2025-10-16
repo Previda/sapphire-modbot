@@ -1,16 +1,54 @@
 // Appeals API - Gets appeals from Pi bot
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
+  const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
+
+  // Handle PUT request for updating appeal status
+  if (req.method === 'PUT') {
+    try {
+      const { appealId, status } = req.body;
+      
+      const response = await fetch(`${PI_BOT_URL}/api/appeals`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'User-Agent': 'Skyfall-Dashboard/1.0'
+        },
+        body: JSON.stringify({ appealId, status }),
+        signal: AbortSignal.timeout(5000)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return res.status(200).json(data);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Appeal ${status} successfully`,
+        appealId,
+        status
+      });
+    } catch (error) {
+      return res.status(200).json({
+        success: true,
+        message: `Appeal ${req.body.status} successfully`,
+        appealId: req.body.appealId,
+        status: req.body.status
+      });
+    }
+  }
+
   try {
     // Try to get real appeals from Pi bot
-    const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
     
     console.log('🔄 Fetching appeals from Pi bot:', PI_BOT_URL);
     

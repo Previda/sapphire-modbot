@@ -115,7 +115,7 @@ app.get('/api/appeals', (req, res) => {
 });
 
 app.post('/api/appeals', (req, res) => {
-    const { username, banReason, appealMessage } = req.body;
+    const { username, banReason, appealMessage, serverId } = req.body;
     
     const appeal = {
         id: Date.now(),
@@ -123,7 +123,8 @@ app.post('/api/appeals', (req, res) => {
         banReason,
         appealMessage,
         status: 'pending',
-        submittedAt: new Date().toISOString()
+        submittedAt: new Date().toISOString(),
+        serverId: serverId || null
     };
     
     botData.appeals.push(appeal);
@@ -143,6 +144,36 @@ app.post('/api/appeals', (req, res) => {
         message: 'Appeal submitted successfully',
         realData: true
     });
+});
+
+app.put('/api/appeals', (req, res) => {
+    const { appealId, status } = req.body;
+    
+    const appeal = botData.appeals.find(a => a.id === appealId);
+    if (appeal) {
+        appeal.status = status;
+        
+        botData.logs.unshift({
+            id: Date.now(),
+            action: 'Appeal updated',
+            user: 'Admin',
+            details: `Appeal from ${appeal.username} ${status}`,
+            type: 'appeal',
+            timestamp: new Date().toISOString()
+        });
+        
+        res.json({
+            success: true,
+            appeal: appeal,
+            message: `Appeal ${status} successfully`,
+            realData: true
+        });
+    } else {
+        res.status(404).json({
+            success: false,
+            error: 'Appeal not found'
+        });
+    }
 });
 
 // Health check

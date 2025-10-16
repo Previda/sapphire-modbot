@@ -341,6 +341,25 @@ export default function Dashboard() {
     }
   };
 
+  const handleAppealAction = async (appealId, action) => {
+    try {
+      const response = await fetch('/api/appeals', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appealId, status: action })
+      });
+
+      if (response.ok) {
+        setAppeals(prev => prev.map(appeal => 
+          appeal.id === appealId ? { ...appeal, status: action } : appeal
+        ));
+        addNotification(`Appeal ${action} successfully`, 'success');
+      }
+    } catch (error) {
+      addNotification('Failed to update appeal', 'error');
+    }
+  };
+
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: '📊' },
     { id: 'commands', label: 'Commands', icon: '⚡' },
@@ -730,12 +749,14 @@ export default function Dashboard() {
                       <div className="mt-4 pt-4 border-t border-white/10">
                         <button
                           onClick={() => {
-                            // Add edit functionality here
-                            addNotification(`Edit functionality for ${command.name} coming soon!`, 'info');
+                            const newDescription = prompt('Enter new description:', command.description);
+                            if (newDescription && newDescription !== command.description) {
+                              handleCommandEdit(command.id, { description: newDescription });
+                            }
                           }}
-                          className="w-full px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
+                          className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-colors"
                         >
-                          Edit Command
+                          ✏️ Edit Command
                         </button>
                       </div>
                     </div>
@@ -816,11 +837,17 @@ export default function Dashboard() {
 
                       {appeal.status === 'pending' && (
                         <div className="mt-4 pt-4 border-t border-white/10 flex space-x-3">
-                          <button className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                            Approve
+                          <button 
+                            onClick={() => handleAppealAction(appeal.id, 'approved')}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            ✅ Approve
                           </button>
-                          <button className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                            Deny
+                          <button 
+                            onClick={() => handleAppealAction(appeal.id, 'denied')}
+                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          >
+                            ❌ Deny
                           </button>
                         </div>
                       )}
