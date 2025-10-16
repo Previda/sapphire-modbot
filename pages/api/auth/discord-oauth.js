@@ -6,8 +6,8 @@ export default async function handler(req, res) {
     // Redirect to Discord OAuth
     const clientId = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
     const redirectUri = process.env.NEXTAUTH_URL 
-      ? `${process.env.NEXTAUTH_URL}/api/auth/callback`
-      : 'https://skyfall-omega.vercel.app/api/auth/callback';
+      ? `${process.env.NEXTAUTH_URL}/api/auth/callback-discord`
+      : 'https://skyfall-omega.vercel.app/api/auth/callback-discord';
     
     const scope = 'identify guilds email';
     const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;

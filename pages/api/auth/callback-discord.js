@@ -10,8 +10,8 @@ export default async function handler(req, res) {
     const clientId = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
     const clientSecret = process.env.DISCORD_CLIENT_SECRET;
     const redirectUri = process.env.NEXTAUTH_URL 
-      ? `${process.env.NEXTAUTH_URL}/api/auth/callback`
-      : 'https://skyfall-omega.vercel.app/api/auth/callback';
+      ? `${process.env.NEXTAUTH_URL}/api/auth/callback-discord`
+      : 'https://skyfall-omega.vercel.app/api/auth/callback-discord';
 
     if (!clientSecret) {
       console.error('❌ DISCORD_CLIENT_SECRET not set');
