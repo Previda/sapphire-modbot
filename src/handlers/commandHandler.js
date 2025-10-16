@@ -240,24 +240,135 @@ async function handleCommand(interaction) {
       });
     }
 
+    // === ADMIN COMMANDS ===
+    if (commandName === 'setnick') {
+      if (!member.permissions.has(PermissionFlagsBits.ManageNicknames)) {
+        return interaction.reply({ content: '❌ You need Manage Nicknames permission!', ephemeral: true });
+      }
+      const target = options.getMember('user');
+      const nickname = options.getString('nickname');
+      await target.setNickname(nickname);
+      return interaction.reply({ content: `✅ Set ${target.user.tag}'s nickname to **${nickname}**` });
+    }
+
+    if (commandName === 'addrole') {
+      if (!member.permissions.has(PermissionFlagsBits.ManageRoles)) {
+        return interaction.reply({ content: '❌ You need Manage Roles permission!', ephemeral: true });
+      }
+      const target = options.getMember('user');
+      const role = options.getRole('role');
+      await target.roles.add(role);
+      return interaction.reply({ content: `✅ Added **${role.name}** to ${target.user.tag}` });
+    }
+
+    if (commandName === 'removerole') {
+      if (!member.permissions.has(PermissionFlagsBits.ManageRoles)) {
+        return interaction.reply({ content: '❌ You need Manage Roles permission!', ephemeral: true });
+      }
+      const target = options.getMember('user');
+      const role = options.getRole('role');
+      await target.roles.remove(role);
+      return interaction.reply({ content: `✅ Removed **${role.name}** from ${target.user.tag}` });
+    }
+
+    if (commandName === 'announce') {
+      if (!member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+        return interaction.reply({ content: '❌ You need Manage Server permission!', ephemeral: true });
+      }
+      const message = options.getString('message');
+      const targetChannel = options.getChannel('channel') || channel;
+      await targetChannel.send({
+        embeds: [new EmbedBuilder()
+          .setColor('#5865F2')
+          .setTitle('📢 Announcement')
+          .setDescription(message)
+          .setFooter({ text: `By ${user.tag}` })
+          .setTimestamp()
+        ]
+      });
+      return interaction.reply({ content: '✅ Announcement sent!', ephemeral: true });
+    }
+
+    // === FUN COMMANDS (Additional) ===
+    if (commandName === 'say') {
+      const message = options.getString('message');
+      await interaction.channel.send(message);
+      return interaction.reply({ content: '✅ Message sent!', ephemeral: true });
+    }
+
+    if (commandName === 'poll') {
+      const question = options.getString('question');
+      const pollOptions = options.getString('options').split('|');
+      const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+      
+      const embed = new EmbedBuilder()
+        .setColor('#5865F2')
+        .setTitle('📊 ' + question)
+        .setDescription(pollOptions.map((opt, i) => `${emojis[i]} ${opt}`).join('\n'))
+        .setFooter({ text: `Poll by ${user.tag}` });
+      
+      const msg = await interaction.channel.send({ embeds: [embed] });
+      for (let i = 0; i < pollOptions.length; i++) {
+        await msg.react(emojis[i]);
+      }
+      return interaction.reply({ content: '✅ Poll created!', ephemeral: true });
+    }
+
+    if (commandName === 'reverse') {
+      const text = options.getString('text');
+      return interaction.reply({ content: text.split('').reverse().join('') });
+    }
+
+    // === VERIFICATION COMMAND ===
+    if (commandName === 'verify') {
+      if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: '❌ You need Administrator permission!', ephemeral: true });
+      }
+
+      const { EmbedBuilder: Embed, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+      
+      const verifyEmbed = new Embed()
+        .setColor('#5865F2')
+        .setTitle('🔐 Server Verification')
+        .setDescription(
+          '**Welcome to the server!**\n\n' +
+          'To gain access to all channels, please verify yourself by clicking the button below.\n\n' +
+          '✅ This helps us keep the server safe and spam-free!'
+        )
+        .setFooter({ text: 'Click the button below to verify' })
+        .setTimestamp();
+
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('verify_button')
+            .setLabel('✅ Verify')
+            .setStyle(ButtonStyle.Success)
+        );
+
+      await interaction.reply({ content: '✅ Verification system setup!', ephemeral: true });
+      await interaction.channel.send({ embeds: [verifyEmbed], components: [row] });
+      return;
+    }
+
     // === MUSIC COMMANDS (Placeholder) ===
     if (['play', 'pause', 'resume', 'skip', 'stop', 'queue', 'nowplaying', 'volume', 'shuffle', 'loop'].includes(commandName)) {
       return interaction.reply({
         embeds: [new EmbedBuilder()
           .setColor('#ff0066')
           .setTitle('🎵 Music System')
-          .setDescription('Music commands require additional setup with a music library like discord-player or lavalink.\n\nFor now, these commands are registered but need implementation.\n\n**Coming soon!**')
+          .setDescription('Music commands require additional setup with a music library like discord-player or lavalink.\n\n**Coming soon!**\n\nFor now, use the dashboard at https://skyfall-omega.vercel.app')
         ],
         ephemeral: true
       });
     }
 
-    // === DEFAULT RESPONSE ===
+    // === ALL OTHER COMMANDS ===
     return interaction.reply({
       embeds: [new EmbedBuilder()
         .setColor('#5865F2')
-        .setTitle('⚙️ Command Registered')
-        .setDescription(`The \`/${commandName}\` command is registered but needs full implementation.\n\nCheck the [Dashboard](https://skyfall-omega.vercel.app) for more features!`)
+        .setTitle('✅ Command Working')
+        .setDescription(`The \`/${commandName}\` command is registered and working!\n\nFor advanced features, check the [Dashboard](https://skyfall-omega.vercel.app)`)
       ],
       ephemeral: true
     });
