@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 
 async function handleCommand(interaction) {
   const { commandName, options, guild, member, user, channel } = interaction;
@@ -13,7 +13,7 @@ async function handleCommand(interaction) {
           .setTitle('🏓 Pong!')
           .setDescription(`**Latency:** ${ping}ms\n**API Latency:** ${Date.now() - interaction.createdTimestamp}ms`)
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -33,7 +33,7 @@ async function handleCommand(interaction) {
           )
           .setFooter({ text: 'Dashboard: https://skyfall-omega.vercel.app' })
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -52,7 +52,7 @@ async function handleCommand(interaction) {
             { name: 'Roles', value: `${guild.roles.cache.size}`, inline: true }
           )
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -71,7 +71,7 @@ async function handleCommand(interaction) {
             { name: 'Account Created', value: `<t:${Math.floor(target.createdTimestamp / 1000)}:R>`, inline: true }
           )
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -83,7 +83,7 @@ async function handleCommand(interaction) {
           .setTitle(`${target.tag}'s Avatar`)
           .setImage(target.displayAvatarURL({ size: 1024 }))
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -100,7 +100,7 @@ async function handleCommand(interaction) {
             { name: 'Dashboard', value: '[Open Dashboard](https://skyfall-omega.vercel.app)', inline: true }
           )
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -111,14 +111,14 @@ async function handleCommand(interaction) {
           .setTitle('🤖 Invite Skyfall')
           .setDescription('[Click here to add Skyfall to your server!](https://skyfall-omega.vercel.app/invite)')
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
     if (commandName === 'membercount') {
       return interaction.reply({
         content: `👥 **${guild.memberCount}** members in ${guild.name}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -129,14 +129,14 @@ async function handleCommand(interaction) {
       const minutes = Math.floor((uptime % 3600) / 60);
       return interaction.reply({
         content: `⏰ Bot uptime: **${days}d ${hours}h ${minutes}m**`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
     // === MODERATION COMMANDS ===
     if (commandName === 'ban') {
       if (!member.permissions.has(PermissionFlagsBits.BanMembers)) {
-        return interaction.reply({ content: '❌ You need Ban Members permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Ban Members permission!', flags: MessageFlags.Ephemeral });
       }
       const target = options.getUser('user');
       const reason = options.getString('reason') || 'No reason provided';
@@ -153,7 +153,7 @@ async function handleCommand(interaction) {
 
     if (commandName === 'kick') {
       if (!member.permissions.has(PermissionFlagsBits.KickMembers)) {
-        return interaction.reply({ content: '❌ You need Kick Members permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Kick Members permission!', flags: MessageFlags.Ephemeral });
       }
       const target = options.getMember('user');
       const reason = options.getString('reason') || 'No reason provided';
@@ -170,7 +170,7 @@ async function handleCommand(interaction) {
 
     if (commandName === 'mute') {
       if (!member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-        return interaction.reply({ content: '❌ You need Moderate Members permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Moderate Members permission!', flags: MessageFlags.Ephemeral });
       }
       const target = options.getMember('user');
       const duration = options.getString('duration') || '10m';
@@ -189,18 +189,18 @@ async function handleCommand(interaction) {
 
     if (commandName === 'purge') {
       if (!member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-        return interaction.reply({ content: '❌ You need Manage Messages permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Manage Messages permission!', flags: MessageFlags.Ephemeral });
       }
       const amount = options.getInteger('amount');
       
       if (amount < 1 || amount > 100) {
-        return interaction.reply({ content: '❌ Amount must be between 1 and 100!', ephemeral: true });
+        return interaction.reply({ content: '❌ Amount must be between 1 and 100!', flags: MessageFlags.Ephemeral });
       }
       
       const deleted = await channel.bulkDelete(amount, true);
       return interaction.reply({
         content: `🗑️ Deleted **${deleted.size}** messages!`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -243,7 +243,7 @@ async function handleCommand(interaction) {
     // === ADMIN COMMANDS ===
     if (commandName === 'setnick') {
       if (!member.permissions.has(PermissionFlagsBits.ManageNicknames)) {
-        return interaction.reply({ content: '❌ You need Manage Nicknames permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Manage Nicknames permission!', flags: MessageFlags.Ephemeral });
       }
       const target = options.getMember('user');
       const nickname = options.getString('nickname');
@@ -253,7 +253,7 @@ async function handleCommand(interaction) {
 
     if (commandName === 'addrole') {
       if (!member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-        return interaction.reply({ content: '❌ You need Manage Roles permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Manage Roles permission!', flags: MessageFlags.Ephemeral });
       }
       const target = options.getMember('user');
       const role = options.getRole('role');
@@ -263,7 +263,7 @@ async function handleCommand(interaction) {
 
     if (commandName === 'removerole') {
       if (!member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-        return interaction.reply({ content: '❌ You need Manage Roles permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Manage Roles permission!', flags: MessageFlags.Ephemeral });
       }
       const target = options.getMember('user');
       const role = options.getRole('role');
@@ -273,7 +273,7 @@ async function handleCommand(interaction) {
 
     if (commandName === 'announce') {
       if (!member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-        return interaction.reply({ content: '❌ You need Manage Server permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Manage Server permission!', flags: MessageFlags.Ephemeral });
       }
       const message = options.getString('message');
       const targetChannel = options.getChannel('channel') || channel;
@@ -286,14 +286,14 @@ async function handleCommand(interaction) {
           .setTimestamp()
         ]
       });
-      return interaction.reply({ content: '✅ Announcement sent!', ephemeral: true });
+      return interaction.reply({ content: '✅ Announcement sent!', flags: MessageFlags.Ephemeral });
     }
 
     // === FUN COMMANDS (Additional) ===
     if (commandName === 'say') {
       const message = options.getString('message');
       await interaction.channel.send(message);
-      return interaction.reply({ content: '✅ Message sent!', ephemeral: true });
+      return interaction.reply({ content: '✅ Message sent!', flags: MessageFlags.Ephemeral });
     }
 
     if (commandName === 'poll') {
@@ -311,7 +311,7 @@ async function handleCommand(interaction) {
       for (let i = 0; i < pollOptions.length; i++) {
         await msg.react(emojis[i]);
       }
-      return interaction.reply({ content: '✅ Poll created!', ephemeral: true });
+      return interaction.reply({ content: '✅ Poll created!', flags: MessageFlags.Ephemeral });
     }
 
     if (commandName === 'reverse') {
@@ -322,7 +322,7 @@ async function handleCommand(interaction) {
     // === VERIFICATION COMMAND ===
     if (commandName === 'verify') {
       if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return interaction.reply({ content: '❌ You need Administrator permission!', ephemeral: true });
+        return interaction.reply({ content: '❌ You need Administrator permission!', flags: MessageFlags.Ephemeral });
       }
 
       const { EmbedBuilder: Embed, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
@@ -346,7 +346,7 @@ async function handleCommand(interaction) {
             .setStyle(ButtonStyle.Success)
         );
 
-      await interaction.reply({ content: '✅ Verification system setup!', ephemeral: true });
+      await interaction.reply({ content: '✅ Verification system setup!', flags: MessageFlags.Ephemeral });
       await interaction.channel.send({ embeds: [verifyEmbed], components: [row] });
       return;
     }
@@ -359,7 +359,7 @@ async function handleCommand(interaction) {
           .setTitle('🎵 Music System')
           .setDescription('Music commands require additional setup with a music library like discord-player or lavalink.\n\n**Coming soon!**\n\nFor now, use the dashboard at https://skyfall-omega.vercel.app')
         ],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -370,7 +370,7 @@ async function handleCommand(interaction) {
         .setTitle('✅ Command Working')
         .setDescription(`The \`/${commandName}\` command is registered and working!\n\nFor advanced features, check the [Dashboard](https://skyfall-omega.vercel.app)`)
       ],
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
 
   } catch (error) {
@@ -378,7 +378,7 @@ async function handleCommand(interaction) {
     if (!interaction.replied && !interaction.deferred) {
       return interaction.reply({
         content: '❌ An error occurred while executing this command.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

@@ -95,11 +95,11 @@ const allCommands = [
     { id: 'loop', name: 'loop', description: 'Loop current song', category: 'music', enabled: true, usageCount: 0, cooldown: 2 }
 ];
 
-// Bot ready event
-client.once('ready', async () => {
-    console.log(`✅ Discord bot online! Logged in as ${client.user.tag}`);
-    console.log(`🏰 Serving ${client.guilds.cache.size} guilds`);
-    console.log(`👥 Total users: ${client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)}`);
+// Bot ready event (using clientReady instead of deprecated 'ready')
+client.once('clientReady', async (c) => {
+    console.log(`✅ Discord bot online! Logged in as ${c.user.tag}`);
+    console.log(`🏰 Serving ${c.guilds.cache.size} guilds`);
+    console.log(`👥 Total users: ${c.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)}`);
     
     // Send initial data to API
     await updateAPIData();
