@@ -6,6 +6,24 @@ export default function Invite() {
   const router = useRouter()
   const [step, setStep] = useState('terms')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [fadeOut, setFadeOut] = useState(false)
+
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/session', {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      setIsAuthenticated(data.authenticated)
+    } catch (error) {
+      console.error('Auth check failed:', error)
+    }
+  }
 
   const handleInviteBot = () => {
     if (!acceptedTerms) {
@@ -13,17 +31,21 @@ export default function Invite() {
       return
     }
     
-    // Direct Discord invite without redirect_uri
+    // Direct Discord invite
     window.open(
       'https://discord.com/api/oauth2/authorize?client_id=1358527215020544222&permissions=8&scope=bot%20applications.commands',
       '_blank'
     )
     
-    // Show success message and redirect to dashboard
+    // Show success with smooth transition
     setStep('success')
+  }
+
+  const handleContinue = () => {
+    setFadeOut(true)
     setTimeout(() => {
       router.push('/dashboard')
-    }, 3000)
+    }, 600)
   }
 
   return (
@@ -161,18 +183,26 @@ export default function Invite() {
           )}
 
           {step === 'success' && (
-            <div className="max-w-md mx-auto text-center">
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl">✓</span>
+            <div className={`max-w-md mx-auto text-center transition-all duration-600 ${fadeOut ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+              <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-12 border border-white/10 shadow-2xl animate-fade-in">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-scale-in shadow-lg">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-4">Bot Added Successfully!</h2>
-                <p className="text-white/70 mb-6">
-                  Skyfall has been added to your server. You'll be redirected to the dashboard in a moment.
+                <h2 className="text-3xl font-bold text-white mb-4 animate-slide-up">Bot Added Successfully!</h2>
+                <p className="text-white/80 mb-8 text-lg animate-slide-up" style={{animationDelay: '0.1s'}}>
+                  {isAuthenticated 
+                    ? 'Skyfall is now active in your server. Ready to manage your Discord!'
+                    : 'Skyfall is ready! Login with Discord to access your dashboard.'}
                 </p>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full animate-pulse" style={{width: '100%'}}></div>
-                </div>
+                <button
+                  onClick={handleContinue}
+                  className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl animate-slide-up"
+                  style={{animationDelay: '0.2s'}}
+                >
+                  {isAuthenticated ? 'Continue to Dashboard →' : 'Login with Discord →'}
+                </button>
               </div>
             </div>
           )}

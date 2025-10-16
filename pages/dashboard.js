@@ -90,17 +90,15 @@ export default function Dashboard() {
         }
       }
 
-      // No session - use demo mode
-      const demoUser = { username: 'Demo User', id: 'demo', isAdmin: false };
-      setUser(demoUser);
-      addNotification('Using demo mode - Login with Discord for full access', 'info');
-      return true;
+      // No session - redirect to login
+      addNotification('Please login with Discord to continue', 'warning');
+      router.push('/login');
+      return false;
     } catch (error) {
       console.error('Authentication check failed:', error);
-      const demoUser = { username: 'Demo User', id: 'demo', isAdmin: false };
-      setUser(demoUser);
-      addNotification('Using demo mode - authentication error', 'warning');
-      return true;
+      addNotification('Authentication required', 'error');
+      router.push('/login');
+      return false;
     }
   };
 
@@ -611,63 +609,63 @@ export default function Dashboard() {
               <div className="space-y-6">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="glass glass-hover rounded-3xl p-6 hover-lift cursor-pointer group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Server Members</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Server Members</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
                           {selectedServer?.memberCount?.toLocaleString() || 0}
                         </p>
                         <p className="text-sm text-green-400 mt-1">
                           {selectedServer?.onlineMembers?.toLocaleString() || 0} online
                         </p>
                       </div>
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">👥</div>
+                      <div className="text-4xl group-hover:scale-110 transition-spring">👥</div>
                     </div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="glass glass-hover rounded-3xl p-6 hover-lift cursor-pointer group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Active Commands</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Active Commands</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
                           {commands.filter(cmd => cmd.enabled).length}
                         </p>
                         <p className="text-sm text-gray-400 mt-1">
                           of {commands.length} total
                         </p>
                       </div>
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚡</div>
+                      <div className="text-4xl group-hover:scale-110 transition-spring">⚡</div>
                     </div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="glass glass-hover rounded-3xl p-6 hover-lift cursor-pointer group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Pending Appeals</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Pending Appeals</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
                           {appeals.filter(appeal => appeal.status === 'pending').length}
                         </p>
                         <p className="text-sm text-gray-400 mt-1">
                           {appeals.length} total appeals
                         </p>
                       </div>
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">⚖️</div>
+                      <div className="text-4xl group-hover:scale-110 transition-spring">⚖️</div>
                     </div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="glass glass-hover rounded-3xl p-6 hover-lift cursor-pointer group">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Server Boost</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-colors">
+                        <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Server Boost</p>
+                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
                           Level {selectedServer?.boostLevel || 0}
                         </p>
                         <p className="text-sm text-purple-400 mt-1">
                           {selectedServer?.boostCount || 0} boosts
                         </p>
                       </div>
-                      <div className="text-4xl group-hover:scale-110 transition-transform duration-300">
+                      <div className="text-4xl group-hover:scale-110 transition-spring">
                         {selectedServer?.boostLevel >= 3 ? '💎' : 
                          selectedServer?.boostLevel >= 2 ? '🚀' : 
                          selectedServer?.boostLevel >= 1 ? '⭐' : '📈'}
