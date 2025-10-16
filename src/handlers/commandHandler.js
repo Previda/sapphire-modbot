@@ -319,36 +319,14 @@ async function handleCommand(interaction) {
       return interaction.reply({ content: text.split('').reverse().join('') });
     }
 
-    // === VERIFICATION COMMAND ===
-    if (commandName === 'verify') {
-      if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return interaction.reply({ content: '❌ You need Administrator permission!', flags: MessageFlags.Ephemeral });
-      }
-
-      const { EmbedBuilder: Embed, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-      
-      const verifyEmbed = new Embed()
-        .setColor('#5865F2')
-        .setTitle('🔐 Server Verification')
-        .setDescription(
-          '**Welcome to the server!**\n\n' +
-          'To gain access to all channels, please verify yourself by clicking the button below.\n\n' +
-          '✅ This helps us keep the server safe and spam-free!'
-        )
-        .setFooter({ text: 'Click the button below to verify' })
-        .setTimestamp();
-
-      const row = new ActionRowBuilder()
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId('verify_button')
-            .setLabel('✅ Verify')
-            .setStyle(ButtonStyle.Success)
-        );
-
-      await interaction.reply({ content: '✅ Verification system setup!', flags: MessageFlags.Ephemeral });
-      await interaction.channel.send({ embeds: [verifyEmbed], components: [row] });
-      return;
+    // === VERIFICATION & TICKET COMMANDS ===
+    // These are now handled in bot-with-api.js by the dedicated systems
+    if (commandName === 'verify' || (commandName === 'ticket' && options.getSubcommand() === 'setup')) {
+      // This should not be reached as these are handled before this function
+      return interaction.reply({
+        content: '✅ This command is handled by the dedicated system.',
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     // === MUSIC COMMANDS (Placeholder) ===

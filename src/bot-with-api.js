@@ -108,12 +108,23 @@ client.once('clientReady', async (c) => {
     setInterval(updateAPIData, 30000);
 });
 
+// Import systems
+const verification = require('./systems/verification');
+const tickets = require('./systems/tickets');
+
 // Handle slash commands and button interactions
 client.on('interactionCreate', async (interaction) => {
     try {
         if (interaction.isChatInputCommand()) {
-            // Handle slash commands
-            await handleCommand(interaction);
+            // Handle special commands
+            if (interaction.commandName === 'verify') {
+                await verification.setupVerification(interaction);
+            } else if (interaction.commandName === 'ticket' && interaction.options.getSubcommand() === 'setup') {
+                await tickets.setupTicketSystem(interaction);
+            } else {
+                // Handle regular commands
+                await handleCommand(interaction);
+            }
             
             // Log command usage to API
             await axios.post(`${config.apiUrl}/api/internal/add-log`, {
@@ -124,15 +135,22 @@ client.on('interactionCreate', async (interaction) => {
             }).catch(() => {});
             
         } else if (interaction.isButton()) {
-            // Handle button interactions (verify, tickets)
-            await handleButtonInteraction(interaction);
+            // Handle button interactions
+            if (interaction.customId === 'verify_button') {
+                await verification.handleVerificationButton(interaction);
+            } else if (interaction.customId === 'create_ticket') {
+                await tickets.createTicket(interaction);
+            } else if (interaction.customId.startsWith('close_ticket_')) {
+                const ticketId = interaction.customId.replace('close_ticket_', '');
+                await tickets.closeTicket(interaction, ticketId);
+            }
         }
     } catch (error) {
         console.error('Interaction error:', error);
         if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({
                 content: '❌ An error occurred while processing this interaction.',
-                ephemeral: true
+                flags: 64
             }).catch(() => {});
         }
     }
