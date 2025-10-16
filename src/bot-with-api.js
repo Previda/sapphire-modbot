@@ -114,6 +114,7 @@ const tickets = require('./systems/tickets');
 const advancedTickets = require('./systems/advanced-tickets');
 const appeals = require('./systems/appeals');
 const music = require('./systems/music');
+const automod = require('./systems/automod');
 
 // Handle slash commands and button interactions
 client.on('interactionCreate', async (interaction) => {
@@ -206,6 +207,15 @@ client.on('interactionCreate', async (interaction) => {
                 flags: 64
             }).catch(() => {});
         }
+    }
+});
+
+// AutoMod message handler
+client.on('messageCreate', async (message) => {
+    try {
+        await automod.moderateMessage(message);
+    } catch (error) {
+        console.error('AutoMod error:', error);
     }
 });
 
