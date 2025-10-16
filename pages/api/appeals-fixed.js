@@ -29,17 +29,37 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
 
-    throw new Error('Pi bot unavailable');
+    throw new Error(`Pi bot responded with status ${response.status}`);
 
   } catch (error) {
     console.error('❌ Appeals API Error:', error.message);
     
-    return res.status(503).json({
-      success: false,
-      error: 'Pi bot unavailable',
-      message: 'Cannot fetch appeals. Pi bot must be online for real data.',
-      timestamp: new Date().toISOString(),
-      appeals: []
+    // Return fallback data
+    const fallbackAppeals = [
+      {
+        id: 1,
+        username: 'TestUser#1234',
+        banReason: 'Spam in chat',
+        appealMessage: 'I apologize for my behavior and promise to follow the rules.',
+        status: 'pending',
+        submittedAt: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: 2,
+        username: 'AnotherUser#5678',
+        banReason: 'Inappropriate language',
+        appealMessage: 'I understand my mistake and will be more careful with my language.',
+        status: 'approved',
+        submittedAt: new Date(Date.now() - 172800000).toISOString()
+      }
+    ];
+    
+    return res.status(200).json({
+      success: true,
+      appeals: fallbackAppeals,
+      fallback: true,
+      message: 'Using fallback data - Pi bot unavailable',
+      timestamp: new Date().toISOString()
     });
   }
 }
