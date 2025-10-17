@@ -1,24 +1,35 @@
 // Discord OAuth Callback Handler
 export default async function handler(req, res) {
-  const { code } = req.query;
+  const { code, error: oauthError } = req.query;
+
+  // Check if Discord returned an error
+  if (oauthError) {
+    console.error('Discord OAuth error:', oauthError);
+    return res.redirect(`/?error=discord_${oauthError}`);
+  }
 
   if (!code) {
+    console.error('No authorization code received');
     return res.redirect('/?error=no_code');
   }
 
   try {
     const clientId = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
     const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-    const redirectUri = process.env.NEXTAUTH_URL 
-      ? `${process.env.NEXTAUTH_URL}/api/auth/callback-discord`
-      : 'https://skyfall-omega.vercel.app/api/auth/callback-discord';
+    const redirectUri = 'https://skyfall-omega.vercel.app/api/auth/callback-discord';
+
+    console.log('🔐 Starting OAuth flow...');
+    console.log('Client ID:', clientId);
+    console.log('Redirect URI:', redirectUri);
+    console.log('Has Secret:', !!clientSecret);
 
     if (!clientSecret) {
-      console.error('❌ DISCORD_CLIENT_SECRET not set');
+      console.error('❌ DISCORD_CLIENT_SECRET not set in environment variables');
       return res.redirect('/?error=missing_secret');
     }
 
     // Exchange code for access token
+    console.log('📡 Exchanging code for token...');
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: {
@@ -34,10 +45,21 @@ export default async function handler(req, res) {
     });
 
     if (!tokenResponse.ok) {
-      const error = await tokenResponse.text();
-      console.error('Token exchange failed:', error);
-      return res.redirect('/?error=token_exchange_failed');
+      const errorText = await tokenResponse.text();
+      console.error('❌ Token exchange failed:', tokenResponse.status, errorText);
+      
+      // Try to parse error details
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('Error details:', errorData);
+      } catch (e) {
+        console.error('Raw error:', errorText);
+      }
+      
+      return res.redirect('/?error=token_exchange_failed&details=' + encodeURIComponent(errorText.substring(0, 100)));
     }
+
+    console.log('✅ Token exchange successful');
 
     const tokenData = await tokenResponse.json();
     const { access_token, token_type } = tokenData;
