@@ -367,17 +367,37 @@ export default function Dashboard() {
             </div>
 
             {/* User Info */}
-            {user && (
+            {user && !user.isGuest && (
               <div className="px-6 py-4 border-b border-white/10">
                 <div className="flex items-center">
-                  <div className="h-8 w-8 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-sm font-bold text-white">{user.username?.[0] || 'U'}</span>
-                  </div>
+                  {user.avatar ? (
+                    <img
+                      src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`}
+                      alt={user.username}
+                      className="w-10 h-10 rounded-full mr-3 border-2 border-purple-500"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-sm font-bold text-white">{user.username?.[0] || 'U'}</span>
+                    </div>
+                  )}
                   <div>
-                    <p className="text-white font-medium">{user.username || 'Admin User'}</p>
-                    <p className="text-xs text-gray-400">Administrator</p>
+                    <p className="text-white font-medium">{user.username}</p>
+                    <p className="text-xs text-green-400">● Online</p>
                   </div>
                 </div>
+              </div>
+            )}
+            
+            {/* Guest User - Show Login Prompt */}
+            {user?.isGuest && (
+              <div className="px-6 py-4 border-b border-white/10">
+                <Link
+                  href="/api/auth/discord-oauth"
+                  className="block w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all text-center"
+                >
+                  🔐 Login with Discord
+                </Link>
               </div>
             )}
 
@@ -446,16 +466,39 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center space-x-4">
+                {/* User Avatar & Name */}
+                {user && !user.isGuest && (
+                  <div className="flex items-center space-x-3 px-4 py-2 bg-white/10 rounded-lg">
+                    {user.avatar ? (
+                      <img
+                        src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`}
+                        alt={user.username}
+                        className="w-8 h-8 rounded-full border-2 border-green-400"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-white">{user.username?.[0]}</span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-white font-medium text-sm">{user.username}</p>
+                      <p className="text-green-400 text-xs">● Online</p>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Status Indicator */}
                 {statusData && (
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${
-                      statusData.overall?.status === 'operational' ? 'bg-green-400' :
-                      statusData.overall?.status === 'degraded_performance' ? 'bg-yellow-400' :
+                  <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 rounded-lg">
+                    <div className={`w-3 h-3 rounded-full animate-pulse ${
+                      statusData.overall?.status === 'online' ? 'bg-green-400' :
+                      statusData.overall?.status === 'degraded' ? 'bg-yellow-400' :
                       'bg-red-400'
                     }`}></div>
-                    <span className="text-gray-300 text-sm">
-                      {statusData.overall?.message || 'Status Unknown'}
+                    <span className="text-white text-sm font-medium">
+                      {statusData.overall?.status === 'online' ? 'All Systems Online' :
+                       statusData.overall?.status === 'degraded' ? 'Partial Outage' :
+                       'System Offline'}
                     </span>
                   </div>
                 )}
@@ -463,16 +506,16 @@ export default function Dashboard() {
                 {/* Login/Logout */}
                 {user?.isGuest ? (
                   <Link
-                    href="/login"
+                    href="/api/auth/discord-oauth"
                     className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
                   >
-                    Login with Discord
+                    🔐 Login with Discord
                   </Link>
                 ) : (
                   <button
                     onClick={() => {
                       fetch('/api/auth/logout', { method: 'POST' });
-                      router.push('/login');
+                      router.push('/');
                     }}
                     className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
                   >
@@ -517,46 +560,57 @@ export default function Dashboard() {
 
             {/* Pi Bot Connection Status */}
             <div className="mb-8">
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-white">Pi Bot Connection</h3>
+              <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur-lg rounded-2xl p-6 border border-purple-500/30">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full animate-pulse ${
+                      statusData?.overall?.status === 'online' ? 'bg-green-400' :
+                      statusData?.overall?.status === 'degraded' ? 'bg-yellow-400' :
+                      'bg-red-400'
+                    }`}></div>
+                    <h3 className="text-2xl font-bold text-white">System Status</h3>
+                  </div>
                   <button
                     onClick={testPiBotConnection}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all transform hover:scale-105"
                   >
-                    Test Connection
+                    🔄 Refresh
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className={`text-4xl mb-2 ${statusData?.overall?.status === 'online' ? 'text-green-400' : statusData?.overall?.status === 'degraded' ? 'text-yellow-400' : 'text-red-400'}`}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-all">
+                    <div className={`text-5xl mb-3 ${
+                      statusData?.overall?.status === 'online' ? 'text-green-400' :
+                      statusData?.overall?.status === 'degraded' ? 'text-yellow-400' :
+                      'text-red-400'
+                    }`}>
                       {statusData?.overall?.status === 'online' ? '✅' : 
                        statusData?.overall?.status === 'degraded' ? '⚠️' : '❌'}
                     </div>
-                    <p className="text-white font-medium">
-                      {statusData?.overall?.status === 'online' ? 'Connected' : 
-                       statusData?.overall?.status === 'degraded' ? 'Partial' : 'Offline'}
+                    <p className="text-white font-bold text-xl mb-2">
+                      {statusData?.overall?.status === 'online' ? 'Online' : 
+                       statusData?.overall?.status === 'degraded' ? 'Degraded' : 'Offline'}
                     </p>
                     <p className="text-gray-400 text-sm">
-                      {statusData?.overall?.healthPercentage || 0}% Health
+                      Pi Bot Status
                     </p>
                   </div>
-                  <div className="text-center">
-                    <div className="text-4xl mb-2 text-blue-400">🏰</div>
-                    <p className="text-white font-medium">
-                      {statusData?.piBot?.guilds || 0} Servers
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-blue-500/50 transition-all">
+                    <div className="text-5xl mb-3 text-blue-400">🏰</div>
+                    <p className="text-white font-bold text-xl mb-2">
+                      {servers.length || 0}
                     </p>
                     <p className="text-gray-400 text-sm">
-                      {statusData?.piBot?.responseTime || 0}ms response
+                      Your Servers
                     </p>
                   </div>
-                  <div className="text-center">
-                    <div className="text-4xl mb-2 text-purple-400">⚡</div>
-                    <p className="text-white font-medium">
-                      {statusData?.endpoints?.filter(e => e.status === 'online').length || 0} APIs
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-all">
+                    <div className="text-5xl mb-3 text-purple-400">⚡</div>
+                    <p className="text-white font-bold text-xl mb-2">
+                      {commands.filter(c => c.enabled).length || 0}
                     </p>
                     <p className="text-gray-400 text-sm">
-                      {statusData?.piBot?.version || 'v1.0.0'}
+                      Active Commands
                     </p>
                   </div>
                 </div>
