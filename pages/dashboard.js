@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ServerSelector from '../components/ServerSelector';
+import SystemStatusOverlay from '../components/SystemStatusOverlay';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -341,6 +342,12 @@ export default function Dashboard() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      {/* System Status Overlay */}
+      <SystemStatusOverlay 
+        isOnline={statusData?.status === 'online'} 
+        isLoading={loading}
+      />
+
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
@@ -578,8 +585,8 @@ export default function Dashboard() {
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-all">
-                    <div className={`text-5xl mb-3 ${
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-smooth hover-lift cursor-pointer group">
+                    <div className={`text-5xl mb-3 transition-spring group-hover:scale-110 ${
                       statusData?.overall?.status === 'online' ? 'text-green-400' :
                       statusData?.overall?.status === 'degraded' ? 'text-yellow-400' :
                       'text-red-400'
@@ -587,29 +594,29 @@ export default function Dashboard() {
                       {statusData?.overall?.status === 'online' ? '✅' : 
                        statusData?.overall?.status === 'degraded' ? '⚠️' : '❌'}
                     </div>
-                    <p className="text-white font-bold text-xl mb-2">
+                    <p className="text-white font-bold text-xl mb-2 group-hover:text-purple-300 transition-smooth">
                       {statusData?.overall?.status === 'online' ? 'Online' : 
                        statusData?.overall?.status === 'degraded' ? 'Degraded' : 'Offline'}
                     </p>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">
                       Pi Bot Status
                     </p>
                   </div>
-                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-blue-500/50 transition-all">
-                    <div className="text-5xl mb-3 text-blue-400">🏰</div>
-                    <p className="text-white font-bold text-xl mb-2">
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-blue-500/50 transition-smooth hover-lift cursor-pointer group">
+                    <div className="text-5xl mb-3 text-blue-400 transition-spring group-hover:scale-110">🏰</div>
+                    <p className="text-white font-bold text-xl mb-2 group-hover:text-blue-300 transition-smooth">
                       {servers.length || 0}
                     </p>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">
                       Your Servers
                     </p>
                   </div>
-                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-all">
-                    <div className="text-5xl mb-3 text-purple-400">⚡</div>
-                    <p className="text-white font-bold text-xl mb-2">
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-smooth hover-lift cursor-pointer group">
+                    <div className="text-5xl mb-3 text-purple-400 transition-spring group-hover:scale-110">⚡</div>
+                    <p className="text-white font-bold text-xl mb-2 group-hover:text-purple-300 transition-smooth">
                       {commands.filter(c => c.enabled).length || 0}
                     </p>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">
                       Active Commands
                     </p>
                   </div>
