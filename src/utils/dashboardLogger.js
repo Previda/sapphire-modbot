@@ -1,4 +1,11 @@
-const fetch = require('node-fetch');
+// Try to load node-fetch, but don't fail if not available
+let fetch;
+try {
+    fetch = require('node-fetch');
+} catch (error) {
+    // Use native fetch if available (Node 18+) or create a dummy
+    fetch = globalThis.fetch || (async () => ({ ok: false }));
+}
 
 class DashboardLogger {
     constructor() {
