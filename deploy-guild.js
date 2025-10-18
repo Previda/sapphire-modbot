@@ -69,6 +69,18 @@ console.log(`\n📋 Total commands: ${commands.length}\n`);
         console.log(`📱 Client ID: ${clientId}`);
         console.log(`🏢 Guild ID: ${guildId}\n`);
 
+        // First, delete all existing guild commands to avoid duplicates
+        console.log('🗑️ Clearing old commands...');
+        try {
+            await rest.put(
+                Routes.applicationGuildCommands(clientId, guildId),
+                { body: [] }
+            );
+            console.log('✅ Old commands cleared!\n');
+        } catch (error) {
+            console.log('⚠️ Could not clear old commands (this is okay)\n');
+        }
+
         // Deploy to specific guild (INSTANT)
         const data = await rest.put(
             Routes.applicationGuildCommands(clientId, guildId),
