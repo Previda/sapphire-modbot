@@ -255,12 +255,12 @@ async function showTicketMenu(interaction) {
 
 async function listTickets(interaction) {
     try {
-        const [tickets] = await pool.execute(
-            'SELECT * FROM tickets WHERE guildID = ? AND status = "open" ORDER BY createdAt DESC',
-            [interaction.guild.id]
+        const allTickets = await loadTickets();
+        const guildTickets = Object.values(allTickets).filter(t => 
+            t.guildID === interaction.guild.id && t.status === 'open'
         );
 
-        if (tickets.length === 0) {
+        if (guildTickets.length === 0) {
             return interaction.reply({
                 content: '📋 No open tickets found.',
                 ephemeral: true
@@ -270,16 +270,16 @@ async function listTickets(interaction) {
         const embed = new EmbedBuilder()
             .setTitle('📋 Open Tickets')
             .setColor(0x00ff00)
-            .setDescription(`Found ${tickets.length} open ticket(s)`)
+            .setDescription(`Found ${guildTickets.length} open ticket(s)`)
             .setTimestamp();
 
-        for (const ticket of tickets.slice(0, 10)) {
+        for (const ticket of guildTickets.slice(0, 10)) {
             const channel = interaction.guild.channels.cache.get(ticket.channelID);
             const user = await interaction.client.users.fetch(ticket.userID).catch(() => null);
             
             embed.addFields({
                 name: `🎫 ${ticket.ticketID}`,
-                value: `**User:** ${user ? user.tag : 'Unknown'}\n**Channel:** ${channel ? channel.toString() : 'Deleted'}\n**Reason:** ${ticket.reason}\n**Created:** <t:${Math.floor(new Date(ticket.createdAt).getTime() / 1000)}:R>`,
+                value: `**User:** ${user ? user.tag : 'Unknown'}\n**Channel:** ${channel ? channel.toString() : 'Deleted'}\n**Reason:** ${ticket.reason || 'No reason'}\n**Created:** <t:${Math.floor(new Date(ticket.createdAt).getTime() / 1000)}:R>`,
                 inline: true
             });
         }
@@ -327,19 +327,20 @@ async function createTicketForUser(interaction) {
             ]
         });
 
-        // Store ticket data locally using ticketUtils
-        const { saveTicket } = require('../../utils/ticketUtils');
-        await saveTicket({
+        // Store ticket data locally
+        const tickets = await loadTickets();
+        tickets[ticketID] = {
             ticketID: ticketID,
             userID: user.id,
             guildID: interaction.guild.id,
             channelID: channel.id,
             status: 'open',
-            reason: reason,
+            reason: reason || 'No reason provided',
             category: category,
             createdAt: new Date().toISOString(),
             createdBy: interaction.user.id
-        });
+        };
+        await saveTickets(tickets);
 
         // Find staff role (common names)
         const staffRoles = interaction.guild.roles.cache.filter(role => 

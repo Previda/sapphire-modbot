@@ -193,7 +193,14 @@ client.on('interactionCreate', async (interaction) => {
             // Handle button interactions
             if (interaction.customId === 'verify_button') {
                 await verification.handleVerificationButton(interaction);
-            } else if (interaction.customId === 'ticket_create') {
+            } 
+            // Ticket panel buttons
+            else if (interaction.customId.startsWith('create_ticket_')) {
+                const category = interaction.customId.replace('create_ticket_', '');
+                await handleTicketCreation(interaction, category);
+            }
+            // Old ticket system buttons
+            else if (interaction.customId === 'ticket_create') {
                 await advancedTickets.createTicket(interaction);
             } else if (interaction.customId.startsWith('ticket_claim_')) {
                 const ticketId = interaction.customId.replace('ticket_claim_', '');
@@ -204,7 +211,9 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.customId.startsWith('ticket_close_')) {
                 const ticketId = interaction.customId.replace('ticket_close_', '');
                 await advancedTickets.closeTicket(interaction, ticketId);
-            } else if (interaction.customId === 'appeal_submit') {
+            } 
+            // Appeal buttons
+            else if (interaction.customId === 'appeal_submit') {
                 await appeals.showAppealModal(interaction);
             } else if (interaction.customId.startsWith('appeal_accept_')) {
                 const appealId = interaction.customId.replace('appeal_accept_', '');
@@ -235,6 +244,87 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 });
+
+// Ticket creation handler
+async function handleTicketCreation(interaction, category) {
+    const { EmbedBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
+    
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const user = interaction.user;
+        const guild = interaction.guild;
+        
+        // Generate ticket ID
+        const ticketID = `ticket-${Date.now()}`;
+        const channelName = `${category}-${user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        
+        // Create ticket channel
+        const ticketChannel = await guild.channels.create({
+            name: channelName,
+            type: ChannelType.GuildText,
+            topic: `Ticket by ${user.tag} | Category: ${category} | ID: ${ticketID}`,
+            parent: guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === ChannelType.GuildCategory)?.id,
+            permissionOverwrites: [
+                {
+                    id: guild.roles.everyone,
+                    deny: [PermissionFlagsBits.ViewChannel]
+                },
+                {
+                    id: user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory]
+                },
+                {
+                    id: client.user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels]
+                }
+            ]
+        });
+        
+        // Find and add staff roles
+        const staffRoles = guild.roles.cache.filter(role => 
+            ['staff', 'mod', 'moderator', 'admin', 'administrator', 'support'].some(name => 
+                role.name.toLowerCase().includes(name)
+            )
+        );
+        
+        for (const role of staffRoles.values()) {
+            await ticketChannel.permissionOverwrites.create(role, {
+                ViewChannel: true,
+                SendMessages: true,
+                ReadMessageHistory: true
+            });
+        }
+        
+        // Create welcome embed
+        const welcomeEmbed = new EmbedBuilder()
+            .setTitle(`🎫 ${category.charAt(0).toUpperCase() + category.slice(1)} Support Ticket`)
+            .setDescription(`Hello ${user}! Thank you for creating a ticket.\n\nOur staff team will be with you shortly. Please describe your issue in detail.`)
+            .addFields(
+                { name: '📂 Category', value: category, inline: true },
+                { name: '🆔 Ticket ID', value: ticketID, inline: true },
+                { name: '⏰ Created', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+            )
+            .setColor('#3742FA')
+            .setTimestamp();
+        
+        const staffMention = staffRoles.size > 0 ? staffRoles.map(r => r.toString()).join(' ') : '';
+        await ticketChannel.send({
+            content: `${user} ${staffMention}`,
+            embeds: [welcomeEmbed]
+        });
+        
+        await interaction.editReply({
+            content: `✅ Ticket created! Please check ${ticketChannel}`
+        });
+        
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        await interaction.editReply({
+            content: '❌ Failed to create ticket. Please contact an administrator.'
+        }).catch(() => {});
+    }
+}
 
 // AutoMod message handler
 client.on('messageCreate', async (message) => {
