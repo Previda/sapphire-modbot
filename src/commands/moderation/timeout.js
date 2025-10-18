@@ -33,28 +33,27 @@ module.exports = {
         const silent = interaction.options.getBoolean('silent') || false;
 
         // Defer reply for moderation actions
-        await interaction.deferReply({ ephemeral: silent });
+        await interaction.deferReply({ flags: silent ? 64 : 0 });
 
         try {
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             
             if (!member) {
-                return interaction.reply({ 
-                    content: '❌ User not found in this server.', 
-                    ephemeral: true 
+                return interaction.editReply({ 
+                    content: '❌ User not found in this server.'
                 });
             }
 
             // Permission checks
             if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                return interaction.reply({ content: '❌ You cannot timeout this member due to role hierarchy.', ephemeral: true });
+                return interaction.editReply({ content: '❌ You cannot timeout this member due to role hierarchy.' });
             }
             if (!member.moderatable) {
-                return interaction.reply({ content: '❌ I cannot timeout this member.', ephemeral: true });
+                return interaction.editReply({ content: '❌ I cannot timeout this member.' });
             }
 
             // Create case
-            const newCase = await createCase({
+            const newCase = await createCase(interaction.guild.id, {
                 type: 'timeout',
                 userId: targetUser.id,
                 moderatorId: interaction.user.id,
