@@ -260,7 +260,16 @@ client.on('interactionCreate', async (interaction) => {
                 await appeals.showAppealModal(interaction);
             } else if (interaction.customId.startsWith('appeal_start_')) {
                 const appealCode = interaction.customId.replace('appeal_start_', '');
-                await handleAppealStart(interaction, appealCode);
+                console.log(`🎫 Appeal button clicked: ${appealCode}`);
+                try {
+                    await handleAppealStart(interaction, appealCode);
+                } catch (error) {
+                    console.error('❌ Appeal button error:', error);
+                    await interaction.reply({
+                        content: `❌ Failed to load appeal form: ${error.message}\n\nPlease try: \`/appeal submit appeal_code:${appealCode}\``,
+                        flags: 64
+                    }).catch(() => {});
+                }
             } else if (interaction.customId.startsWith('appeal_approve_')) {
                 const appealCode = interaction.customId.replace('appeal_approve_', '').replace('reason_', '');
                 await handleAppealApprove(interaction, appealCode);
