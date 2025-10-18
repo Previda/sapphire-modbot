@@ -34,9 +34,14 @@ function generateCaseId(guildId) {
 }
 
 // Create a new case
-async function createCase(caseData) {
+async function createCase(guildId, caseData) {
+    // Support both old and new calling conventions
+    if (typeof guildId === 'object' && !caseData) {
+        caseData = guildId;
+        guildId = caseData.guildId;
+    }
+    
     const casesData = await loadCasesData();
-    const guildId = caseData.guildId;
     
     if (!casesData[guildId]) {
         casesData[guildId] = [];

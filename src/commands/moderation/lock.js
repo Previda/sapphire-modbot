@@ -164,7 +164,10 @@ module.exports = {
         }
 
         try {
-            await interaction.deferReply({ flags: 64 });
+            // Check if already deferred/replied
+            if (!interaction.deferred && !interaction.replied) {
+                await interaction.deferReply({ flags: 64 });
+            }
 
             const everyoneRole = interaction.guild.roles.everyone;
             let lockedChannels = 0;
