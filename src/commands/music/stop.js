@@ -1,5 +1,13 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getVoiceConnection } = require('@discordjs/voice');
+
+// Try to load voice, but don't fail if not available
+let getVoiceConnection;
+try {
+    const voice = require('@discordjs/voice');
+    getVoiceConnection = voice.getVoiceConnection;
+} catch (error) {
+    getVoiceConnection = null;
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
