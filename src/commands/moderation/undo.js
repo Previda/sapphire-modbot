@@ -210,12 +210,13 @@ module.exports = {
             await interaction.editReply({ embeds: [embed] });
 
             // Log to webhook
-            await webhookLogger.logModeration(interaction.guild, {
-                type: 'unban',
-                user: { id: targetUserId },
-                moderator: interaction.user,
-                reason: reason,
-                caseId: caseId
+            await webhookLogger.logModAction(interaction.guild.id, 'unban', {
+                targetTag: `User ${targetUserId}`,
+                targetId: targetUserId,
+                moderatorTag: interaction.user.tag,
+                moderatorId: interaction.user.id,
+                caseId: caseId || 'N/A',
+                reason: reason
             });
 
         } catch (error) {
@@ -274,10 +275,11 @@ module.exports = {
 
             await interaction.editReply({ embeds: [embed] });
 
-            await webhookLogger.logModeration(interaction.guild, {
-                type: 'unmute',
-                user: { id: targetUserId },
-                moderator: interaction.user,
+            await webhookLogger.logModAction(interaction.guild.id, 'unmute', {
+                targetTag: `User ${targetUserId}`,
+                targetId: targetUserId,
+                moderatorTag: interaction.user.tag,
+                moderatorId: interaction.user.id,
                 reason: reason,
                 caseId: caseId
             });
