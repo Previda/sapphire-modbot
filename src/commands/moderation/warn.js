@@ -50,14 +50,22 @@ module.exports = {
                 appealable: true
             });
 
-            // Auto-generate appeal code
-            const appealCode = await appealLibrary.autoGenerateAppeal(
-                interaction.guild.id,
-                targetUser.id,
-                'warn',
-                interaction.user.id,
-                reason
-            );
+            // Check if appeals are enabled
+            const { loadGuildConfig } = require('../../utils/configManager');
+            const config = await loadGuildConfig(interaction.guild.id);
+            const appealsEnabled = config.appealsEnabled !== false;
+            
+            let appealCode = null;
+            if (appealsEnabled) {
+                // Auto-generate appeal code
+                appealCode = await appealLibrary.autoGenerateAppeal(
+                    interaction.guild.id,
+                    targetUser.id,
+                    'warn',
+                    interaction.user.id,
+                    reason
+                );
+            }
 
             // Send DM to user (unless silent)
             let dmSent = false;
@@ -70,22 +78,36 @@ module.exports = {
                         .setColor(0xffff00)
                         .addFields(
                             { name: '🏢 Server', value: interaction.guild.name, inline: true },
-                            { name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true },
-                            { name: '📝 Reason', value: reason, inline: false },
-                            { name: '📋 How to Appeal', value: `Click the button below to submit an appeal, or use:\n\`/appeal submit appeal_code:${appealCode}\``, inline: false }
+                            { name: '📝 Reason', value: reason, inline: false }
                         )
                         .setTimestamp();
                     
-                    const appealButton = new ActionRowBuilder()
-                        .addComponents(
-                            new ButtonBuilder()
-                                .setCustomId(`appeal_start_${appealCode}`)
-                                .setLabel('Submit Appeal')
-                                .setEmoji('📝')
-                                .setStyle(ButtonStyle.Primary)
+                    const components = [];
+                    
+                    if (appealsEnabled && appealCode) {
+                        dmEmbed.addFields(
+                            { name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true },
+                            { name: '📋 How to Appeal', value: `Click the button below to submit an appeal:`, inline: false }
                         );
+                        
+                        const appealButton = new ActionRowBuilder()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setCustomId(`appeal_start_${appealCode}`)
+                                    .setLabel('Submit Appeal')
+                                    .setEmoji('📝')
+                                    .setStyle(ButtonStyle.Primary)
+                            );
+                        components.push(appealButton);
+                    } else {
+                        dmEmbed.addFields({
+                            name: '📋 Appeals',
+                            value: '❌ Appeals are currently disabled on this server.',
+                            inline: false
+                        });
+                    }
 
-                    await targetUser.send({ embeds: [dmEmbed], components: [appealButton] });
+                    await targetUser.send({ embeds: [dmEmbed], components });
                     dmSent = true;
                 } catch (error) {
                     console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
