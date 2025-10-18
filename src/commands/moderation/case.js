@@ -130,18 +130,53 @@ async function handleViewCase(interaction) {
     const caseId = interaction.options.getString('case_id');
     
     try {
+        const caseData = await getCaseById(interaction.guild.id, caseId);
+        
+        if (!caseData) {
+            return interaction.editReply({
+                content: `❌ Case **${caseId}** not found.\n\nUse \`/case list @user\` to see all cases for a user.`
+            });
+        }
+        
+        // Fetch user and moderator
+        let user, moderator;
+        try {
+            user = await interaction.client.users.fetch(caseData.userId);
+        } catch (e) {
+            user = { tag: 'Unknown User', id: caseData.userId };
+        }
+        
+        try {
+            moderator = await interaction.client.users.fetch(caseData.moderatorId);
+        } catch (e) {
+            moderator = { tag: 'Unknown Moderator', id: caseData.moderatorId };
+        }
+        
         const embed = new EmbedBuilder()
             .setTitle(`📋 Case Details: ${caseId}`)
-            .setColor(0x00ff00)
+            .setColor(caseData.status === 'active' ? 0xff0000 : 0x808080)
             .addFields(
-                { name: '📝 Status', value: 'Case viewing not fully implemented yet', inline: false }
+                { name: '👤 User', value: `${user.tag}\n\`${user.id}\``, inline: true },
+                { name: '👮 Moderator', value: `${moderator.tag}\n\`${moderator.id}\``, inline: true },
+                { name: '📋 Type', value: caseData.type.toUpperCase(), inline: true },
+                { name: '🔄 Status', value: caseData.status === 'active' ? '🟢 Active' : '🔴 Closed', inline: true },
+                { name: '📅 Created', value: `<t:${Math.floor(new Date(caseData.timestamp).getTime() / 1000)}:F>`, inline: true },
+                { name: '📝 Reason', value: caseData.reason || 'No reason provided', inline: false }
             )
             .setTimestamp();
+        
+        if (caseData.duration) {
+            embed.addFields({ name: '⏱️ Duration', value: `${caseData.duration} minutes`, inline: true });
+        }
+        
+        if (caseData.appealable) {
+            embed.addFields({ name: '📋 Appealable', value: '✅ Yes', inline: true });
+        }
 
         await interaction.editReply({ embeds: [embed] });
     } catch (error) {
         console.error('Error viewing case:', error);
-        await interaction.editReply({ content: '❌ Failed to view case.' });
+        await interaction.editReply({ content: `❌ Failed to view case: ${error.message}` });
     }
 }
 
@@ -149,35 +184,78 @@ async function handleListCases(interaction) {
     const user = interaction.options.getUser('user');
 
     try {
+        const cases = await getUserCases(interaction.guild.id, user.id);
+        
         const embed = new EmbedBuilder()
             .setTitle(`📋 Cases for ${user.tag}`)
             .setColor(0x3498db)
-            .setDescription('No cases found for this user.')
             .setThumbnail(user.displayAvatarURL())
             .setTimestamp();
+        
+        if (!cases || cases.length === 0) {
+            embed.setDescription('✅ No cases found for this user.');
+            return interaction.editReply({ embeds: [embed] });
+        }
+        
+        // Group cases by type
+        const casesByType = {};
+        cases.forEach(c => {
+            if (!casesByType[c.type]) casesByType[c.type] = [];
+            casesByType[c.type].push(c);
+        });
+        
+        // Add summary
+        embed.setDescription(`**Total Cases:** ${cases.length}\n**Active:** ${cases.filter(c => c.status === 'active').length}`);
+        
+        // Add cases by type
+        for (const [type, typeCases] of Object.entries(casesByType)) {
+            const caseList = typeCases.slice(0, 5).map(c => {
+                const status = c.status === 'active' ? '🟢' : '🔴';
+                const date = new Date(c.timestamp).toLocaleDateString();
+                return `${status} \`${c.caseId}\` - ${c.reason.substring(0, 50)}... (${date})`;
+            }).join('\n');
+            
+            const fieldName = `${type.toUpperCase()} (${typeCases.length})`;
+            embed.addFields({ name: fieldName, value: caseList || 'None', inline: false });
+        }
+        
+        if (cases.length > 15) {
+            embed.setFooter({ text: `Showing first 15 of ${cases.length} cases` });
+        }
 
         await interaction.editReply({ embeds: [embed] });
     } catch (error) {
         console.error('Error listing cases:', error);
-        await interaction.editReply({ content: '❌ Failed to list cases.' });
+        await interaction.editReply({ content: `❌ Failed to list cases: ${error.message}` });
     }
 }
 
 async function handleCaseStats(interaction) {
     try {
+        const stats = await getCaseStats(interaction.guild.id);
+        
         const embed = new EmbedBuilder()
             .setTitle('📊 Server Case Statistics')
             .setColor(0x9b59b6)
+            .setDescription(`Statistics for **${interaction.guild.name}**`)
             .addFields(
-                { name: '📋 Total Cases', value: '0', inline: true },
-                { name: '🟢 Active', value: '0', inline: true },
-                { name: '🔴 Closed', value: '0', inline: true }
+                { name: '📋 Total Cases', value: stats.total?.toString() || '0', inline: true },
+                { name: '🟢 Active', value: stats.active?.toString() || '0', inline: true },
+                { name: '🔴 Closed', value: stats.closed?.toString() || '0', inline: true }
             )
             .setTimestamp();
+        
+        // Add breakdown by type
+        if (stats.byType && Object.keys(stats.byType).length > 0) {
+            const typeBreakdown = Object.entries(stats.byType)
+                .map(([type, count]) => `**${type.toUpperCase()}:** ${count}`)
+                .join('\n');
+            embed.addFields({ name: '📊 By Type', value: typeBreakdown, inline: false });
+        }
 
         await interaction.editReply({ embeds: [embed] });
     } catch (error) {
         console.error('Error getting case stats:', error);
-        await interaction.editReply({ content: '❌ Failed to get case statistics.' });
+        await interaction.editReply({ content: `❌ Failed to get case statistics: ${error.message}` });
     }
 }
