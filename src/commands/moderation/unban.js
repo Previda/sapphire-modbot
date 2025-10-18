@@ -50,9 +50,8 @@ module.exports = {
             }
 
             if (!userId) {
-                return interaction.reply({
-                    content: '❌ Could not find a banned user with that ID or username.',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: '❌ Could not find a banned user with that ID or username.'
                 });
             }
 
@@ -60,9 +59,8 @@ module.exports = {
             try {
                 await interaction.guild.bans.fetch(userId);
             } catch (error) {
-                return interaction.reply({
-                    content: '❌ User is not banned from this server.',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: '❌ User is not banned from this server.'
                 });
             }
 

@@ -27,26 +27,24 @@ module.exports = {
             const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
             
             if (!member) {
-                return interaction.reply({ 
-                    content: '❌ User not found in this server.', 
-                    ephemeral: true 
+                return interaction.editReply({ 
+                    content: '❌ User not found in this server.'
                 });
             }
 
             // Check if user is actually timed out
             if (!member.isCommunicationDisabled()) {
-                return interaction.reply({ 
-                    content: '❌ This member is not currently timed out.', 
-                    ephemeral: true 
+                return interaction.editReply({ 
+                    content: '❌ This member is not currently timed out.'
                 });
             }
 
             // Permission checks
             if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                return interaction.reply({ content: '❌ You cannot untimeout this member due to role hierarchy.', ephemeral: true });
+                return interaction.editReply({ content: '❌ You cannot untimeout this member due to role hierarchy.' });
             }
             if (!member.moderatable) {
-                return interaction.reply({ content: '❌ I cannot modify this member\'s timeout.', ephemeral: true });
+                return interaction.editReply({ content: '❌ I cannot modify this member\'s timeout.' });
             }
 
             // Create case

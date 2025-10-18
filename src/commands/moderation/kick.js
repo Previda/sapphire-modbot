@@ -72,9 +72,8 @@ module.exports = {
             const member = await guild.members.fetch(targetUser.id).catch(() => null);
             
             if (!member) {
-                return interaction.reply({ 
-                    content: '❌ User not found in this server.', 
-                    ephemeral: true 
+                return interaction.editReply({ 
+                    content: '❌ User not found in this server.'
                 });
             }
 
@@ -189,7 +188,7 @@ module.exports = {
                 .setThumbnail(targetUser.displayAvatarURL())
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
 
             // Log via webhook system
             await webhookLogger.logModeration(guild, { id: guild.id, type: 'kick', 
@@ -213,9 +212,8 @@ module.exports = {
         } catch (error) {
             console.error('Kick command error:', error);
             await dashboardLogger.logError(error, interaction);
-            await interaction.reply({
-                content: '❌ Failed to kick the user. Please check my permissions.',
-                ephemeral: true
+            await interaction.editReply({
+                content: '❌ Failed to kick the user. Please check my permissions.'
             });
         }
     }

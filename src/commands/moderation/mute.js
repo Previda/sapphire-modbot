@@ -80,29 +80,27 @@ module.exports = {
             const member = await guild.members.fetch(targetUser.id).catch(() => null);
 
             if (!member) {
-                return interaction.reply({
-                    content: '❌ User not found in this server.',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: '❌ User not found in this server.'
                 });
             }
 
             // Permission checks (skip for server owner)
             if (guild.ownerId !== interaction.user.id) {
                 if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                    return interaction.reply({ content: '❌ You cannot mute this member due to role hierarchy.', ephemeral: true });
+                    return interaction.editReply({ content: '❌ You cannot mute this member due to role hierarchy.' });
                 }
             }
             
             if (!member.moderatable) {
-                return interaction.reply({ content: '❌ I cannot mute this member.', ephemeral: true });
+                return interaction.editReply({ content: '❌ I cannot mute this member.' });
             }
 
             // Parse duration
             const durationMinutes = parseDuration(duration);
             if (!durationMinutes) {
-                return interaction.reply({
-                    content: '❌ Invalid duration format. Please use a format like 1h, 30m, or 1d.',
-                    ephemeral: true
+                return interaction.editReply({
+                    content: '❌ Invalid duration format. Please use a format like 1h, 30m, or 1d.'
                 });
             }
 
