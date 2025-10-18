@@ -346,7 +346,7 @@ async function handleCommand(interaction) {
       embeds: [new EmbedBuilder()
         .setColor('#5865F2')
         .setTitle('✅ Command Working')
-        .setDescription(`The \`/${commandName}\` command is registered and working!\n\nFor advanced features, check the [Dashboard](https://skyfall-omega.vercel.app)`)
+        .setDescription(`The \`/${commandName}\` command is registered and working!`)
       ],
       flags: MessageFlags.Ephemeral
     });

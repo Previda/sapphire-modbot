@@ -194,8 +194,8 @@ module.exports = {
 
 async function showTicketMenu(interaction) {
     const embed = new EmbedBuilder()
-        .setTitle('🎫 Advanced Ticket Management')
-        .setDescription('Complete ticket management system with all features')
+        .setTitle('🎫 Ticket Management')
+        .setDescription('Manage tickets and support system')
         .setColor(0x0099ff)
         .addFields(
             { name: '📋 Quick Actions', value: 'Use buttons below for instant ticket management', inline: false },
