@@ -212,9 +212,33 @@ module.exports = {
         } catch (error) {
             console.error('Kick command error:', error);
             await dashboardLogger.logError(error, interaction);
-            await interaction.editReply({
-                content: '❌ Failed to kick the user. Please check my permissions.'
-            });
+            
+            let errorMessage = '❌ Failed to kick the user.\n\n';
+            
+            if (error.code === 50013) {
+                errorMessage += '**Missing Permissions**: I need the "Kick Members" permission.\n\n';
+                errorMessage += '**How to fix:**\n';
+                errorMessage += '1. Go to **Server Settings** → **Roles**\n';
+                errorMessage += '2. Find my role\n';
+                errorMessage += '3. Enable "Kick Members" permission\n';
+                errorMessage += '4. Make sure my role is **above** the target user\'s role\n\n';
+                errorMessage += '**Quick check:** `/fix-permissions`';
+            } else if (error.code === 50001) {
+                errorMessage += '**Missing Access**: I cannot access this user.\n\n';
+                errorMessage += '**How to fix:**\n';
+                errorMessage += '• Make sure my role is **higher** than the target user\'s highest role';
+            } else if (error.message.includes('hierarchy')) {
+                errorMessage += '**Role Hierarchy Issue**: My role is not high enough.\n\n';
+                errorMessage += '**How to fix:**\n';
+                errorMessage += '1. Go to **Server Settings** → **Roles**\n';
+                errorMessage += '2. Drag my role **above** the target user\'s highest role\n';
+                errorMessage += '3. Try the command again';
+            } else {
+                errorMessage += `**Error**: ${error.message}\n\n`;
+                errorMessage += '**Tip**: Use `/fix-permissions` to check bot permissions.';
+            }
+            
+            await interaction.editReply({ content: errorMessage });
         }
     }
 };
