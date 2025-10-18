@@ -261,6 +261,14 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.customId.startsWith('appeal_start_')) {
                 const appealCode = interaction.customId.replace('appeal_start_', '');
                 await handleAppealStart(interaction, appealCode);
+            } else if (interaction.customId.startsWith('appeal_approve_')) {
+                const appealCode = interaction.customId.replace('appeal_approve_', '').replace('reason_', '');
+                await handleAppealApprove(interaction, appealCode);
+            } else if (interaction.customId.startsWith('appeal_reject_')) {
+                const appealCode = interaction.customId.replace('appeal_reject_', '');
+                await handleAppealReject(interaction, appealCode);
+            } else if (interaction.customId.startsWith('appeal_skip_')) {
+                await interaction.reply({ content: '⏭️ Appeal skipped.', flags: 64 });
             } else if (interaction.customId.startsWith('appeal_accept_')) {
                 const appealId = interaction.customId.replace('appeal_accept_', '');
                 await appeals.acceptAppeal(interaction, appealId);
@@ -370,6 +378,128 @@ async function handleAppealStart(interaction, appealCode) {
         await interaction.reply({
             content: '❌ Failed to load appeal form.',
             flags: 64
+        }).catch(() => {});
+    }
+}
+
+// Handle appeal approval
+async function handleAppealApprove(interaction, appealCode) {
+    const { EmbedBuilder } = require('discord.js');
+    const appealLibrary = require('./utils/appealLibrary');
+    
+    try {
+        await interaction.deferReply({ flags: 64 });
+        
+        const found = await appealLibrary.findAppealByCode(appealCode);
+        if (!found) {
+            return interaction.editReply({ content: '❌ Appeal not found.' });
+        }
+        
+        const { appeal, guildId } = found;
+        
+        // Update appeal status
+        appeal.status = 'approved';
+        appeal.reviewedBy = interaction.user.id;
+        appeal.reviewedAt = new Date().toISOString();
+        appeal.reviewReason = 'Approved by staff';
+        
+        await appealLibrary.saveAppeal(guildId, appealCode, appeal);
+        
+        // Notify user
+        try {
+            const user = await interaction.client.users.fetch(appeal.moderatedUserId);
+            const approvalEmbed = new EmbedBuilder()
+                .setTitle('✅ Appeal Approved')
+                .setDescription(`Your appeal for **${appeal.moderationType.toUpperCase()}** has been approved!`)
+                .addFields(
+                    { name: '🎫 Appeal Code', value: appealCode, inline: true },
+                    { name: '🏢 Server', value: (await interaction.client.guilds.fetch(guildId)).name, inline: true },
+                    { name: '👮 Reviewed By', value: interaction.user.tag, inline: true }
+                )
+                .setColor('#00ff00')
+                .setTimestamp();
+            
+            await user.send({ embeds: [approvalEmbed] });
+        } catch (e) {
+            console.log('Could not DM user:', e.message);
+        }
+        
+        await interaction.editReply({
+            content: `✅ Appeal **${appealCode}** has been approved!\nUser has been notified.`
+        });
+        
+        // Update original message
+        if (interaction.message) {
+            await interaction.message.edit({
+                components: [] // Remove buttons
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error approving appeal:', error);
+        await interaction.editReply({
+            content: '❌ Failed to approve appeal.'
+        }).catch(() => {});
+    }
+}
+
+// Handle appeal rejection
+async function handleAppealReject(interaction, appealCode) {
+    const { EmbedBuilder } = require('discord.js');
+    const appealLibrary = require('./utils/appealLibrary');
+    
+    try {
+        await interaction.deferReply({ flags: 64 });
+        
+        const found = await appealLibrary.findAppealByCode(appealCode);
+        if (!found) {
+            return interaction.editReply({ content: '❌ Appeal not found.' });
+        }
+        
+        const { appeal, guildId } = found;
+        
+        // Update appeal status
+        appeal.status = 'rejected';
+        appeal.reviewedBy = interaction.user.id;
+        appeal.reviewedAt = new Date().toISOString();
+        appeal.reviewReason = 'Rejected by staff';
+        
+        await appealLibrary.saveAppeal(guildId, appealCode, appeal);
+        
+        // Notify user
+        try {
+            const user = await interaction.client.users.fetch(appeal.moderatedUserId);
+            const rejectionEmbed = new EmbedBuilder()
+                .setTitle('❌ Appeal Rejected')
+                .setDescription(`Your appeal for **${appeal.moderationType.toUpperCase()}** has been rejected.`)
+                .addFields(
+                    { name: '🎫 Appeal Code', value: appealCode, inline: true },
+                    { name: '🏢 Server', value: (await interaction.client.guilds.fetch(guildId)).name, inline: true },
+                    { name: '👮 Reviewed By', value: interaction.user.tag, inline: true }
+                )
+                .setColor('#ff0000')
+                .setTimestamp();
+            
+            await user.send({ embeds: [rejectionEmbed] });
+        } catch (e) {
+            console.log('Could not DM user:', e.message);
+        }
+        
+        await interaction.editReply({
+            content: `❌ Appeal **${appealCode}** has been rejected.\nUser has been notified.`
+        });
+        
+        // Update original message
+        if (interaction.message) {
+            await interaction.message.edit({
+                components: [] // Remove buttons
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error rejecting appeal:', error);
+        await interaction.editReply({
+            content: '❌ Failed to reject appeal.'
         }).catch(() => {});
     }
 }
