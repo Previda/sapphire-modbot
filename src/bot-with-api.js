@@ -258,6 +258,9 @@ client.on('interactionCreate', async (interaction) => {
             // Appeal buttons
             else if (interaction.customId === 'appeal_submit') {
                 await appeals.showAppealModal(interaction);
+            } else if (interaction.customId.startsWith('appeal_start_')) {
+                const appealCode = interaction.customId.replace('appeal_start_', '');
+                await handleAppealStart(interaction, appealCode);
             } else if (interaction.customId.startsWith('appeal_accept_')) {
                 const appealId = interaction.customId.replace('appeal_accept_', '');
                 await appeals.acceptAppeal(interaction, appealId);
@@ -269,6 +272,12 @@ client.on('interactionCreate', async (interaction) => {
             // Handle modal submissions
             if (interaction.customId === 'appeal_modal') {
                 await appeals.handleAppealSubmission(interaction);
+            }
+            else if (interaction.customId === 'appeal_config_modal') {
+                await handleAppealConfigModal(interaction);
+            }
+            else if (interaction.customId.startsWith('appeal_submit_')) {
+                await handleAppealSubmit(interaction);
             }
             else if (interaction.customId === 'ticket_create_modal') {
                 await handleTicketCreateSubmit(interaction);
@@ -290,6 +299,238 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 });
+
+// Appeal start button handler
+async function handleAppealStart(interaction, appealCode) {
+    const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    const appealLibrary = require('./utils/appealLibrary');
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    try {
+        // Find the appeal
+        const found = await appealLibrary.findAppealByCode(appealCode);
+        if (!found) {
+            return interaction.reply({
+                content: '❌ Appeal code not found or expired.',
+                flags: 64
+            });
+        }
+        
+        const { appeal, guildId } = found;
+        
+        // Check if already submitted
+        if (appeal.status !== 'pending') {
+            return interaction.reply({
+                content: '❌ This appeal has already been submitted or reviewed.',
+                flags: 64
+            });
+        }
+        
+        // Load custom questions from config
+        const APPEAL_CONFIG_PATH = path.join(process.cwd(), 'data', 'appeal-configs');
+        let config;
+        try {
+            const configPath = path.join(APPEAL_CONFIG_PATH, `${guildId}.json`);
+            const data = await fs.readFile(configPath, 'utf8');
+            config = JSON.parse(data);
+        } catch (error) {
+            // Use default questions
+            config = {
+                questions: [
+                    { id: 'reason', label: 'Why should this punishment be reversed?', placeholder: 'Explain your reasoning', required: true, style: 'paragraph' },
+                    { id: 'evidence', label: 'Evidence (Optional)', placeholder: 'Provide any evidence', required: false, style: 'paragraph' },
+                    { id: 'contact', label: 'Contact Method', placeholder: 'Discord DM', required: false, style: 'short' }
+                ]
+            };
+        }
+        
+        // Create modal with custom questions
+        const modal = new ModalBuilder()
+            .setCustomId(`appeal_submit_${appealCode}`)
+            .setTitle(`Appeal for ${appeal.moderationType.toUpperCase()}`);
+        
+        // Add up to 5 questions (Discord limit)
+        const questions = config.questions.slice(0, 5);
+        questions.forEach((q, index) => {
+            const input = new TextInputBuilder()
+                .setCustomId(`question_${index}`)
+                .setLabel(q.label.substring(0, 45)) // Discord limit
+                .setStyle(q.style === 'short' ? TextInputStyle.Short : TextInputStyle.Paragraph)
+                .setPlaceholder(q.placeholder?.substring(0, 100) || 'Enter your response')
+                .setRequired(q.required);
+            
+            modal.addComponents(new ActionRowBuilder().addComponents(input));
+        });
+        
+        await interaction.showModal(modal);
+        
+    } catch (error) {
+        console.error('Error showing appeal modal:', error);
+        await interaction.reply({
+            content: '❌ Failed to load appeal form.',
+            flags: 64
+        }).catch(() => {});
+    }
+}
+
+// Handle appeal submission from modal
+async function handleAppealSubmit(interaction) {
+    const { EmbedBuilder } = require('discord.js');
+    const appealLibrary = require('./utils/appealLibrary');
+    
+    try {
+        await interaction.deferReply({ flags: 64 });
+        
+        const appealCode = interaction.customId.replace('appeal_submit_', '');
+        
+        // Find the appeal
+        const found = await appealLibrary.findAppealByCode(appealCode);
+        if (!found) {
+            return interaction.editReply({
+                content: '❌ Appeal not found or expired.'
+            });
+        }
+        
+        const { appeal, guildId } = found;
+        
+        // Get all answers
+        const answers = [];
+        for (let i = 0; i < 5; i++) {
+            try {
+                const answer = interaction.fields.getTextInputValue(`question_${i}`);
+                if (answer) answers.push(answer);
+            } catch (e) {
+                // Question doesn't exist
+                break;
+            }
+        }
+        
+        // Update appeal with answers
+        appeal.appealReason = answers[0] || 'No reason provided';
+        appeal.appealEvidence = answers[1] || 'None provided';
+        appeal.appealContact = answers[2] || 'Discord DM';
+        appeal.submittedAt = new Date().toISOString();
+        appeal.status = 'under_review';
+        
+        await appealLibrary.saveAppeal(guildId, appealCode, appeal);
+        
+        // Send confirmation to user
+        const confirmEmbed = new EmbedBuilder()
+            .setTitle('✅ Appeal Submitted')
+            .setDescription('Your appeal has been submitted successfully!')
+            .addFields(
+                { name: '🎫 Appeal Code', value: appealCode, inline: true },
+                { name: '⏳ Status', value: 'Under Review', inline: true },
+                { name: '📅 Submitted', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+            )
+            .setColor('#00ff00')
+            .setTimestamp();
+        
+        await interaction.editReply({ embeds: [confirmEmbed] });
+        
+        // Notify staff in review channel
+        try {
+            const guild = await interaction.client.guilds.fetch(guildId);
+            const reviewChannel = guild.channels.cache.find(ch => 
+                ch.name.toLowerCase().includes('appeal') || 
+                ch.name.toLowerCase().includes('mod-log')
+            );
+            
+            if (reviewChannel) {
+                const reviewEmbed = appealLibrary.createAppealEmbed(appeal, interaction.client);
+                await reviewChannel.send({
+                    content: `📋 New appeal submitted by <@${appeal.moderatedUserId}>`,
+                    embeds: [reviewEmbed]
+                });
+            }
+        } catch (e) {
+            console.log('Could not notify staff:', e.message);
+        }
+        
+    } catch (error) {
+        console.error('Error submitting appeal:', error);
+        await interaction.editReply({
+            content: '❌ Failed to submit appeal. Please try again.'
+        }).catch(() => {});
+    }
+}
+
+// Appeal config modal handler
+async function handleAppealConfigModal(interaction) {
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    try {
+        await interaction.deferReply({ flags: 64 });
+        
+        const guildId = interaction.guild.id;
+        const APPEAL_CONFIG_PATH = path.join(process.cwd(), 'data', 'appeal-configs');
+        
+        // Get values from modal
+        const q1Label = interaction.fields.getTextInputValue('q1_label');
+        const q1Placeholder = interaction.fields.getTextInputValue('q1_placeholder') || 'Enter your response';
+        const q2Label = interaction.fields.getTextInputValue('q2_label') || '';
+        const q2Placeholder = interaction.fields.getTextInputValue('q2_placeholder') || 'Enter your response';
+        const q3Label = interaction.fields.getTextInputValue('q3_label') || '';
+        
+        // Load existing config
+        let config;
+        try {
+            const configPath = path.join(APPEAL_CONFIG_PATH, `${guildId}.json`);
+            const data = await fs.readFile(configPath, 'utf8');
+            config = JSON.parse(data);
+        } catch (error) {
+            config = { enabled: true, questions: [], reviewChannel: null, cooldown: 86400000 };
+        }
+        
+        // Update questions
+        config.questions = [
+            {
+                id: 'reason',
+                label: q1Label,
+                placeholder: q1Placeholder,
+                required: true,
+                style: 'paragraph'
+            }
+        ];
+        
+        if (q2Label) {
+            config.questions.push({
+                id: 'evidence',
+                label: q2Label,
+                placeholder: q2Placeholder,
+                required: false,
+                style: 'paragraph'
+            });
+        }
+        
+        if (q3Label) {
+            config.questions.push({
+                id: 'contact',
+                label: q3Label,
+                placeholder: 'Discord DM',
+                required: false,
+                style: 'short'
+            });
+        }
+        
+        // Save config
+        await fs.mkdir(APPEAL_CONFIG_PATH, { recursive: true });
+        const configPath = path.join(APPEAL_CONFIG_PATH, `${guildId}.json`);
+        await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+        
+        await interaction.editReply({
+            content: `✅ Appeal questions updated!\n\n**Questions configured:** ${config.questions.length}\n\nUsers will now see these questions when submitting appeals.`
+        });
+        
+    } catch (error) {
+        console.error('Error updating appeal config:', error);
+        await interaction.editReply({
+            content: '❌ Failed to update appeal configuration.'
+        }).catch(() => {});
+    }
+}
 
 // Ticket creation handler
 async function handleTicketCreation(interaction, category) {

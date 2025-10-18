@@ -112,6 +112,8 @@ module.exports = {
             let dmSent = false;
             if (targetUser && !targetUser.bot) {
                 try {
+                    const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+                    
                     const dmEmbed = new EmbedBuilder()
                         .setTitle('🔨 You have been banned')
                         .setColor(0xFF0000)
@@ -120,11 +122,20 @@ module.exports = {
                             { name: '🆔 Server ID', value: guild.id, inline: true },
                             { name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true },
                             { name: '📝 Reason', value: reason, inline: false },
-                            { name: '📋 Appeal', value: `Use \`/appeal submit appeal_code:${appealCode} server_id:${guild.id}\` if you believe this is unfair`, inline: false }
+                            { name: '📋 How to Appeal', value: `Click the button below to submit an appeal, or use:\n\`/appeal submit appeal_code:${appealCode}\``, inline: false }
                         )
                         .setTimestamp();
+                    
+                    const appealButton = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`appeal_start_${appealCode}`)
+                                .setLabel('Submit Appeal')
+                                .setEmoji('📝')
+                                .setStyle(ButtonStyle.Primary)
+                        );
 
-                    await targetUser.send({ embeds: [dmEmbed] });
+                    await targetUser.send({ embeds: [dmEmbed], components: [appealButton] });
                     dmSent = true;
                 } catch (error) {
                     console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
