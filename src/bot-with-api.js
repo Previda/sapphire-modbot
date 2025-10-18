@@ -477,33 +477,118 @@ async function handleTicketClose(interaction) {
             return interaction.editReply({ content: '❌ This is not a ticket channel!' });
         }
         
-        // Create transcript
+        // Fetch messages for transcript
         const messages = await channel.messages.fetch({ limit: 100 });
-        const transcript = messages.reverse().map(m => 
-            `[${m.createdAt.toLocaleString()}] ${m.author.tag}: ${m.content}`
-        ).join('\n');
+        const sortedMessages = Array.from(messages.values()).reverse();
         
-        // Try to DM transcript to ticket creator
-        const creatorId = channel.topic?.match(/Ticket by .+ \((\d+)\)/)?.[1];
-        if (creatorId) {
+        // Create detailed transcript
+        const transcript = sortedMessages.map(m => {
+            const timestamp = m.createdAt.toLocaleString();
+            const author = m.author.tag;
+            const content = m.content || '[No text content]';
+            const attachments = m.attachments.size > 0 ? `\n  Attachments: ${m.attachments.map(a => a.url).join(', ')}` : '';
+            return `[${timestamp}] ${author}: ${content}${attachments}`;
+        }).join('\n');
+        
+        const transcriptBuffer = Buffer.from(transcript);
+        const fileName = `transcript-${channel.name}-${Date.now()}.txt`;
+        
+        // Extract ticket creator from channel topic or permissions
+        let ticketCreator = null;
+        const topicMatch = channel.topic?.match(/Ticket (?:by|for) (.+?) (?:\((\d+)\)|\\|)/);
+        if (topicMatch && topicMatch[2]) {
             try {
-                const user = await interaction.client.users.fetch(creatorId);
-                await user.send({
-                    content: `📄 Transcript for ticket: ${channel.name}`,
-                    files: [{
-                        attachment: Buffer.from(transcript),
-                        name: `transcript-${channel.name}.txt`
-                    }]
-                });
+                ticketCreator = await interaction.client.users.fetch(topicMatch[2]);
             } catch (e) {
-                console.log('Could not DM transcript to user');
+                console.log('Could not fetch user from topic');
             }
         }
         
-        await interaction.editReply({ content: '✅ Closing ticket in 5 seconds...' });
+        // If not found in topic, check channel permissions
+        if (!ticketCreator) {
+            const permissions = channel.permissionOverwrites.cache;
+            for (const [id, perm] of permissions) {
+                if (id !== interaction.guild.roles.everyone.id && id !== interaction.client.user.id) {
+                    try {
+                        const member = await interaction.guild.members.fetch(id);
+                        if (member && !member.user.bot) {
+                            ticketCreator = member.user;
+                            break;
+                        }
+                    } catch (e) {
+                        // Not a user, might be a role
+                    }
+                }
+            }
+        }
         
+        // Create transcript embed
+        const transcriptEmbed = new EmbedBuilder()
+            .setTitle('🎫 Ticket Closed')
+            .setDescription(`Ticket **${channel.name}** has been closed.`)
+            .addFields(
+                { name: '🔒 Closed By', value: interaction.user.tag, inline: true },
+                { name: '📅 Closed At', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true },
+                { name: '💬 Messages', value: `${sortedMessages.length} messages`, inline: true }
+            )
+            .setColor('#ff0000')
+            .setTimestamp();
+        
+        // Try to DM transcript to ticket creator
+        let dmSent = false;
+        if (ticketCreator) {
+            try {
+                await ticketCreator.send({
+                    content: `📄 Your ticket **${channel.name}** has been closed. Here's the transcript:`,
+                    embeds: [transcriptEmbed],
+                    files: [{
+                        attachment: transcriptBuffer,
+                        name: fileName
+                    }]
+                });
+                dmSent = true;
+                console.log(`✅ Sent transcript to ${ticketCreator.tag}`);
+            } catch (e) {
+                console.log(`❌ Could not DM transcript to ${ticketCreator.tag}: ${e.message}`);
+            }
+        }
+        
+        // Send transcript to logs channel if configured
+        const logsChannel = interaction.guild.channels.cache.find(ch => 
+            ch.name.toLowerCase().includes('ticket-log') || 
+            ch.name.toLowerCase().includes('transcript') ||
+            ch.name.toLowerCase() === 'logs'
+        );
+        
+        if (logsChannel && logsChannel.isTextBased()) {
+            try {
+                await logsChannel.send({
+                    embeds: [transcriptEmbed.addFields(
+                        { name: '👤 Ticket Creator', value: ticketCreator ? ticketCreator.tag : 'Unknown', inline: true },
+                        { name: '📨 DM Sent', value: dmSent ? '✅ Yes' : '❌ No', inline: true }
+                    )],
+                    files: [{
+                        attachment: transcriptBuffer,
+                        name: fileName
+                    }]
+                });
+                console.log(`✅ Sent transcript to ${logsChannel.name}`);
+            } catch (e) {
+                console.log(`❌ Could not send transcript to logs channel: ${e.message}`);
+            }
+        }
+        
+        await interaction.editReply({ 
+            content: `✅ Ticket closing...\n${dmSent ? '📨 Transcript sent to user via DM' : '⚠️ Could not DM user'}\n${logsChannel ? `📋 Transcript saved to ${logsChannel}` : ''}` 
+        });
+        
+        // Delete channel after delay
         setTimeout(async () => {
-            await channel.delete('Ticket closed by staff');
+            try {
+                await channel.delete(`Ticket closed by ${interaction.user.tag}`);
+            } catch (e) {
+                console.log('Could not delete channel:', e.message);
+            }
         }, 5000);
         
     } catch (error) {
