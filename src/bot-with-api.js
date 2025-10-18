@@ -265,10 +265,18 @@ client.on('interactionCreate', async (interaction) => {
                     await handleAppealStart(interaction, appealCode);
                 } catch (error) {
                     console.error('❌ Appeal button error:', error);
-                    await interaction.reply({
-                        content: `❌ Failed to load appeal form: ${error.message}\n\nPlease try: \`/appeal submit appeal_code:${appealCode}\``,
-                        flags: 64
-                    }).catch(() => {});
+                    console.error('Stack:', error.stack);
+                    
+                    const errorMsg = `❌ Failed to load appeal form: ${error.message}\n\nPlease try using the command instead:\n\`/appeal submit appeal_code:${appealCode}\``;
+                    
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.editReply({ content: errorMsg }).catch(e => console.error('Edit reply failed:', e));
+                    } else {
+                        await interaction.reply({
+                            content: errorMsg,
+                            flags: 64
+                        }).catch(e => console.error('Reply failed:', e));
+                    }
                 }
             } else if (interaction.customId.startsWith('appeal_approve_')) {
                 const appealCode = interaction.customId.replace('appeal_approve_', '').replace('reason_', '');
