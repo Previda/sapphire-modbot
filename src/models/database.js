@@ -1,4 +1,12 @@
-const mongoose = require('mongoose');
+// Try to load mongoose, but don't fail if it's not available
+let mongoose;
+try {
+    mongoose = require('mongoose');
+} catch (error) {
+    console.log('⚠️ Mongoose not available - using local storage only');
+    mongoose = null;
+}
+
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -36,6 +44,12 @@ const loadFromLocal = async (collection, docId) => {
 
 const connectDB = async () => {
     try {
+        if (!mongoose) {
+            console.log('📦 Mongoose not available - using local storage');
+            isMongoConnected = false;
+            return;
+        }
+        
         if (process.env.MONGODB_URI) {
             const conn = await mongoose.connect(process.env.MONGODB_URI, {
                 useNewUrlParser: true,
@@ -65,7 +79,7 @@ const initializeDatabase = async () => {
 // Graceful shutdown handler
 process.on('SIGINT', async () => {
     console.log('🛑 Graceful shutdown initiated...');
-    if (isMongoConnected) {
+    if (mongoose && isMongoConnected) {
         await mongoose.connection.close();
         console.log('✅ MongoDB connection closed');
     }
@@ -74,7 +88,7 @@ process.on('SIGINT', async () => {
 module.exports = {
     initializeDatabase,
     connectToMongoDB: connectDB,
-    getConnection: () => mongoose.connection,
+    getConnection: () => mongoose ? mongoose.connection : null,
     isConnected: () => isMongoConnected || true, // Always true for local fallback
     
     // Document operations with local storage fallback
