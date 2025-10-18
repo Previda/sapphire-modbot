@@ -191,7 +191,7 @@ module.exports = {
             await interaction.editReply({ embeds: [embed] });
 
             // Log via webhook system
-            await webhookLogger.logModeration(guild, { id: guild.id, type: 'kick', 
+            await webhookLogger.logModAction(guild.id, 'kick', {
                 targetTag: targetUser.tag,
                 targetId: targetUser.id,
                 moderatorTag: interaction.user.tag,

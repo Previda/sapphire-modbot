@@ -171,12 +171,13 @@ module.exports = {
             });
 
             // Log the action
-            await webhookLogger.logModeration(guild, {
-                type: 'ban',
-                user: targetUser,
-                moderator: interaction.user,
-                reason: reason,
-                caseId: newCase.caseId
+            await webhookLogger.logModAction(guild.id, 'ban', {
+                targetTag: targetUser.tag,
+                targetId: targetUser.id,
+                moderatorTag: interaction.user.tag,
+                moderatorId: interaction.user.id,
+                caseId: newCase.caseId,
+                reason: reason
             });
 
             // Create success embed
