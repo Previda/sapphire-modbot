@@ -55,8 +55,22 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     try {
         console.log('🚀 Started refreshing application (/) commands...');
 
-        // Get application ID from bot token
-        const clientId = Buffer.from(process.env.DISCORD_TOKEN.split('.')[0], 'base64').toString();
+        // Check if token exists
+        if (!process.env.DISCORD_TOKEN) {
+            console.error('❌ DISCORD_TOKEN not found in environment variables!');
+            process.exit(1);
+        }
+
+        // Get application ID from .env file
+        const clientId = process.env.CLIENT_ID || process.env.APPLICATION_ID;
+        
+        if (!clientId) {
+            console.error('❌ CLIENT_ID or APPLICATION_ID not found in .env file!');
+            console.log('💡 Add CLIENT_ID=your_bot_client_id to your .env file');
+            process.exit(1);
+        }
+
+        console.log(`📱 Using Client ID: ${clientId}`);
 
         // Deploy commands globally (takes up to 1 hour to propagate)
         const data = await rest.put(
