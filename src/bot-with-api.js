@@ -231,6 +231,19 @@ client.on('interactionCreate', async (interaction) => {
             else if (interaction.customId === 'ticket_settings') {
                 await interaction.reply({ content: '⚙️ Use `/setup tickets` to configure ticket settings.', ephemeral: true });
             }
+            // Ticket control buttons (in ticket channels)
+            else if (interaction.customId === 'ticket_close_button') {
+                console.log('🔒 Closing ticket via button');
+                await handleTicketClose(interaction);
+            }
+            else if (interaction.customId === 'ticket_transcript_button') {
+                console.log('📄 Generating transcript via button');
+                await handleTicketTranscript(interaction);
+            }
+            else if (interaction.customId === 'ticket_claim_button') {
+                console.log('✋ Claiming ticket');
+                await handleTicketClaim(interaction);
+            }
             // Old ticket system buttons
             else if (interaction.customId.startsWith('ticket_claim_')) {
                 const ticketId = interaction.customId.replace('ticket_claim_', '');
@@ -341,10 +354,32 @@ async function handleTicketCreation(interaction, category) {
             .setColor('#3742FA')
             .setTimestamp();
         
+        // Create control buttons for ticket
+        const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+        const controlRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('ticket_close_button')
+                    .setLabel('Close Ticket')
+                    .setEmoji('🔒')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('ticket_transcript_button')
+                    .setLabel('Transcript')
+                    .setEmoji('📄')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('ticket_claim_button')
+                    .setLabel('Claim')
+                    .setEmoji('✋')
+                    .setStyle(ButtonStyle.Primary)
+            );
+        
         const staffMention = staffRoles.size > 0 ? staffRoles.map(r => r.toString()).join(' ') : '';
         await ticketChannel.send({
             content: `${user} ${staffMention}`,
-            embeds: [welcomeEmbed]
+            embeds: [welcomeEmbed],
+            components: [controlRow]
         });
         
         await interaction.editReply({
@@ -503,6 +538,45 @@ async function handleTicketTranscript(interaction) {
     }
 }
 
+// Ticket claim handler
+async function handleTicketClaim(interaction) {
+    const { EmbedBuilder } = require('discord.js');
+    
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const channel = interaction.channel;
+        const claimer = interaction.user;
+        
+        // Update channel topic to show claimer
+        const currentTopic = channel.topic || '';
+        const newTopic = currentTopic.includes('Claimed by') 
+            ? currentTopic 
+            : `${currentTopic} | Claimed by: ${claimer.tag}`;
+        
+        await channel.setTopic(newTopic);
+        
+        // Send claim message
+        const claimEmbed = new EmbedBuilder()
+            .setTitle('✋ Ticket Claimed')
+            .setDescription(`${claimer} has claimed this ticket and will be assisting you.`)
+            .setColor('#00ff00')
+            .setTimestamp();
+        
+        await channel.send({ embeds: [claimEmbed] });
+        
+        await interaction.editReply({
+            content: '✅ You have claimed this ticket!'
+        });
+        
+    } catch (error) {
+        console.error('Error claiming ticket:', error);
+        await interaction.editReply({
+            content: '❌ Failed to claim ticket.'
+        }).catch(() => {});
+    }
+}
+
 // Ticket create modal submit handler
 async function handleTicketCreateSubmit(interaction) {
     const { EmbedBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
@@ -579,10 +653,32 @@ async function handleTicketCreateSubmit(interaction) {
             .setColor('#3742FA')
             .setTimestamp();
         
+        // Create control buttons
+        const { ButtonBuilder, ButtonStyle, ActionRowBuilder: AR } = require('discord.js');
+        const controlRow = new AR()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('ticket_close_button')
+                    .setLabel('Close Ticket')
+                    .setEmoji('🔒')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('ticket_transcript_button')
+                    .setLabel('Transcript')
+                    .setEmoji('📄')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('ticket_claim_button')
+                    .setLabel('Claim')
+                    .setEmoji('✋')
+                    .setStyle(ButtonStyle.Primary)
+            );
+        
         const staffMention = staffRoles.size > 0 ? staffRoles.map(r => r.toString()).join(' ') : '';
         await ticketChannel.send({
             content: `${user} ${staffMention}`,
-            embeds: [welcomeEmbed]
+            embeds: [welcomeEmbed],
+            components: [controlRow]
         });
         
         await interaction.editReply({
