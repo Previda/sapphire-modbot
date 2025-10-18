@@ -383,28 +383,44 @@ async function handleAppealSubmit(interaction) {
         await interaction.deferReply({ flags: 64 });
         
         const appealCode = interaction.customId.replace('appeal_submit_', '');
+        console.log(`📝 Processing appeal submission for code: ${appealCode}`);
         
         // Find the appeal
         const found = await appealLibrary.findAppealByCode(appealCode);
         if (!found) {
+            console.log(`❌ Appeal not found: ${appealCode}`);
             return interaction.editReply({
                 content: '❌ Appeal not found or expired.'
             });
         }
         
         const { appeal, guildId } = found;
+        console.log(`✅ Found appeal for guild: ${guildId}, status: ${appeal.status}`);
+        
+        // Check if already submitted
+        if (appeal.status !== 'pending') {
+            console.log(`⚠️ Appeal already submitted or reviewed: ${appeal.status}`);
+            return interaction.editReply({
+                content: `❌ This appeal has already been ${appeal.status}. Current status: **${appeal.status}**`
+            });
+        }
         
         // Get all answers
         const answers = [];
         for (let i = 0; i < 5; i++) {
             try {
                 const answer = interaction.fields.getTextInputValue(`question_${i}`);
-                if (answer) answers.push(answer);
+                if (answer) {
+                    answers.push(answer);
+                    console.log(`📝 Answer ${i + 1}: ${answer.substring(0, 50)}...`);
+                }
             } catch (e) {
                 // Question doesn't exist
                 break;
             }
         }
+        
+        console.log(`📊 Total answers received: ${answers.length}`);
         
         // Update appeal with answers
         appeal.appealReason = answers[0] || 'No reason provided';
@@ -414,6 +430,7 @@ async function handleAppealSubmit(interaction) {
         appeal.status = 'under_review';
         
         await appealLibrary.saveAppeal(guildId, appealCode, appeal);
+        console.log(`✅ Appeal saved successfully`);
         
         // Send confirmation to user
         const confirmEmbed = new EmbedBuilder()
@@ -428,6 +445,7 @@ async function handleAppealSubmit(interaction) {
             .setTimestamp();
         
         await interaction.editReply({ embeds: [confirmEmbed] });
+        console.log(`✅ Confirmation sent to user`);
         
         // Notify staff in review channel
         try {
@@ -443,16 +461,25 @@ async function handleAppealSubmit(interaction) {
                     content: `📋 New appeal submitted by <@${appeal.moderatedUserId}>`,
                     embeds: [reviewEmbed]
                 });
+                console.log(`✅ Staff notified in ${reviewChannel.name}`);
+            } else {
+                console.log(`⚠️ No review channel found`);
             }
         } catch (e) {
             console.log('Could not notify staff:', e.message);
         }
         
     } catch (error) {
-        console.error('Error submitting appeal:', error);
-        await interaction.editReply({
-            content: '❌ Failed to submit appeal. Please try again.'
-        }).catch(() => {});
+        console.error('❌ Error submitting appeal:', error);
+        console.error('Stack trace:', error.stack);
+        
+        const errorMsg = interaction.deferred || interaction.replied 
+            ? 'editReply' 
+            : 'reply';
+            
+        await interaction[errorMsg]({
+            content: `❌ Failed to submit appeal: ${error.message}\n\nPlease contact a server administrator.`
+        }).catch(e => console.error('Failed to send error message:', e));
     }
 }
 
