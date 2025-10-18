@@ -194,15 +194,38 @@ client.on('interactionCreate', async (interaction) => {
             if (interaction.customId === 'verify_button') {
                 await verification.handleVerificationButton(interaction);
             } 
-            // Ticket panel buttons
+            // Ticket panel buttons (from /panel command)
             else if (interaction.customId.startsWith('create_ticket_')) {
                 const category = interaction.customId.replace('create_ticket_', '');
                 await handleTicketCreation(interaction, category);
             }
-            // Old ticket system buttons
+            // Ticket management buttons (from /manage menu)
+            else if (interaction.customId === 'ticket_list') {
+                await handleTicketList(interaction);
+            }
             else if (interaction.customId === 'ticket_create') {
-                await advancedTickets.createTicket(interaction);
-            } else if (interaction.customId.startsWith('ticket_claim_')) {
+                await handleTicketCreateModal(interaction);
+            }
+            else if (interaction.customId === 'ticket_close_menu') {
+                await handleTicketClose(interaction);
+            }
+            else if (interaction.customId === 'ticket_add_user') {
+                await interaction.reply({ content: '👤 Use `/manage add @user` to add users to tickets.', ephemeral: true });
+            }
+            else if (interaction.customId === 'ticket_remove_user') {
+                await interaction.reply({ content: '👤 Use `/manage remove @user` to remove users from tickets.', ephemeral: true });
+            }
+            else if (interaction.customId === 'ticket_slowmode') {
+                await interaction.reply({ content: '⏱️ Use `/slowmode duration:10s` to set slowmode.', ephemeral: true });
+            }
+            else if (interaction.customId === 'ticket_transcript') {
+                await handleTicketTranscript(interaction);
+            }
+            else if (interaction.customId === 'ticket_settings') {
+                await interaction.reply({ content: '⚙️ Use `/setup tickets` to configure ticket settings.', ephemeral: true });
+            }
+            // Old ticket system buttons
+            else if (interaction.customId.startsWith('ticket_claim_')) {
                 const ticketId = interaction.customId.replace('ticket_claim_', '');
                 await advancedTickets.claimTicket(interaction, ticketId);
             } else if (interaction.customId.startsWith('ticket_pause_')) {
@@ -226,6 +249,9 @@ client.on('interactionCreate', async (interaction) => {
             // Handle modal submissions
             if (interaction.customId === 'appeal_modal') {
                 await appeals.handleAppealSubmission(interaction);
+            }
+            else if (interaction.customId === 'ticket_create_modal') {
+                await handleTicketCreateSubmit(interaction);
             }
         } else if (interaction.isStringSelectMenu()) {
             // Handle select menu interactions
@@ -322,6 +348,244 @@ async function handleTicketCreation(interaction, category) {
         console.error('Error creating ticket:', error);
         await interaction.editReply({
             content: '❌ Failed to create ticket. Please contact an administrator.'
+        }).catch(() => {});
+    }
+}
+
+// Ticket list handler
+async function handleTicketList(interaction) {
+    const { EmbedBuilder } = require('discord.js');
+    
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        // Find all ticket channels
+        const ticketChannels = interaction.guild.channels.cache.filter(c => 
+            c.name.match(/^(general|technical|report|billing|staff)-/) && c.isTextBased()
+        );
+        
+        if (ticketChannels.size === 0) {
+            return interaction.editReply({ content: '📋 No open tickets found.' });
+        }
+        
+        const embed = new EmbedBuilder()
+            .setTitle('📋 Open Tickets')
+            .setColor('#3742FA')
+            .setDescription(`Found ${ticketChannels.size} open ticket(s)`)
+            .setTimestamp();
+        
+        ticketChannels.forEach(channel => {
+            const topic = channel.topic || 'No topic';
+            embed.addFields({
+                name: `🎫 ${channel.name}`,
+                value: `Channel: ${channel}\nTopic: ${topic}`,
+                inline: false
+            });
+        });
+        
+        await interaction.editReply({ embeds: [embed] });
+        
+    } catch (error) {
+        console.error('Error listing tickets:', error);
+        await interaction.editReply({ content: '❌ Failed to list tickets.' }).catch(() => {});
+    }
+}
+
+// Ticket create modal handler
+async function handleTicketCreateModal(interaction) {
+    const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    
+    const modal = new ModalBuilder()
+        .setCustomId('ticket_create_modal')
+        .setTitle('Create Ticket for User');
+    
+    const userInput = new TextInputBuilder()
+        .setCustomId('ticket_user_id')
+        .setLabel('User ID or @mention')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('123456789 or @username')
+        .setRequired(true);
+    
+    const reasonInput = new TextInputBuilder()
+        .setCustomId('ticket_reason')
+        .setLabel('Reason')
+        .setStyle(TextInputStyle.Paragraph)
+        .setPlaceholder('Why is this ticket being created?')
+        .setRequired(true);
+    
+    modal.addComponents(
+        new ActionRowBuilder().addComponents(userInput),
+        new ActionRowBuilder().addComponents(reasonInput)
+    );
+    
+    await interaction.showModal(modal);
+}
+
+// Ticket close handler
+async function handleTicketClose(interaction) {
+    const { EmbedBuilder } = require('discord.js');
+    
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const channel = interaction.channel;
+        
+        // Check if this is a ticket channel
+        if (!channel.name.match(/^(general|technical|report|billing|staff)-/)) {
+            return interaction.editReply({ content: '❌ This is not a ticket channel!' });
+        }
+        
+        // Create transcript
+        const messages = await channel.messages.fetch({ limit: 100 });
+        const transcript = messages.reverse().map(m => 
+            `[${m.createdAt.toLocaleString()}] ${m.author.tag}: ${m.content}`
+        ).join('\n');
+        
+        // Try to DM transcript to ticket creator
+        const creatorId = channel.topic?.match(/Ticket by .+ \((\d+)\)/)?.[1];
+        if (creatorId) {
+            try {
+                const user = await interaction.client.users.fetch(creatorId);
+                await user.send({
+                    content: `📄 Transcript for ticket: ${channel.name}`,
+                    files: [{
+                        attachment: Buffer.from(transcript),
+                        name: `transcript-${channel.name}.txt`
+                    }]
+                });
+            } catch (e) {
+                console.log('Could not DM transcript to user');
+            }
+        }
+        
+        await interaction.editReply({ content: '✅ Closing ticket in 5 seconds...' });
+        
+        setTimeout(async () => {
+            await channel.delete('Ticket closed by staff');
+        }, 5000);
+        
+    } catch (error) {
+        console.error('Error closing ticket:', error);
+        await interaction.editReply({ content: '❌ Failed to close ticket.' }).catch(() => {});
+    }
+}
+
+// Ticket transcript handler
+async function handleTicketTranscript(interaction) {
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const channel = interaction.channel;
+        const messages = await channel.messages.fetch({ limit: 100 });
+        
+        const transcript = messages.reverse().map(m => 
+            `[${m.createdAt.toLocaleString()}] ${m.author.tag}: ${m.content}`
+        ).join('\n');
+        
+        await interaction.editReply({
+            content: '📄 Ticket transcript generated!',
+            files: [{
+                attachment: Buffer.from(transcript),
+                name: `transcript-${channel.name}.txt`
+            }]
+        });
+        
+    } catch (error) {
+        console.error('Error generating transcript:', error);
+        await interaction.editReply({ content: '❌ Failed to generate transcript.' }).catch(() => {});
+    }
+}
+
+// Ticket create modal submit handler
+async function handleTicketCreateSubmit(interaction) {
+    const { EmbedBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
+    
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const userIdInput = interaction.fields.getTextInputValue('ticket_user_id');
+        const reason = interaction.fields.getTextInputValue('ticket_reason');
+        
+        // Extract user ID from input (handle @mentions or plain IDs)
+        const userId = userIdInput.replace(/[<@!>]/g, '');
+        
+        // Fetch user
+        const user = await interaction.client.users.fetch(userId).catch(() => null);
+        if (!user) {
+            return interaction.editReply({ content: '❌ User not found!' });
+        }
+        
+        const guild = interaction.guild;
+        const ticketID = `ticket-${Date.now()}`;
+        const channelName = `staff-${user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        
+        // Create ticket channel
+        const ticketChannel = await guild.channels.create({
+            name: channelName,
+            type: ChannelType.GuildText,
+            topic: `Ticket for ${user.tag} (${user.id}) | Reason: ${reason} | Created by: ${interaction.user.tag}`,
+            parent: guild.channels.cache.find(c => c.name.toLowerCase().includes('ticket') && c.type === ChannelType.GuildCategory)?.id,
+            permissionOverwrites: [
+                {
+                    id: guild.roles.everyone,
+                    deny: [PermissionFlagsBits.ViewChannel]
+                },
+                {
+                    id: user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory]
+                },
+                {
+                    id: interaction.user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels]
+                },
+                {
+                    id: client.user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels]
+                }
+            ]
+        });
+        
+        // Find and add staff roles
+        const staffRoles = guild.roles.cache.filter(role => 
+            ['staff', 'mod', 'moderator', 'admin', 'administrator', 'support'].some(name => 
+                role.name.toLowerCase().includes(name)
+            )
+        );
+        
+        for (const role of staffRoles.values()) {
+            await ticketChannel.permissionOverwrites.create(role, {
+                ViewChannel: true,
+                SendMessages: true,
+                ReadMessageHistory: true
+            });
+        }
+        
+        // Create welcome embed
+        const welcomeEmbed = new EmbedBuilder()
+            .setTitle('🎫 Staff-Created Support Ticket')
+            .setDescription(`Hello ${user}! A ticket has been created for you by ${interaction.user}.\n\n**Reason:** ${reason}`)
+            .addFields(
+                { name: '🆔 Ticket ID', value: ticketID, inline: true },
+                { name: '👤 Created By', value: interaction.user.tag, inline: true },
+                { name: '⏰ Created', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+            )
+            .setColor('#3742FA')
+            .setTimestamp();
+        
+        const staffMention = staffRoles.size > 0 ? staffRoles.map(r => r.toString()).join(' ') : '';
+        await ticketChannel.send({
+            content: `${user} ${staffMention}`,
+            embeds: [welcomeEmbed]
+        });
+        
+        await interaction.editReply({
+            content: `✅ Ticket created for ${user.tag}! Check ${ticketChannel}`
+        });
+        
+    } catch (error) {
+        console.error('Error creating ticket from modal:', error);
+        await interaction.editReply({
+            content: '❌ Failed to create ticket. Please check the user ID and try again.'
         }).catch(() => {});
     }
 }
