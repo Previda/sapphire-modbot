@@ -132,11 +132,9 @@ client.on('interactionCreate', async (interaction) => {
             } else if (interaction.commandName === 'appeal' && interaction.options.getSubcommand() === 'setup') {
                 await appeals.setupAppealsSystem(interaction);
             } else if (['play', 'pause', 'resume', 'skip', 'stop', 'queue', 'nowplaying', 'volume', 'loop', 'shuffle'].includes(interaction.commandName)) {
-                // Music commands temporarily disabled
-                await interaction.reply({
-                    content: '🎵 Music commands are temporarily disabled while we fix some issues. They will be back soon!',
-                    ephemeral: true
-                });
+                // Music commands - show helpful message
+                const music = require('./systems/music-simple');
+                await music[interaction.commandName](interaction);
             } else {
                 // Handle regular commands
                 await handleCommand(interaction);
