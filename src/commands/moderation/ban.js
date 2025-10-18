@@ -181,8 +181,25 @@ module.exports = {
         } catch (error) {
             console.error('Ban command error:', error);
             await dashboardLogger.logError(error, interaction);
+            
+            let errorMessage = '❌ Failed to ban the user.\n\n';
+            
+            if (error.code === 50013) {
+                errorMessage += '**Missing Permissions**: I need the "Ban Members" permission.\n';
+                errorMessage += '**Fix**: Go to Server Settings → Roles → My Role → Enable "Ban Members"';
+            } else if (error.code === 50001) {
+                errorMessage += '**Missing Access**: I cannot access this user.\n';
+                errorMessage += '**Fix**: Make sure my role is higher than the target user\'s role.';
+            } else if (error.message.includes('hierarchy')) {
+                errorMessage += '**Role Hierarchy Issue**: My role is not high enough.\n';
+                errorMessage += '**Fix**: Move my role above the target user\'s highest role in Server Settings → Roles.';
+            } else {
+                errorMessage += `**Error**: ${error.message}\n`;
+                errorMessage += '**Tip**: Use \`/fix-permissions\` to check bot permissions.';
+            }
+            
             await interaction.editReply({ 
-                content: '❌ Failed to ban the user. Please check my permissions.'
+                content: errorMessage
             });
         }
     },
