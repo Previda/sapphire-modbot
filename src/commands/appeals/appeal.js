@@ -19,7 +19,7 @@ module.exports = {
                 .addStringOption(option =>
                     option
                         .setName('server_id')
-                        .setDescription('Server ID (required for DMs)')
+                        .setDescription('Server ID (optional - auto-detected from appeal code)')
                         .setRequired(false)
                 )
         )
@@ -36,7 +36,7 @@ module.exports = {
                 .addStringOption(option =>
                     option
                         .setName('server_id')
-                        .setDescription('Server ID (required for DMs)')
+                        .setDescription('Server ID (optional - auto-detected from appeal code)')
                         .setRequired(false)
                 )
         )
@@ -145,7 +145,7 @@ async function handleSubmitAppeal(interaction) {
         });
     }
     
-    // Determine guild ID (from current guild or provided server_id for DMs)
+    // Determine guild ID (from current guild, provided server_id, or auto-find from appeal code)
     let guildId;
     let guild;
     
@@ -169,10 +169,24 @@ async function handleSubmitAppeal(interaction) {
             });
         }
     } else {
-        return interaction.reply({
-            content: '❌ When using appeals in DMs, please provide the server_id parameter.\nExample: `/appeal submit appeal_code:ABC12345 server_id:123456789`',
-            flags: 64
-        });
+        // Auto-retrieve server ID from appeal code
+        const found = await appealLibrary.findAppealByCode(appealCode);
+        if (!found) {
+            return interaction.reply({
+                content: '❌ Appeal code not found. Please check your code and try again.',
+                flags: 64
+            });
+        }
+        
+        guildId = found.guildId;
+        try {
+            guild = await interaction.client.guilds.fetch(guildId);
+        } catch (error) {
+            return interaction.reply({
+                content: '❌ Could not find the server for this appeal. The bot may have been removed from the server.',
+                flags: 64
+            });
+        }
     }
     
     // Validate appeal
@@ -238,11 +252,16 @@ async function handleAppealStatus(interaction) {
     
     let guildId = interaction.guild?.id || serverIdRaw;
     
+    // Auto-retrieve server ID if not provided
     if (!guildId) {
-        return interaction.reply({
-            content: '❌ Please provide server_id when using this command in DMs.',
-            flags: 64
-        });
+        const found = await appealLibrary.findAppealByCode(appealCode);
+        if (!found) {
+            return interaction.reply({
+                content: '❌ Appeal code not found. Please check your code and try again.',
+                flags: 64
+            });
+        }
+        guildId = found.guildId;
     }
 
     await interaction.deferReply({ flags: 64 });

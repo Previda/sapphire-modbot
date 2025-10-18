@@ -87,6 +87,24 @@ class AppealLibrary {
         }
     }
 
+    // Find appeal by code across all guilds (auto-retrieve server ID)
+    async findAppealByCode(appealCode) {
+        try {
+            const guilds = await fs.readdir(this.appealsPath);
+            
+            for (const guildId of guilds) {
+                const appeal = await this.getAppeal(guildId, appealCode);
+                if (appeal) {
+                    return { appeal, guildId };
+                }
+            }
+            
+            return null;
+        } catch (error) {
+            return null;
+        }
+    }
+
     // Save appeal
     async saveAppeal(guildId, appealCode, appealData) {
         const guildPath = path.join(this.appealsPath, guildId);
