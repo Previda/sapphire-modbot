@@ -5,6 +5,17 @@ const { handleCommand } = require('./handlers/commandHandler');
 const { handleButtonInteraction } = require('./handlers/buttonHandler');
 require('dotenv').config();
 
+// Global error handlers to prevent crashes
+process.on('unhandledRejection', (error) => {
+    console.error('❌ Unhandled promise rejection:', error);
+    console.error('Stack:', error.stack);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught exception:', error);
+    console.error('Stack:', error.stack);
+});
+
 // Initialize Discord client
 const client = new Client({
     intents: [
@@ -1222,6 +1233,19 @@ client.on('guildCreate', async (guild) => {
 
 client.on('guildDelete', async (guild) => {
     console.log(`📤 Left guild: ${guild.name}`);
+});
+
+// Client error handlers
+client.on('error', (error) => {
+    console.error('❌ Discord client error:', error);
+});
+
+client.on('warn', (warning) => {
+    console.warn('⚠️ Discord client warning:', warning);
+});
+
+client.on('shardError', (error) => {
+    console.error('❌ Shard error:', error);
 });
 
 // Login
