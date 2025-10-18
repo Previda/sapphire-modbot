@@ -11,7 +11,7 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
       setTimeout(() => {
         setShow(false);
         setFadeOut(false);
-      }, 1000); // Match animation duration
+      }, 1200); // Smoother fade
     } else if (!isOnline && !isLoading) {
       setShow(true);
     }
@@ -21,13 +21,13 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-1000 ${
-        fadeOut ? 'opacity-0 backdrop-blur-0' : 'opacity-100 backdrop-blur-xl'
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-1000 ease-out ${
+        fadeOut ? 'opacity-0 backdrop-blur-0' : 'opacity-100 backdrop-blur-2xl'
       }`}
       style={{
         background: fadeOut 
           ? 'transparent'
-          : 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+          : 'linear-gradient(135deg, rgba(88, 28, 135, 0.95) 0%, rgba(29, 78, 216, 0.95) 50%, rgba(15, 23, 42, 0.98) 100%)',
       }}
     >
       {/* Animated Background Particles */}
@@ -95,55 +95,112 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
             </div>
           </div>
         ) : (
-          // Offline State
-          <div className="space-y-8">
+          // Offline State - Ultra Modern Design
+          <div className="space-y-10 max-w-2xl mx-auto px-6">
+            {/* Animated Icon Container */}
             <div className="relative">
-              {/* Pulsing Error Ring */}
-              <div className="w-32 h-32 mx-auto">
-                <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping"></div>
-                <div className="absolute inset-0 rounded-full bg-red-500/30 border-4 border-red-500/50"></div>
+              {/* Outer Glow Rings */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-64 h-64 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-ping" style={{ animationDuration: '3s' }}></div>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-48 h-48 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 animate-ping" style={{ animationDuration: '2s' }}></div>
               </div>
               
-              {/* Center Icon */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-6xl animate-pulse-slow">⚠️</div>
+              {/* Main Icon Circle */}
+              <div className="relative w-40 h-40 mx-auto">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-500/40 to-orange-500/40 backdrop-blur-xl border-2 border-red-400/50 shadow-2xl"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-7xl animate-pulse-slow filter drop-shadow-2xl">⚠️</div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4 max-w-md mx-auto">
-              <h2 className="text-4xl font-bold text-white">
-                System Offline
+            {/* Title Section */}
+            <div className="text-center space-y-3">
+              <h2 className="text-5xl font-black text-white tracking-tight">
+                System <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">Offline</span>
               </h2>
-              <p className="text-red-300 text-lg">
+              <p className="text-xl text-gray-300 font-medium">
                 Unable to connect to Pi Bot
               </p>
-              <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 border border-red-500/30">
-                <p className="text-gray-300 text-sm mb-4">
-                  The bot server is currently unavailable. Please check:
-                </p>
-                <ul className="text-left text-gray-400 text-sm space-y-2">
-                  <li className="flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    <span>Pi bot is running (pm2 status)</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    <span>ngrok tunnel is active</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    <span>Network connection is stable</span>
-                  </li>
-                </ul>
-              </div>
+            </div>
+
+            {/* Info Card */}
+            <div className="relative group">
+              {/* Glow Effect */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition duration-500"></div>
               
+              {/* Card Content */}
+              <div className="relative bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/10">
+                <div className="flex items-start space-x-4 mb-6">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-2xl flex items-center justify-center border border-red-400/30">
+                    <span className="text-2xl">🔍</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-2">Troubleshooting Steps</h3>
+                    <p className="text-sm text-gray-400">The bot server is currently unavailable</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  {[
+                    { icon: '🤖', text: 'Pi bot is running', cmd: 'pm2 status' },
+                    { icon: '🌐', text: 'ngrok tunnel is active', cmd: 'screen -r ngrok' },
+                    { icon: '📡', text: 'Network connection is stable', cmd: 'ping 8.8.8.8' }
+                  ].map((item, i) => (
+                    <div 
+                      key={i}
+                      className="flex items-center space-x-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 group/item"
+                    >
+                      <span className="text-2xl group-hover/item:scale-110 transition-transform duration-300">{item.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-white font-medium text-sm">{item.text}</p>
+                        <code className="text-xs text-gray-500 font-mono">{item.cmd}</code>
+                      </div>
+                      <div className="w-2 h-2 rounded-full bg-red-400 group-hover/item:bg-orange-400 transition-colors"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => window.location.reload()}
-                className="mt-4 px-8 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold rounded-xl hover:from-red-700 hover:to-pink-700 transition-all transform hover:scale-105 active:scale-95"
+                className="group relative px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl hover:shadow-red-500/50"
               >
-                🔄 Retry Connection
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span className="relative flex items-center justify-center space-x-2">
+                  <span className="text-xl group-hover:rotate-180 transition-transform duration-500">🔄</span>
+                  <span>Retry Connection</span>
+                </span>
               </button>
+              
+              <a
+                href="/status"
+                className="group relative px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-xl"
+              >
+                <span className="flex items-center justify-center space-x-2">
+                  <span className="text-xl">📊</span>
+                  <span>View Status Page</span>
+                </span>
+              </a>
             </div>
+
+            {/* Help Text */}
+            <p className="text-center text-sm text-gray-500">
+              Need help? Check the{' '}
+              <a href="/faq" className="text-purple-400 hover:text-purple-300 underline transition-colors">
+                FAQ
+              </a>
+              {' '}or run{' '}
+              <code className="px-2 py-1 bg-white/10 rounded text-purple-400 font-mono text-xs">
+                npm install && pm2 restart discord-bot
+              </code>
+              {' '}on your Pi
+            </p>
           </div>
         )}
       </div>
