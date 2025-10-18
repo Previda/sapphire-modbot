@@ -118,6 +118,7 @@ module.exports = {
 
             // Try to DM user before banning
             let dmSent = false;
+            let dmFailReason = '';
             if (targetUser && !targetUser.bot) {
                 try {
                     const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
@@ -161,6 +162,11 @@ module.exports = {
                     dmSent = true;
                 } catch (error) {
                     console.log(`Could not DM user ${targetUser.tag}: ${error.message}`);
+                    if (error.code === 50007) {
+                        dmFailReason = 'User has DMs disabled or doesn\'t share a server with the bot';
+                    } else {
+                        dmFailReason = error.message;
+                    }
                 }
             }
 
@@ -194,9 +200,19 @@ module.exports = {
                 .setTimestamp();
 
             if (dmSent) {
-                embed.setFooter({ text: 'User was notified via DM' });
+                embed.setFooter({ text: '✅ User was notified via DM' });
+                if (appealsEnabled && appealCode) {
+                    embed.addFields({ name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true });
+                }
             } else {
-                embed.setFooter({ text: 'User could not be notified' });
+                embed.setFooter({ text: `❌ Could not DM user: ${dmFailReason || 'Unknown reason'}` });
+                if (appealsEnabled && appealCode) {
+                    embed.addFields({ 
+                        name: '⚠️ Appeal Info', 
+                        value: `User has DMs disabled. Appeal code: \`${appealCode}\`\nThey can appeal using: \`/appeal submit appeal_code:${appealCode}\``, 
+                        inline: false 
+                    });
+                }
             }
 
             await interaction.editReply({ embeds: [embed] });
