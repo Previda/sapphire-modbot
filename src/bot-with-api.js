@@ -1,5 +1,7 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 const { handleCommand } = require('./handlers/commandHandler');
 const { handleButtonInteraction } = require('./handlers/buttonHandler');
 require('dotenv').config();
@@ -14,6 +16,39 @@ const client = new Client({
         GatewayIntentBits.GuildModeration
     ]
 });
+
+// Load all commands
+client.commands = new Collection();
+
+function loadCommands(dir) {
+    const files = fs.readdirSync(dir);
+    
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        
+        if (stat.isDirectory()) {
+            loadCommands(filePath);
+        } else if (file.endsWith('.js')) {
+            try {
+                const command = require(filePath);
+                if (command.data && command.execute) {
+                    client.commands.set(command.data.name, command);
+                    console.log(`✅ Loaded command: ${command.data.name}`);
+                }
+            } catch (error) {
+                console.error(`❌ Error loading ${file}:`, error.message);
+            }
+        }
+    }
+}
+
+// Load all commands from commands directory
+const commandsPath = path.join(__dirname, 'commands');
+if (fs.existsSync(commandsPath)) {
+    loadCommands(commandsPath);
+    console.log(`📋 Loaded ${client.commands.size} commands`);
+}
 
 // Bot configuration
 const config = {
@@ -121,8 +156,27 @@ const automod = require('./systems/automod');
 client.on('interactionCreate', async (interaction) => {
     try {
         if (interaction.isChatInputCommand()) {
-            // Handle special commands
-            if (interaction.commandName === 'verify') {
+            const command = client.commands.get(interaction.commandName);
+            
+            // If command file exists, execute it
+            if (command) {
+                try {
+                    await command.execute(interaction);
+                } catch (error) {
+                    console.error(`Error executing ${interaction.commandName}:`, error);
+                    const reply = {
+                        content: '❌ There was an error executing this command!',
+                        ephemeral: true
+                    };
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.followUp(reply);
+                    } else {
+                        await interaction.reply(reply);
+                    }
+                }
+            }
+            // Handle special system commands
+            else if (interaction.commandName === 'verify') {
                 await verification.setupVerification(interaction);
             } else if (interaction.commandName === 'ticket') {
                 const subcommand = interaction.options.getSubcommand();
@@ -136,7 +190,7 @@ client.on('interactionCreate', async (interaction) => {
                 const music = require('./systems/music-simple');
                 await music[interaction.commandName](interaction);
             } else {
-                // Handle regular commands
+                // Fallback to command handler
                 await handleCommand(interaction);
             }
             
