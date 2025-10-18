@@ -191,22 +191,28 @@ client.on('interactionCreate', async (interaction) => {
             
         } else if (interaction.isButton()) {
             // Handle button interactions
+            console.log(`🔘 Button clicked: ${interaction.customId} by ${interaction.user.tag}`);
+            
             if (interaction.customId === 'verify_button') {
                 await verification.handleVerificationButton(interaction);
             } 
             // Ticket panel buttons (from /panel command)
             else if (interaction.customId.startsWith('create_ticket_')) {
                 const category = interaction.customId.replace('create_ticket_', '');
+                console.log(`🎫 Creating ticket for category: ${category}`);
                 await handleTicketCreation(interaction, category);
             }
             // Ticket management buttons (from /manage menu)
             else if (interaction.customId === 'ticket_list') {
+                console.log('📋 Listing tickets');
                 await handleTicketList(interaction);
             }
             else if (interaction.customId === 'ticket_create') {
+                console.log('➕ Opening ticket creation modal');
                 await handleTicketCreateModal(interaction);
             }
             else if (interaction.customId === 'ticket_close_menu') {
+                console.log('🔒 Closing ticket');
                 await handleTicketClose(interaction);
             }
             else if (interaction.customId === 'ticket_add_user') {
@@ -219,6 +225,7 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.reply({ content: '⏱️ Use `/slowmode duration:10s` to set slowmode.', ephemeral: true });
             }
             else if (interaction.customId === 'ticket_transcript') {
+                console.log('📄 Generating transcript');
                 await handleTicketTranscript(interaction);
             }
             else if (interaction.customId === 'ticket_settings') {
