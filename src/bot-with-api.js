@@ -1,5 +1,4 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const { handleCommand } = require('./handlers/commandHandler');
@@ -53,8 +52,7 @@ if (fs.existsSync(commandsPath)) {
 // Bot configuration
 const config = {
     token: process.env.DISCORD_BOT_TOKEN,
-    clientId: process.env.DISCORD_CLIENT_ID || '1358527215020544222',
-    apiUrl: process.env.API_URL || 'http://localhost:3004'
+    clientId: process.env.DISCORD_CLIENT_ID || '1358527215020544222'
 };
 
 // All 60 commands
@@ -135,12 +133,7 @@ client.once('clientReady', async (c) => {
     console.log(`✅ Discord bot online! Logged in as ${c.user.tag}`);
     console.log(`🏰 Serving ${c.guilds.cache.size} guilds`);
     console.log(`👥 Total users: ${c.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)}`);
-    
-    // Send initial data to API
-    await updateAPIData();
-    
-    // Update API every 30 seconds
-    setInterval(updateAPIData, 30000);
+    console.log(`🎯 Bot is running in standalone mode (no website required)`);
 });
 
 // Import systems
@@ -194,13 +187,7 @@ client.on('interactionCreate', async (interaction) => {
                 await handleCommand(interaction);
             }
             
-            // Log command usage to API
-            await axios.post(`${config.apiUrl}/api/internal/add-log`, {
-                action: 'Command executed',
-                user: interaction.user.tag,
-                details: `Used /${interaction.commandName}`,
-                type: 'command'
-            }).catch(() => {});
+            // Command executed successfully (no API logging needed)
             
         } else if (interaction.isButton()) {
             // Handle button interactions
@@ -258,59 +245,13 @@ client.on('messageCreate', async (message) => {
     }
 });
 
-// Update API with real Discord data
-async function updateAPIData() {
-    try {
-        // Get guild data
-        const guilds = client.guilds.cache.map(guild => ({
-            id: guild.id,
-            name: guild.name,
-            icon: guild.iconURL(),
-            memberCount: guild.memberCount,
-            onlineMembers: guild.members.cache.filter(m => m.presence?.status !== 'offline').size,
-            boostLevel: guild.premiumTier,
-            boostCount: guild.premiumSubscriptionCount || 0,
-            isOwner: guild.ownerId === client.user.id,
-            canManage: guild.members.me?.permissions.has('Administrator') || false
-        }));
-        
-        // Send to API
-        await axios.post(`${config.apiUrl}/api/internal/update-guilds`, { guilds }).catch(() => {});
-        
-        // Send commands to API
-        await axios.post(`${config.apiUrl}/api/internal/update-commands`, { commands: allCommands }).catch(() => {});
-        
-        console.log(`📊 Updated API with ${guilds.length} guilds and ${allCommands.length} commands`);
-    } catch (error) {
-        console.error('Failed to update API:', error.message);
-    }
-}
-
 // Guild events
 client.on('guildCreate', async (guild) => {
-    console.log(`📥 Joined guild: ${guild.name}`);
-    await updateAPIData();
-    
-    // Log to API
-    await axios.post(`${config.apiUrl}/api/internal/add-log`, {
-        action: 'Guild joined',
-        user: 'System',
-        details: `Bot joined ${guild.name}`,
-        type: 'system'
-    }).catch(() => {});
+    console.log(`📥 Joined guild: ${guild.name} (${guild.memberCount} members)`);
 });
 
 client.on('guildDelete', async (guild) => {
     console.log(`📤 Left guild: ${guild.name}`);
-    await updateAPIData();
-    
-    // Log to API
-    await axios.post(`${config.apiUrl}/api/internal/add-log`, {
-        action: 'Guild left',
-        user: 'System',
-        details: `Bot left ${guild.name}`,
-        type: 'system'
-    }).catch(() => {});
 });
 
 // Login
