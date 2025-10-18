@@ -316,21 +316,26 @@ async function handleAppealStart(interaction, appealCode) {
     const path = require('path');
     
     try {
+        console.log(`🎫 Appeal button clicked for code: ${appealCode}`);
+        
         // Find the appeal
         const found = await appealLibrary.findAppealByCode(appealCode);
         if (!found) {
+            console.log(`❌ Appeal not found: ${appealCode}`);
             return interaction.reply({
-                content: '❌ Appeal code not found or expired.',
+                content: '❌ Appeal code not found or expired.\n\nPlease use the command:\n`/appeal submit appeal_code:' + appealCode + '`',
                 flags: 64
             });
         }
         
         const { appeal, guildId } = found;
+        console.log(`✅ Found appeal: ${appealCode}, status: ${appeal.status}`);
         
         // Check if already submitted
         if (appeal.status !== 'pending') {
+            console.log(`⚠️ Appeal already processed: ${appeal.status}`);
             return interaction.reply({
-                content: '❌ This appeal has already been submitted or reviewed.',
+                content: `❌ This appeal has already been ${appeal.status}.\n\nCurrent status: **${appeal.status.toUpperCase()}**`,
                 flags: 64
             });
         }
@@ -374,11 +379,19 @@ async function handleAppealStart(interaction, appealCode) {
         await interaction.showModal(modal);
         
     } catch (error) {
-        console.error('Error showing appeal modal:', error);
-        await interaction.reply({
-            content: '❌ Failed to load appeal form.',
-            flags: 64
-        }).catch(() => {});
+        console.error('❌ Error showing appeal modal:', error);
+        console.error('Stack trace:', error.stack);
+        
+        const errorMessage = `❌ Failed to load appeal form.\n\n**Error**: ${error.message}\n\nPlease try using the command instead:\n\`/appeal submit appeal_code:${appealCode}\``;
+        
+        if (interaction.replied || interaction.deferred) {
+            await interaction.editReply({ content: errorMessage }).catch(e => console.error('Failed to edit reply:', e));
+        } else {
+            await interaction.reply({
+                content: errorMessage,
+                flags: 64
+            }).catch(e => console.error('Failed to reply:', e));
+        }
     }
 }
 
