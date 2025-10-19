@@ -3,6 +3,7 @@ const appealLibrary = require('../../utils/appealLibrary');
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
 const dashboardLogger = require('../../utils/dashboardLogger');
+const { ModernEmbedBuilder } = require('../../utils/embedBuilder');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -186,33 +187,26 @@ module.exports = {
                 reason: reason
             });
 
-            // Create success embed
-            const embed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle('🔨 Member Banned')
-                .addFields(
-                    { name: 'User', value: `${targetUser.tag} (${targetUser.id})`, inline: true },
-                    { name: 'Moderator', value: `${interaction.user.tag}`, inline: true },
-                    { name: 'Reason', value: reason, inline: true },
-                    { name: 'Case ID', value: newCase.caseId, inline: true },
-                    { name: 'Server', value: `${guild.name}`, inline: true }
-                )
-                .setTimestamp();
+            // Create success embed using ModernEmbedBuilder
+            const embed = ModernEmbedBuilder.moderation('ban', {
+                user: targetUser,
+                moderator: interaction.user,
+                caseId: newCase.caseId,
+                reason: reason,
+                dmSent: dmSent,
+                appealCode: appealsEnabled ? appealCode : null,
+                footer: dmSent 
+                    ? '✅ User was notified via DM' 
+                    : `❌ Could not DM user: ${dmFailReason || 'Unknown reason'}`
+            });
 
-            if (dmSent) {
-                embed.setFooter({ text: '✅ User was notified via DM' });
-                if (appealsEnabled && appealCode) {
-                    embed.addFields({ name: '🎫 Appeal Code', value: `\`${appealCode}\``, inline: true });
-                }
-            } else {
-                embed.setFooter({ text: `❌ Could not DM user: ${dmFailReason || 'Unknown reason'}` });
-                if (appealsEnabled && appealCode) {
-                    embed.addFields({ 
-                        name: '⚠️ Appeal Info', 
-                        value: `User has DMs disabled. Appeal code: \`${appealCode}\`\nThey can appeal using: \`/appeal submit appeal_code:${appealCode}\``, 
-                        inline: false 
-                    });
-                }
+            // Add appeal info if DM failed
+            if (!dmSent && appealsEnabled && appealCode) {
+                embed.addFields({ 
+                    name: '⚠️ Appeal Info', 
+                    value: `User has DMs disabled. Appeal code: \`${appealCode}\`\nThey can appeal using: \`/appeal submit appeal_code:${appealCode}\``, 
+                    inline: false 
+                });
             }
 
             await interaction.editReply({ embeds: [embed] });
