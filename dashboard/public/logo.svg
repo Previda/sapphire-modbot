@@ -1,0 +1,40 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="512" cy="512" r="512" fill="#1a1a1a"/>
+  
+  <!-- Stars -->
+  <path d="M330 310 L340 320 L330 330 L320 320 Z" fill="white"/>
+  <path d="M700 370 L710 380 L700 390 L690 380 Z" fill="white"/>
+  <path d="M380 570 L390 580 L380 590 L370 580 Z" fill="white"/>
+  <path d="M720 620 L730 630 L720 640 L710 630 Z" fill="white"/>
+  
+  <!-- Dots -->
+  <circle cx="350" cy="280" r="8" fill="white"/>
+  <circle cx="400" cy="290" r="6" fill="white"/>
+  <circle cx="460" cy="260" r="8" fill="white"/>
+  <circle cx="580" cy="250" r="8" fill="white"/>
+  <circle cx="680" cy="280" r="8" fill="white"/>
+  <circle cx="720" cy="310" r="6" fill="white"/>
+  <circle cx="280" cy="370" r="8" fill="white"/>
+  <circle cx="320" cy="420" r="6" fill="white"/>
+  <circle cx="740" cy="450" r="8" fill="white"/>
+  <circle cx="280" cy="520" r="6" fill="white"/>
+  <circle cx="320" cy="580" r="8" fill="white"/>
+  <circle cx="420" cy="650" r="6" fill="white"/>
+  <circle cx="520" cy="680" r="8" fill="white"/>
+  <circle cx="620" cy="670" r="6" fill="white"/>
+  <circle cx="720" cy="580" r="8" fill="white"/>
+  <circle cx="760" cy="520" r="6" fill="white"/>
+  
+  <!-- Meteor/Comet -->
+  <ellipse cx="512" cy="720" rx="80" ry="100" fill="white"/>
+  
+  <!-- Meteor trails -->
+  <rect x="490" y="320" width="20" height="180" rx="10" fill="white" opacity="0.9"/>
+  <rect x="520" y="280" width="18" height="200" rx="9" fill="white" opacity="0.85"/>
+  <rect x="470" y="360" width="16" height="160" rx="8" fill="white" opacity="0.8"/>
+  <rect x="540" y="340" width="16" height="170" rx="8" fill="white" opacity="0.8"/>
+  <rect x="450" y="400" width="14" height="140" rx="7" fill="white" opacity="0.75"/>
+  <rect x="560" y="380" width="14" height="150" rx="7" fill="white" opacity="0.75"/>
+  <rect x="430" cy="440" width="12" height="120" rx="6" fill="white" opacity="0.7"/>
+  <rect x="580" y="420" width="12" height="130" rx="6" fill="white" opacity="0.7"/>
+</svg>

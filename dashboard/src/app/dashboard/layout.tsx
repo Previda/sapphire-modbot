@@ -21,6 +21,7 @@ import {
 import { cn, getAvatarUrl } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useBotStatus } from '@/hooks/useBotStatus';
+import { Logo } from '@/components/Logo';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -69,11 +70,8 @@ export default function DashboardLayout({
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-dark-border">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-discord-blurple to-discord-fuchsia rounded-lg flex items-center justify-center">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-white">Sapphire</span>
+            <Link href="/dashboard">
+              <Logo size="sm" showText />
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -157,12 +155,7 @@ export default function DashboardLayout({
             >
               <Menu className="h-6 w-6" />
             </button>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-discord-blurple to-discord-fuchsia rounded-lg flex items-center justify-center">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-white">Sapphire</span>
-            </div>
+            <Logo size="sm" showText />
             <div className="w-6" /> {/* Spacer for centering */}
           </div>
         </header>

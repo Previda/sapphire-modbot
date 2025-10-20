@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Logo } from '@/components/Logo';
 import { 
   Shield, 
   Zap, 
@@ -70,12 +71,8 @@ export default function LandingPage() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-discord-blurple to-discord-fuchsia rounded-lg flex items-center justify-center">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">Sapphire ModBot</span>
+              <Logo size="md" showText />
             </motion.div>
 
             <motion.div
