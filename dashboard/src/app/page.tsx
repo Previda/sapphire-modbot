@@ -118,9 +118,9 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-xl text-dark-muted max-w-2xl mx-auto mb-8"
+            className="text-xl text-gray-400 max-w-2xl mx-auto mb-8"
           >
-            Powerful moderation tools with a beautiful dashboard. Keep your Discord server safe and organized with advanced features and real-time analytics.
+            Powerful moderation tools with a beautiful dashboard. Keep your Discord server safe and organized.
           </motion.p>
 
           <motion.div
