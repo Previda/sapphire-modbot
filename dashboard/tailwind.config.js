@@ -8,6 +8,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Sapphire theme - matching logo
+        sapphire: {
+          black: '#0A0A0A',
+          darkgray: '#1A1A1A',
+          gray: '#2A2A2A',
+          lightgray: '#3A3A3A',
+          white: '#FFFFFF',
+          accent: '#4A90E2',
+          meteor: '#E8E8E8',
+        },
         // Discord-inspired color palette
         discord: {
           blurple: '#5865F2',
@@ -20,12 +30,12 @@ module.exports = {
         },
         // Custom dark theme
         dark: {
-          bg: '#2C2F33',
-          surface: '#23272A',
-          elevated: '#2C2F33',
-          border: '#40444B',
-          text: '#DCDDDE',
-          muted: '#72767D',
+          bg: '#0A0A0A',
+          surface: '#1A1A1A',
+          elevated: '#2A2A2A',
+          border: '#3A3A3A',
+          text: '#FFFFFF',
+          muted: '#999999',
         },
       },
       fontFamily: {

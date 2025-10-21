@@ -95,7 +95,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-bg via-dark-surface to-dark-bg p-6">
+    <div className="min-h-screen bg-gradient-to-br from-sapphire-black via-sapphire-darkgray to-sapphire-black p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

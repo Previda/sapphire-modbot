@@ -57,11 +57,15 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-bg via-dark-surface to-dark-bg">
-      {/* Animated background */}
+    <div className="min-h-screen bg-gradient-to-br from-sapphire-black via-sapphire-darkgray to-sapphire-black">
+      {/* Animated background - meteor trails */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-discord-blurple/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-discord-fuchsia/10 rounded-full blur-3xl animate-pulse-slow delay-1000" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sapphire-meteor/5 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-sapphire-accent/10 rounded-full blur-3xl animate-pulse-slow delay-1000" />
+        {/* Stars */}
+        <div className="absolute top-1/3 right-1/3 w-2 h-2 bg-white rounded-full animate-pulse" />
+        <div className="absolute top-1/2 left-1/4 w-1 h-1 bg-white rounded-full animate-pulse delay-500" />
+        <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-white rounded-full animate-pulse delay-1000" />
       </div>
 
       {/* Navigation */}
