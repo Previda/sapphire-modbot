@@ -8,33 +8,33 @@
   }
   
   body {
-    @apply bg-dark-bg text-dark-text;
+    @apply bg-sapphire-black text-white;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Custom scrollbar */
+  /* Custom scrollbar - matching logo theme */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-dark-surface;
+    @apply bg-sapphire-darkgray;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-dark-border rounded-full hover:bg-discord-blurple transition-colors;
+    @apply bg-sapphire-lightgray rounded-full hover:bg-sapphire-meteor transition-colors;
   }
 }
 
 @layer utilities {
-  /* Glassmorphism effect */
+  /* Glassmorphism effect - matching logo */
   .glass {
-    @apply bg-dark-surface/50 backdrop-blur-xl border border-dark-border/50;
+    @apply bg-sapphire-darkgray/50 backdrop-blur-xl border border-sapphire-lightgray/30;
   }
 
-  /* Gradient text */
+  /* Gradient text - meteor theme */
   .gradient-text {
-    @apply bg-gradient-to-r from-discord-blurple to-discord-fuchsia bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-sapphire-meteor via-white to-sapphire-accent bg-clip-text text-transparent;
   }
 
   /* Shimmer loading effect */
