@@ -1,6 +1,8 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+const cors = require('cors');
 const { handleCommand } = require('./handlers/commandHandler');
 const { handleButtonInteraction } = require('./handlers/buttonHandler');
 require('dotenv').config();
@@ -1246,6 +1248,84 @@ client.on('warn', (warning) => {
 
 client.on('shardError', (error) => {
     console.error('❌ Shard error:', error);
+});
+
+// ===== EXPRESS API SERVER =====
+const app = express();
+const PORT = process.env.API_PORT || 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// API Routes
+app.get('/api/status', (req, res) => {
+    try {
+        const guilds = client.guilds.cache.map(guild => ({
+            id: guild.id,
+            name: guild.name,
+            memberCount: guild.memberCount,
+            icon: guild.iconURL()
+        }));
+
+        res.json({
+            online: true,
+            status: 'operational',
+            uptime: process.uptime(),
+            guilds: guilds.length,
+            users: client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0),
+            commands: client.commands.size,
+            ping: client.ws.ping,
+            memory: process.memoryUsage(),
+            guildList: guilds
+        });
+    } catch (error) {
+        console.error('API status error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/commands', (req, res) => {
+    try {
+        const commands = Array.from(client.commands.values()).map(cmd => ({
+            name: cmd.data.name,
+            description: cmd.data.description,
+            category: cmd.category || 'general',
+            enabled: true
+        }));
+
+        res.json({ commands });
+    } catch (error) {
+        console.error('API commands error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/api/guilds', (req, res) => {
+    try {
+        const guilds = client.guilds.cache.map(guild => ({
+            id: guild.id,
+            name: guild.name,
+            memberCount: guild.memberCount,
+            icon: guild.iconURL(),
+            owner: guild.ownerId
+        }));
+
+        res.json({ guilds });
+    } catch (error) {
+        console.error('API guilds error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: Date.now() });
+});
+
+// Start API server
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 API server running on http://0.0.0.0:${PORT}`);
 });
 
 // Login
