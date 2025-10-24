@@ -3,38 +3,105 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Light Mode */
+    --bg-primary: 255 255 255;
+    --bg-secondary: 249 250 251;
+    --bg-tertiary: 243 244 246;
+    --text-primary: 17 24 39;
+    --text-secondary: 75 85 99;
+    --text-tertiary: 156 163 175;
+    --border: 229 231 235;
+    --accent: 59 130 246;
+  }
+
+  .dark {
+    /* Dark Mode */
+    --bg-primary: 10 10 10;
+    --bg-secondary: 26 26 26;
+    --bg-tertiary: 42 42 42;
+    --text-primary: 255 255 255;
+    --text-secondary: 156 163 175;
+    --text-tertiary: 107 114 128;
+    --border: 58 58 58;
+    --accent: 96 165 250;
+  }
+
   * {
-    @apply border-dark-border;
+    @apply border-border transition-colors duration-200;
   }
   
   body {
-    @apply bg-sapphire-black text-white;
+    @apply bg-primary text-primary antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Custom scrollbar - matching logo theme */
+  /* Ultra-smooth scrollbar */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-sapphire-darkgray;
+    @apply bg-secondary;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-sapphire-lightgray rounded-full hover:bg-sapphire-meteor transition-colors;
+    @apply bg-tertiary rounded-full hover:bg-accent/50 transition-all duration-300;
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
   }
 }
 
 @layer utilities {
-  /* Glassmorphism effect - matching logo */
-  .glass {
-    @apply bg-sapphire-darkgray/50 backdrop-blur-xl border border-sapphire-lightgray/30;
+  /* Color utilities */
+  .bg-primary {
+    background-color: rgb(var(--bg-primary));
+  }
+  
+  .bg-secondary {
+    background-color: rgb(var(--bg-secondary));
+  }
+  
+  .bg-tertiary {
+    background-color: rgb(var(--bg-tertiary));
+  }
+  
+  .text-primary {
+    color: rgb(var(--text-primary));
+  }
+  
+  .text-secondary {
+    color: rgb(var(--text-secondary));
+  }
+  
+  .text-tertiary {
+    color: rgb(var(--text-tertiary));
+  }
+  
+  .border-border {
+    border-color: rgb(var(--border));
+  }
+  
+  .bg-accent {
+    background-color: rgb(var(--accent));
+  }
+  
+  .text-accent {
+    color: rgb(var(--accent));
   }
 
-  /* Gradient text - meteor theme */
+  /* Ultra-smooth glass effect */
+  .glass {
+    @apply bg-secondary/80 backdrop-blur-2xl border border-border/50;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  /* Smooth gradient text */
   .gradient-text {
-    @apply bg-gradient-to-r from-sapphire-meteor via-white to-sapphire-accent bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-accent via-blue-500 to-purple-500 bg-clip-text text-transparent;
   }
 
   /* Shimmer loading effect */
@@ -42,25 +109,43 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.1) 50%,
+      rgba(var(--accent), 0.1) 50%,
       transparent 100%
     );
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
 
-  /* Glow effect */
-  .glow {
-    @apply shadow-glow;
+  /* Smooth hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-1 shadow-xl;
   }
 
-  .glow-lg {
-    @apply shadow-glow-lg;
+  /* Smooth scale effect */
+  .hover-scale {
+    @apply transition-transform duration-300 ease-out;
+  }
+  
+  .hover-scale:hover {
+    @apply scale-105;
   }
 
-  /* Smooth transitions */
+  /* Smooth glow effect */
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(var(--accent), 0.5);
+  }
+
+  /* Ultra-smooth transitions */
   .transition-smooth {
-    @apply transition-all duration-300 ease-in-out;
+    @apply transition-all duration-500 ease-in-out;
   }
 
   /* Hide scrollbar but keep functionality */
@@ -71,6 +156,16 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Smooth fade in */
+  .fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  /* Smooth slide up */
+  .slide-up {
+    animation: slideUp 0.6s ease-out;
   }
 }
 
