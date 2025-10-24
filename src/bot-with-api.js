@@ -1219,12 +1219,18 @@ async function handleTicketCreateSubmit(interaction) {
     }
 }
 
-// AutoMod message handler
+// Message handler for AutoMod and Verification
+const { handleVerificationMessage } = require('./handlers/verificationHandler');
+
 client.on('messageCreate', async (message) => {
     try {
+        // Handle verification messages first
+        await handleVerificationMessage(message);
+        
+        // Then handle AutoMod
         await automod.moderateMessage(message);
     } catch (error) {
-        console.error('AutoMod error:', error);
+        console.error('Message handler error:', error);
     }
 });
 

@@ -26,7 +26,20 @@ module.exports = {
                     option
                         .setName('enabled')
                         .setDescription('Enable verification?')
-                        .setRequired(true)))
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option
+                        .setName('method')
+                        .setDescription('Verification method')
+                        .addChoices(
+                            { name: '✅ Simple Button', value: 'button' },
+                            { name: '🔢 Code Verification', value: 'code' },
+                            { name: '🧮 Math Challenge', value: 'math' }
+                        ))
+                .addChannelOption(option =>
+                    option
+                        .setName('log_channel')
+                        .setDescription('Channel to log verifications')))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
@@ -198,20 +211,37 @@ async function handleConfig(interaction) {
 
     const verifiedRole = interaction.options.getRole('verified_role');
     const enabled = interaction.options.getBoolean('enabled');
+    const method = interaction.options.getString('method') || 'button';
+    const logChannel = interaction.options.getChannel('log_channel');
 
     const config = await loadGuildConfig(interaction.guild.id);
     config.verificationEnabled = enabled;
     config.verifiedRole = verifiedRole.id;
+    config.verificationMethod = method;
+    if (logChannel) {
+        config.verificationLogChannel = logChannel.id;
+    }
     await saveGuildConfig(interaction.guild.id, config);
+
+    const methodNames = {
+        'button': '✅ Simple Button',
+        'code': '🔢 Code Verification',
+        'math': '🧮 Math Challenge'
+    };
 
     const embed = new EmbedBuilder()
         .setTitle('✅ Verification Configuration Updated')
         .setColor(enabled ? '#00ff00' : '#ff0000')
         .addFields(
             { name: '📊 Status', value: enabled ? '✅ Enabled' : '❌ Disabled', inline: true },
-            { name: '✅ Verified Role', value: `${verifiedRole}`, inline: true }
+            { name: '✅ Verified Role', value: `${verifiedRole}`, inline: true },
+            { name: '🔐 Method', value: methodNames[method], inline: true }
         )
         .setTimestamp();
+
+    if (logChannel) {
+        embed.addFields({ name: '📝 Log Channel', value: `${logChannel}`, inline: true });
+    }
 
     await interaction.editReply({ embeds: [embed] });
 }

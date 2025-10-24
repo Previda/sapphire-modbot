@@ -1,26 +1,12 @@
 const { ChannelType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { handleVerificationButton } = require('./verificationHandler');
 
 async function handleButtonInteraction(interaction) {
   const { customId, guild, member, user } = interaction;
 
-  // Handle verification button
+  // Handle verification button with advanced system
   if (customId === 'verify_button') {
-    const verifiedRole = guild.roles.cache.find(r => r.name === 'Verified') || 
-                         await guild.roles.create({ name: 'Verified', color: '#00ff00' });
-
-    if (member.roles.cache.has(verifiedRole.id)) {
-      return interaction.reply({
-        content: '✅ You are already verified!',
-        ephemeral: true
-      });
-    }
-
-    await member.roles.add(verifiedRole);
-    
-    return interaction.reply({
-      content: '✅ You have been verified! Welcome to the server!',
-      ephemeral: true
-    });
+    return handleVerificationButton(interaction);
   }
 
   // Handle ticket creation
