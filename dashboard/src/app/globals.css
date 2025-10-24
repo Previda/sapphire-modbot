@@ -46,7 +46,11 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-tertiary rounded-full hover:bg-accent/50 transition-all duration-300;
+    @apply bg-tertiary rounded-full transition-all duration-300;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(var(--accent), 0.5);
   }
 
   /* Smooth scroll behavior */
