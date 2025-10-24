@@ -62,7 +62,7 @@ export default function ServersPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="text-xl font-bold">{server.name}</h3>
                   {server.owner && (
-                    <Crown className="h-4 w-4 text-yellow-400" title="Owner" />
+                    <Crown className="h-4 w-4 text-yellow-400" />
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-sm text-secondary">
