@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Sapphire ModBot - Modern Discord Moderation',
-  description: 'Powerful Discord moderation bot with a beautiful dashboard',
-  keywords: ['discord', 'bot', 'moderation', 'dashboard', 'modern'],
-  authors: [{ name: 'Skyfall Team' }],
+  title: 'Sapphire ModBot - Ultra-Modern Discord Moderation',
+  description: 'The most advanced Discord moderation bot with a stunning dashboard. Smooth, fast, and powerful.',
+  keywords: ['discord', 'bot', 'moderation', 'dashboard', 'modern', 'advanced', 'smooth'],
+  authors: [{ name: 'Sapphire Team' }],
   openGraph: {
-    title: 'Sapphire ModBot',
-    description: 'Modern Discord moderation bot with advanced features',
+    title: 'Sapphire ModBot - Ultra-Modern Discord Moderation',
+    description: 'The most advanced Discord moderation bot with smooth animations and clean design',
     type: 'website',
   },
 };
@@ -22,8 +23,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
