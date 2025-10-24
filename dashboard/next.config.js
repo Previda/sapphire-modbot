@@ -11,7 +11,7 @@ const nextConfig = {
     ],
   },
   env: {
-    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
+    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || '',
     BOT_API_URL: process.env.BOT_API_URL || 'http://localhost:3001',
   },
 }

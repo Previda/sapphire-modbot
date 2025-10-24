@@ -6,14 +6,22 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Sapphire ModBot - Ultra-Modern Discord Moderation',
-  description: 'The most advanced Discord moderation bot with a stunning dashboard. Smooth, fast, and powerful.',
-  keywords: ['discord', 'bot', 'moderation', 'dashboard', 'modern', 'advanced', 'smooth'],
+  metadataBase: new URL('https://skyfall-omega.vercel.app'),
+  title: 'Sapphire ModBot - Professional Discord Management',
+  description: 'Advanced Discord moderation bot with beautiful dashboard, real-time monitoring, and powerful features.',
+  keywords: ['discord', 'bot', 'moderation', 'dashboard', 'modern', 'advanced', 'management'],
   authors: [{ name: 'Sapphire Team' }],
   openGraph: {
-    title: 'Sapphire ModBot - Ultra-Modern Discord Moderation',
-    description: 'The most advanced Discord moderation bot with smooth animations and clean design',
+    title: 'Sapphire ModBot - Professional Discord Management',
+    description: 'Advanced Discord moderation bot with beautiful dashboard, real-time monitoring, and powerful features.',
     type: 'website',
+    url: 'https://skyfall-omega.vercel.app',
+    siteName: 'Sapphire ModBot',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sapphire ModBot - Professional Discord Management',
+    description: 'Advanced Discord moderation bot with beautiful dashboard',
   },
 };
 
