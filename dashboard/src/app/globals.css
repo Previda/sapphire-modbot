@@ -4,36 +4,38 @@
 
 @layer base {
   :root {
-    /* Light Mode */
+    /* Light Mode - Crisp White */
     --bg-primary: 255 255 255;
-    --bg-secondary: 249 250 251;
-    --bg-tertiary: 243 244 246;
-    --text-primary: 17 24 39;
-    --text-secondary: 75 85 99;
-    --text-tertiary: 156 163 175;
-    --border: 229 231 235;
+    --bg-secondary: 248 250 252;
+    --bg-tertiary: 241 245 249;
+    --text-primary: 15 23 42;
+    --text-secondary: 71 85 105;
+    --text-tertiary: 148 163 184;
+    --border: 226 232 240;
     --accent: 59 130 246;
   }
 
   .dark {
-    /* Dark Mode */
-    --bg-primary: 10 10 10;
-    --bg-secondary: 26 26 26;
-    --bg-tertiary: 42 42 42;
+    /* Dark Mode - Pure Black */
+    --bg-primary: 0 0 0;
+    --bg-secondary: 15 15 15;
+    --bg-tertiary: 30 30 30;
     --text-primary: 255 255 255;
-    --text-secondary: 156 163 175;
-    --text-tertiary: 107 114 128;
-    --border: 58 58 58;
+    --text-secondary: 161 161 170;
+    --text-tertiary: 113 113 122;
+    --border: 39 39 42;
     --accent: 96 165 250;
   }
 
   * {
-    @apply border-border transition-colors duration-200;
+    @apply transition-all duration-300 ease-out;
   }
   
   body {
     @apply bg-primary text-primary antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Ultra-smooth scrollbar */
