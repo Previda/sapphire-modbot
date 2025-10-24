@@ -25,15 +25,31 @@ async function incrementThreatScore(userID, guildID, increment = 1) {
 async function resetThreatScore(userID, guildID) {
     try {
         console.log(`Mock: Resetting threat score for ${userID}`);
-        return { userID, guildID, score: 0, lastIncrement: new Date() };
+        return true;
     } catch (error) {
         console.error('Error resetting threat score:', error);
-        return null;
+        return false;
+    }
+}
+
+async function getAllThreatScores(guildID) {
+    try {
+        // Mock implementation - returns sample data
+        console.log(`Mock: Getting all threat scores for guild ${guildID}`);
+        return [
+            { userID: '123456789', guildID, score: 3, lastIncrement: new Date() },
+            { userID: '987654321', guildID, score: 1, lastIncrement: new Date() },
+            { userID: '456789123', guildID, score: 7, lastIncrement: new Date() }
+        ];
+    } catch (error) {
+        console.error('Error getting all threat scores:', error);
+        return [];
     }
 }
 
 module.exports = {
     getThreatScore,
     incrementThreatScore,
-    resetThreatScore
+    resetThreatScore,
+    getAllThreatScores
 };
