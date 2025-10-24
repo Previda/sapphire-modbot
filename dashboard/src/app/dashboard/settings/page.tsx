@@ -13,7 +13,10 @@ export default function SettingsPage() {
 
       <div className="space-y-6">
         {/* General Settings */}
-        <div className="glass p-6 rounded-xl">
+        <div className="backdrop-blur-3xl p-6 rounded-3xl" style={{
+          background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.4) 0%, rgba(var(--bg-secondary), 0.2) 100%)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        }}>
           <div className="flex items-center gap-3 mb-6">
             <Settings className="h-6 w-6 text-blue-400" />
             <h2 className="text-2xl font-bold">General Settings</h2>
@@ -45,7 +48,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Moderation Settings */}
-        <div className="glass p-6 rounded-xl">
+        <div className="backdrop-blur-3xl p-6 rounded-3xl" style={{
+          background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.4) 0%, rgba(var(--bg-secondary), 0.2) 100%)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        }}>
           <div className="flex items-center gap-3 mb-6">
             <Shield className="h-6 w-6 text-red-400" />
             <h2 className="text-2xl font-bold">Moderation</h2>
@@ -77,7 +83,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Notifications */}
-        <div className="glass p-6 rounded-xl">
+        <div className="backdrop-blur-3xl p-6 rounded-3xl" style={{
+          background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.4) 0%, rgba(var(--bg-secondary), 0.2) 100%)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        }}>
           <div className="flex items-center gap-3 mb-6">
             <Bell className="h-6 w-6 text-yellow-400" />
             <h2 className="text-2xl font-bold">Notifications</h2>
@@ -109,7 +118,10 @@ export default function SettingsPage() {
         </div>
 
         {/* Appearance */}
-        <div className="glass p-6 rounded-xl">
+        <div className="backdrop-blur-3xl p-6 rounded-3xl" style={{
+          background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.4) 0%, rgba(var(--bg-secondary), 0.2) 100%)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        }}>
           <div className="flex items-center gap-3 mb-6">
             <Palette className="h-6 w-6 text-purple-400" />
             <h2 className="text-2xl font-bold">Appearance</h2>

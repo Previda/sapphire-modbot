@@ -37,9 +37,13 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
-          <div key={stat.label} className="glass p-6 rounded-xl hover-lift transition-smooth">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {stats.map((stat, index) => (
+          <div key={stat.label} className="backdrop-blur-3xl p-6 rounded-3xl hover-lift transition-all duration-500 fade-in" style={{
+            animationDelay: `${index * 100}ms`,
+            background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.4) 0%, rgba(var(--bg-secondary), 0.2) 100%)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          }}>
             <div className="flex items-center gap-4 mb-4">
               <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
                 <stat.icon className="h-6 w-6" />

@@ -60,58 +60,61 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
-        <div className="h-full w-64 glass border-r border-border/50 flex flex-col">
+        <div className="h-full w-64 backdrop-blur-3xl flex flex-col" style={{
+          background: 'linear-gradient(180deg, rgba(var(--bg-secondary), 0.5) 0%, rgba(var(--bg-secondary), 0.3) 100%)',
+          borderRight: '1px solid rgba(var(--border), 0.1)',
+        }}>
           {/* Logo */}
-          <div className="p-6 border-b border-border/50">
+          <div className="p-6">
             <Link href="/" className="flex items-center gap-3 hover-scale">
               <Logo size="sm" showText />
             </Link>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
                     isActive
-                      ? 'bg-accent text-white shadow-lg'
-                      : 'text-secondary hover:bg-secondary hover:text-primary'
+                      ? 'bg-accent text-white shadow-lg shadow-accent/20'
+                      : 'text-secondary hover:bg-secondary/50 hover:text-primary'
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
-                  <span className="font-medium">{item.name}</span>
+                  <span className="font-medium text-sm">{item.name}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Bottom Actions */}
-          <div className="p-4 border-t border-border/50 space-y-2">
+          <div className="p-4 space-y-1.5">
             <Link
               href="/"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary hover:bg-secondary hover:text-primary transition-all"
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl text-secondary hover:bg-secondary/50 hover:text-primary transition-all duration-300"
             >
               <Home className="h-5 w-5" />
-              <span className="font-medium">Home</span>
+              <span className="font-medium text-sm">Home</span>
             </Link>
             
             <button
               onClick={toggleTheme}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-secondary hover:bg-secondary hover:text-primary transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-secondary hover:bg-secondary/50 hover:text-primary transition-all duration-300"
             >
               {theme === 'dark' ? (
                 <>
                   <Sun className="h-5 w-5" />
-                  <span className="font-medium">Light Mode</span>
+                  <span className="font-medium text-sm">Light Mode</span>
                 </>
               ) : (
                 <>
                   <Moon className="h-5 w-5" />
-                  <span className="font-medium">Dark Mode</span>
+                  <span className="font-medium text-sm">Dark Mode</span>
                 </>
               )}
             </button>
@@ -130,11 +133,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         {/* Top Bar */}
-        <header className="sticky top-0 z-20 glass border-b border-border/50">
+        <header className="sticky top-0 z-20 backdrop-blur-3xl" style={{
+          background: 'linear-gradient(180deg, rgba(var(--bg-primary), 0.8) 0%, rgba(var(--bg-primary), 0.6) 100%)',
+          borderBottom: '1px solid rgba(var(--border), 0.1)',
+        }}>
           <div className="flex items-center justify-between px-6 py-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-secondary transition-smooth lg:hidden"
+              className="p-2 rounded-2xl hover:bg-secondary/50 transition-all duration-300 lg:hidden"
             >
               {sidebarOpen ? (
                 <X className="h-6 w-6" />
@@ -143,13 +149,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               )}
             </button>
 
-            <div className="flex items-center gap-4 ml-auto">
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg glass">
+            <div className="flex items-center gap-3 ml-auto">
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl backdrop-blur-xl" style={{
+                background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.4) 0%, rgba(var(--bg-secondary), 0.2) 100%)',
+              }}>
                 <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-sm font-medium text-secondary">Online</span>
               </div>
               
-              <button className="p-2 rounded-lg hover:bg-secondary transition-smooth">
+              <button className="p-2 rounded-2xl hover:bg-secondary/50 transition-all duration-300">
                 <LogOut className="h-5 w-5 text-secondary" />
               </button>
             </div>
@@ -157,7 +165,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
+        <main className="p-6 lg:p-8">
           {children}
         </main>
       </div>
