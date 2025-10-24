@@ -1,7 +1,7 @@
 'use client';
 
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { Users, Search, UserPlus, UserMinus, Shield, Crown } from 'lucide-react';
+import { Users, Search, UserPlus, Shield, Crown, X } from 'lucide-react';
 
 export default function MembersPage() {
   const members = [
@@ -40,90 +40,112 @@ export default function MembersPage() {
   ];
 
   const stats = [
-    { label: 'Total Members', value: '1,234', icon: Users, color: 'text-blue-400' },
-    { label: 'Online', value: '567', icon: UserPlus, color: 'text-green-400' },
-    { label: 'Moderators', value: '12', icon: Shield, color: 'text-purple-400' },
-    { label: 'New Today', value: '8', icon: UserPlus, color: 'text-yellow-400' },
+    { label: 'Total Members', value: '1,234', icon: Users, color: 'bg-blue-500/20 text-blue-400' },
+    { label: 'Online', value: '567', icon: UserPlus, color: 'bg-green-500/20 text-green-400' },
+    { label: 'Moderators', value: '12', icon: Shield, color: 'bg-purple-500/20 text-purple-400' },
+    { label: 'New Today', value: '8', icon: UserPlus, color: 'bg-yellow-500/20 text-yellow-400' },
   ];
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Members</h1>
+      {/* Header */}
+      <div className="mb-8 fade-in">
+        <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Members
+        </h1>
         <p className="text-secondary">Manage your server members</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
-          <div key={stat.label} className="glass p-6 rounded-xl hover-lift transition-smooth">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm text-secondary mb-1">{stat.label}</p>
-                <p className="text-3xl font-bold">{stat.value}</p>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {stats.map((stat, index) => (
+          <div 
+            key={stat.label} 
+            className="glass p-5 rounded-xl hover-lift transition-smooth fade-in"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`p-2.5 rounded-lg ${stat.color}`}>
+                <stat.icon className="h-5 w-5" />
               </div>
             </div>
+            <p className="text-2xl font-bold mb-1">{stat.value}</p>
+            <p className="text-xs text-secondary">{stat.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Search & Filter */}
-      <div className="glass p-6 rounded-xl mb-6">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary" />
-            <input
-              type="text"
-              placeholder="Search members..."
-              className="w-full pl-10 pr-4 py-3 bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-            />
-          </div>
-          <button className="px-6 py-3 bg-accent text-white rounded-lg hover-scale transition-smooth">
-            Search
-          </button>
+      {/* Search Bar */}
+      <div className="glass p-4 rounded-xl mb-6 fade-in" style={{ animationDelay: '400ms' }}>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
+          <input
+            type="text"
+            placeholder="Search members..."
+            className="w-full pl-10 pr-4 py-2.5 bg-secondary/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
+          />
         </div>
       </div>
 
       {/* Members List */}
-      <div className="glass p-6 rounded-xl">
-        <h2 className="text-2xl font-bold mb-6">All Members</h2>
-        <div className="space-y-4">
-          {members.map((member) => (
+      <div className="glass p-6 rounded-xl fade-in" style={{ animationDelay: '500ms' }}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">All Members</h2>
+          <span className="text-sm text-secondary">{members.length} members</span>
+        </div>
+        
+        <div className="space-y-3">
+          {members.map((member, index) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary transition-smooth"
+              className="group flex items-center justify-between p-4 bg-secondary/30 rounded-xl hover:bg-secondary/60 transition-all duration-300 border border-transparent hover:border-accent/20"
+              style={{ animationDelay: `${(index + 6) * 100}ms` }}
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-tertiary rounded-full flex items-center justify-center text-2xl">
-                  {member.avatar}
+              {/* Member Info */}
+              <div className="flex items-center gap-4 flex-1">
+                {/* Avatar with Status */}
+                <div className="relative">
+                  <div className="w-11 h-11 bg-tertiary rounded-full flex items-center justify-center text-xl ring-2 ring-secondary group-hover:ring-accent/30 transition-all">
+                    {member.avatar}
+                  </div>
+                  <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-secondary ${
+                    member.status === 'online' ? 'bg-green-400' :
+                    member.status === 'idle' ? 'bg-yellow-400' :
+                    'bg-gray-500'
+                  }`} />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">{member.username}</span>
-                    {member.role === 'Owner' && <Crown className="h-4 w-4 text-yellow-400" />}
-                    {member.role === 'Moderator' && <Shield className="h-4 w-4 text-purple-400" />}
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm truncate">{member.username}</span>
+                    {member.role === 'Owner' && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-500/20 rounded-md">
+                        <Crown className="h-3 w-3 text-yellow-400" />
+                        <span className="text-xs text-yellow-400 font-medium">Owner</span>
+                      </div>
+                    )}
+                    {member.role === 'Moderator' && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/20 rounded-md">
+                        <Shield className="h-3 w-3 text-purple-400" />
+                        <span className="text-xs text-purple-400 font-medium">Moderator</span>
+                      </div>
+                    )}
+                    {member.role === 'Member' && (
+                      <span className="text-xs text-secondary px-2 py-0.5 bg-secondary/50 rounded-md">Member</span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-secondary">
-                    <div className={`w-2 h-2 rounded-full ${
-                      member.status === 'online' ? 'bg-green-400' :
-                      member.status === 'idle' ? 'bg-yellow-400' :
-                      'bg-gray-400'
-                    }`} />
-                    <span>{member.role}</span>
-                    <span>•</span>
-                    <span>Joined {member.joinedAt}</span>
-                  </div>
+                  <p className="text-xs text-secondary">Joined {member.joinedAt}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button className="px-4 py-2 bg-secondary rounded-lg hover:bg-tertiary transition-smooth">
+
+              {/* Actions */}
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button className="px-3 py-1.5 text-sm bg-accent/20 text-accent rounded-lg hover:bg-accent/30 transition-all">
                   View
                 </button>
-                <button className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-smooth">
-                  <UserMinus className="h-4 w-4" />
+                <button className="p-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all">
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
