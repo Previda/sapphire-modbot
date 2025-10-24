@@ -4,15 +4,15 @@
 
 @layer base {
   :root {
-    /* Light Mode - Crisp White */
+    /* Light Mode - Clean & Minimal */
     --bg-primary: 255 255 255;
-    --bg-secondary: 248 250 252;
-    --bg-tertiary: 241 245 249;
-    --text-primary: 15 23 42;
-    --text-secondary: 71 85 105;
-    --text-tertiary: 148 163 184;
-    --border: 226 232 240;
-    --accent: 59 130 246;
+    --bg-secondary: 250 250 250;
+    --bg-tertiary: 245 245 245;
+    --text-primary: 0 0 0;
+    --text-secondary: 82 82 91;
+    --text-tertiary: 161 161 170;
+    --border: 228 228 231;
+    --accent: 37 99 235;
   }
 
   .dark {
