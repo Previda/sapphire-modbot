@@ -107,7 +107,8 @@
 
   /* Smooth gradient text */
   .gradient-text {
-    @apply bg-gradient-to-r from-accent via-blue-500 to-purple-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, rgb(var(--accent)), #3b82f6, #a855f7);
   }
 
   /* Shimmer loading effect */
