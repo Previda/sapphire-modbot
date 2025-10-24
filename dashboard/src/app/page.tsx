@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Logo } from '@/components/Logo';
 import { 
   Shield, 
   Zap, 
@@ -56,10 +57,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 hover-scale">
-              <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-primary">Sapphire</span>
+              <Logo size="sm" showText />
             </Link>
 
             {/* Nav Links */}
@@ -232,11 +230,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-white" />
-                </div>
-                <span className="font-bold text-primary">Sapphire</span>
+              <div className="mb-4">
+                <Logo size="sm" showText />
               </div>
               <p className="text-sm text-secondary">
                 Professional Discord management made simple.
