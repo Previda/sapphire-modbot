@@ -84,10 +84,15 @@ module.exports = {
       },
       backdropBlur: {
         xs: '2px',
+        '3xl': '64px',
+        '4xl': '96px',
       },
       boxShadow: {
         'glow': '0 0 20px rgba(88, 101, 242, 0.5)',
         'glow-lg': '0 0 40px rgba(88, 101, 242, 0.6)',
+        'glow-xl': '0 0 60px rgba(88, 101, 242, 0.7)',
+        'smooth': '0 8px 32px rgba(0, 0, 0, 0.12)',
+        'smooth-lg': '0 12px 48px rgba(0, 0, 0, 0.18)',
       },
     },
   },

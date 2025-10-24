@@ -28,23 +28,33 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Overview</h1>
-        <p className="text-secondary">Welcome back! Here's your server overview.</p>
+      {/* Header with Gradient */}
+      <div className="mb-8 fade-in">
+        <h1 className="text-5xl font-bold mb-3 gradient-text">
+          Overview
+        </h1>
+        <p className="text-secondary text-lg">Welcome back! Here's your server overview.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
-          <div key={stat.label} className="glass p-6 rounded-xl hover-lift transition-smooth">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
+      {/* Stats Grid with Enhanced Blur */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {stats.map((stat, index) => (
+          <div 
+            key={stat.label} 
+            className="group relative glass backdrop-blur-3xl p-6 rounded-2xl hover-lift transition-smooth overflow-hidden border border-white/5 hover:border-accent/30 fade-in"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            {/* Content */}
+            <div className="relative z-10 flex items-center gap-4">
+              <div className={`p-3 rounded-xl bg-gradient-to-br from-secondary to-tertiary shadow-smooth group-hover:scale-110 transition-transform duration-300 ${stat.color}`}>
                 <stat.icon className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-secondary mb-1">{stat.label}</p>
-                <p className="text-3xl font-bold">{stat.value}</p>
+                <p className="text-xs text-secondary mb-1 uppercase tracking-wide">{stat.label}</p>
+                <p className="text-3xl font-bold group-hover:text-accent transition-colors">{stat.value}</p>
               </div>
             </div>
           </div>
