@@ -1,7 +1,6 @@
 'use client';
 
 import { ButtonHTMLAttributes, forwardRef } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
@@ -15,11 +14,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', loading, icon, children, disabled, ...props }, ref) => {
     const variants = {
-      primary: 'bg-discord-blurple hover:bg-discord-blurple/90 text-white shadow-lg hover:shadow-glow',
-      secondary: 'bg-dark-elevated hover:bg-dark-border text-dark-text',
-      danger: 'bg-discord-red hover:bg-discord-red/90 text-white shadow-lg',
-      ghost: 'hover:bg-dark-elevated text-dark-text',
-      outline: 'border-2 border-dark-border hover:border-discord-blurple text-dark-text hover:text-discord-blurple',
+      primary: 'bg-accent hover:bg-accent/90 text-white shadow-lg hover-scale',
+      secondary: 'bg-secondary hover:bg-tertiary text-primary',
+      danger: 'bg-red-600 hover:bg-red-700 text-white shadow-lg',
+      ghost: 'hover:bg-secondary text-primary',
+      outline: 'border-2 border-border hover:border-accent text-primary hover:text-accent',
     };
 
     const sizes = {
@@ -29,19 +28,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     return (
-      <motion.button
+      <button
         ref={ref}
         className={cn(
           'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-discord-blurple focus:ring-offset-2 focus:ring-offset-dark-bg',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none',
+          'focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-primary',
+          'disabled:opacity-50 disabled:cursor-not-allowed',
           variants[variant],
           sizes[size],
           className
         )}
         disabled={disabled || loading}
-        whileHover={{ scale: disabled || loading ? 1 : 1.02 }}
-        whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
         {...props}
       >
         {loading ? (
@@ -50,7 +47,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           <span className="flex items-center">{icon}</span>
         ) : null}
         {children}
-      </motion.button>
+      </button>
     );
   }
 );
