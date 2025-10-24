@@ -99,7 +99,9 @@
 
   /* Ultra-smooth glass effect */
   .glass {
-    @apply bg-secondary/80 backdrop-blur-2xl border border-border/50;
+    @apply backdrop-blur-2xl border;
+    background-color: rgba(var(--bg-secondary), 0.8);
+    border-color: rgba(var(--border), 0.5);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
   }
 
