@@ -55,11 +55,15 @@ export default function ServersPage() {
         {servers.map((server, index) => (
           <div
             key={server.id}
-            className="group relative glass backdrop-blur-xl p-6 rounded-2xl hover-lift transition-all duration-500 border border-white/5 hover:border-accent/30 fade-in overflow-hidden"
-            style={{ animationDelay: `${index * 100}ms` }}
+            className="group relative backdrop-blur-3xl p-6 rounded-2xl hover-lift transition-all duration-500 fade-in overflow-hidden"
+            style={{ 
+              animationDelay: `${index * 100}ms`,
+              background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.4) 0%, rgba(var(--bg-secondary), 0.2) 100%)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            }}
           >
             {/* Gradient Overlay on Hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
             
             {/* Content */}
             <div className="relative z-10">
@@ -129,11 +133,16 @@ export default function ServersPage() {
 
         {/* Add Server Card */}
         <div 
-          className="group relative glass backdrop-blur-xl p-6 rounded-2xl hover-lift transition-all duration-500 border border-dashed border-white/10 hover:border-accent/50 cursor-pointer fade-in overflow-hidden"
-          style={{ animationDelay: `${servers.length * 100}ms` }}
+          className="group relative backdrop-blur-3xl p-6 rounded-2xl hover-lift transition-all duration-500 cursor-pointer fade-in overflow-hidden"
+          style={{ 
+            animationDelay: `${servers.length * 100}ms`,
+            background: 'linear-gradient(135deg, rgba(var(--bg-secondary), 0.3) 0%, rgba(var(--bg-secondary), 0.1) 100%)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: '2px dashed rgba(var(--accent), 0.2)',
+          }}
         >
           {/* Gradient Overlay on Hover */}
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
           
           {/* Content */}
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-center py-4">
