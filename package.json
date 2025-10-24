@@ -44,7 +44,8 @@
     "axios": "^1.7.7",
     "@heroicons/react": "^2.2.0",
     "@headlessui/react": "^2.2.0",
-    "next-auth": "^4.24.10"
+    "next-auth": "^4.24.10",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "eslint": "^9.14.0",
