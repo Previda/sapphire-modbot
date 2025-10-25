@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { canModerate } = require('../../utils/permissionChecker');
 const appealLibrary = require('../../utils/appealLibrary');
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
@@ -80,10 +81,11 @@ module.exports = {
             });
             const member = await guild.members.fetch(targetUser.id).catch(() => null);
             
-            // Permission checks (skip hierarchy check in DMs)
+            // Permission checks
             if (member && interaction.guild) {
-                if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                    return interaction.editReply({ content: '❌ You cannot ban this member due to role hierarchy.' });
+                const permCheck = canModerate(interaction.member, member, interaction.guild);
+                if (!permCheck.allowed) {
+                    return interaction.editReply({ content: permCheck.reason });
                 }
                 if (!member.bannable) {
                     return interaction.editReply({ content: '❌ I cannot ban this member.' });

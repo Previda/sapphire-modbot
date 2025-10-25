@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('disc
 const { createCase } = require('../../utils/caseManager');
 const webhookLogger = require('../../utils/webhookLogger');
 const appealLibrary = require('../../utils/appealLibrary');
+const { canModerate } = require('../../utils/permissionChecker');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,8 +36,9 @@ module.exports = {
             // Check if user is in server (optional for warnings)
             if (member) {
                 // Permission checks for in-server warnings
-                if (member.roles.highest.position >= interaction.member.roles.highest.position) {
-                    return interaction.editReply({ content: '❌ You cannot warn this member due to role hierarchy.' });
+                const permCheck = canModerate(interaction.member, member, interaction.guild);
+                if (!permCheck.allowed) {
+                    return interaction.editReply({ content: permCheck.reason });
                 }
             }
 
