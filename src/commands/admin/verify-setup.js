@@ -202,15 +202,10 @@ async function handleCreate(interaction) {
 }
 
 async function handlePanel(interaction) {
-    await interaction.deferReply({ flags: 64 });
-
     const channel = interaction.options.getChannel('channel');
     
-    await advancedVerification.setupPanel(interaction);
-    
-    await interaction.editReply({
-        content: `✅ Advanced verification panel created in ${channel || interaction.channel}!`
-    });
+    // setupPanel handles its own reply
+    await advancedVerification.setupPanel({ ...interaction, channel: channel || interaction.channel });
 }
 
 async function handleConfig(interaction) {
