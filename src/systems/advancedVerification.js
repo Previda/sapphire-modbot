@@ -216,6 +216,19 @@ class AdvancedVerification {
         }
 
         const config = await this.loadConfig(interaction.guild.id);
+        
+        // Check if Roblox verification is enabled
+        let robloxEnabled = false;
+        try {
+            const fs = require('fs').promises;
+            const path = require('path');
+            const robloxConfigFile = path.join(__dirname, '../../data/roblox-config.json');
+            const data = await fs.readFile(robloxConfigFile, 'utf8');
+            const robloxConfigs = JSON.parse(data);
+            robloxEnabled = robloxConfigs[interaction.guild.id]?.enabled || false;
+        } catch (error) {
+            // Roblox config doesn't exist
+        }
 
         const embed = new EmbedBuilder()
             .setColor(0x5865F2)
@@ -227,6 +240,7 @@ class AdvancedVerification {
                 '🔒 Protects against bots and spam\n' +
                 '✅ Ensures you\'re a real person\n' +
                 '🛡️ Keeps our community safe\n\n' +
+                (robloxEnabled ? '**Choose your verification method:**\n🎮 Link your Roblox account (optional)\n🛡️ Standard Discord verification\n\n' : '') +
                 '**Click the button below to get started!**'
             )
             .addFields(
@@ -237,17 +251,28 @@ class AdvancedVerification {
             .setFooter({ text: '🛡️ Skyfall Security System | Powered by Advanced Verification' })
             .setTimestamp();
 
-        const row = new ActionRowBuilder()
-            .addComponents(
+        const buttons = [
+            new ButtonBuilder()
+                .setCustomId('verify_button')
+                .setLabel('✅ Verify Discord')
+                .setEmoji('🛡️')
+                .setStyle(ButtonStyle.Success)
+        ];
+
+        if (robloxEnabled) {
+            buttons.push(
                 new ButtonBuilder()
-                    .setCustomId('verify_button')
-                    .setLabel('✅ Verify Me')
-                    .setEmoji('🛡️')
-                    .setStyle(ButtonStyle.Success)
+                    .setCustomId('roblox_verify_start')
+                    .setLabel('🎮 Verify Roblox')
+                    .setEmoji('🎮')
+                    .setStyle(ButtonStyle.Primary)
             );
+        }
+
+        const row = new ActionRowBuilder().addComponents(buttons);
 
         await interaction.reply({
-            content: '✅ Advanced verification panel created!',
+            content: `✅ Verification panel created!${robloxEnabled ? ' (Discord + Roblox)' : ''}`,
             flags: 64
         });
 

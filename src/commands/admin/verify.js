@@ -85,6 +85,24 @@ module.exports = {
                         .setName('user')
                         .setDescription('User to reset')
                         .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('roblox')
+                .setDescription('Configure Roblox verification')
+                .addBooleanOption(option =>
+                    option
+                        .setName('enabled')
+                        .setDescription('Enable Roblox verification')
+                        .setRequired(true))
+                .addRoleOption(option =>
+                    option
+                        .setName('verified_role')
+                        .setDescription('Role for Roblox verified users'))
+                .addIntegerOption(option =>
+                    option
+                        .setName('min_account_age')
+                        .setDescription('Minimum Roblox account age in days')
+                        .setMinValue(0)))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
@@ -114,6 +132,9 @@ module.exports = {
                 break;
             case 'reset':
                 await handleReset(interaction);
+                break;
+            case 'roblox':
+                await handleRobloxConfig(interaction);
                 break;
         }
     }
@@ -441,4 +462,71 @@ async function handleReset(interaction) {
             .setTimestamp()
         ]
     });
+}
+
+async function handleRobloxConfig(interaction) {
+    await interaction.deferReply({ flags: 64 });
+
+    const fs = require('fs').promises;
+    const path = require('path');
+    const configFile = path.join(__dirname, '../../../data/roblox-config.json');
+
+    const enabled = interaction.options.getBoolean('enabled');
+    const verifiedRole = interaction.options.getRole('verified_role');
+    const minAccountAge = interaction.options.getInteger('min_account_age');
+
+    try {
+        // Load config
+        let allConfigs = {};
+        try {
+            const data = await fs.readFile(configFile, 'utf8');
+            allConfigs = JSON.parse(data);
+        } catch (error) {
+            // File doesn't exist
+        }
+
+        if (!allConfigs[interaction.guild.id]) {
+            allConfigs[interaction.guild.id] = {
+                enabled: false,
+                verifiedRole: null,
+                minAccountAge: 30,
+                requireGroup: false,
+                groupId: null
+            };
+        }
+
+        const config = allConfigs[interaction.guild.id];
+        config.enabled = enabled;
+        if (verifiedRole) config.verifiedRole = verifiedRole.id;
+        if (minAccountAge !== null) config.minAccountAge = minAccountAge;
+
+        // Save config
+        await fs.mkdir(path.dirname(configFile), { recursive: true });
+        await fs.writeFile(configFile, JSON.stringify(allConfigs, null, 2));
+
+        await interaction.editReply({
+            embeds: [new EmbedBuilder()
+                .setColor(enabled ? 0x57F287 : 0xED4245)
+                .setTitle(enabled ? '✅ Roblox Verification Enabled' : '❌ Roblox Verification Disabled')
+                .setDescription(
+                    enabled 
+                        ? 'Roblox verification is now enabled!\n\nUsers can link their Roblox accounts during verification.'
+                        : 'Roblox verification has been disabled.'
+                )
+                .addFields(
+                    { name: '🎮 Status', value: enabled ? '✅ Enabled' : '❌ Disabled', inline: true },
+                    { name: '✅ Verified Role', value: verifiedRole ? verifiedRole.toString() : config.verifiedRole ? `<@&${config.verifiedRole}>` : 'Not set', inline: true },
+                    { name: '📅 Min Account Age', value: `${config.minAccountAge} days`, inline: true }
+                )
+                .setFooter({ text: enabled ? 'Roblox verification will appear in the verification panel' : 'Users will only see Discord verification' })
+                .setTimestamp()
+            ]
+        });
+
+    } catch (error) {
+        console.error('Roblox config error:', error);
+        await interaction.editReply({
+            content: `❌ Error configuring Roblox verification: ${error.message}`
+        });
+    }
 }
