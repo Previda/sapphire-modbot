@@ -9,14 +9,7 @@ class MusicSystem {
             leaveOnEmpty: true,
             leaveOnFinish: false,
             leaveOnStop: true,
-            savePreviousSongs: true,
-            searchSongs: 5,
-            nsfw: false,
-            emptyCooldown: 60,
-            ytdlOptions: {
-                quality: 'highestaudio',
-                highWaterMark: 1 << 25
-            }
+            emptyCooldown: 60
         });
 
         this.setupEvents();
