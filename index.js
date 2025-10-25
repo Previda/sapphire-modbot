@@ -12,6 +12,7 @@ const AutoModSystem = require('./src/services/autoModSystem');
 const { AutoModerationModule } = require('./src/modules/automod');
 const AntiRaidSystem = require('./src/utils/antiRaid');
 const AntiNukeSystem = require('./src/utils/antiNuke');
+const PolishedLogger = require('./src/utils/polishedLogger');
 
 // Security and error handling
 process.on('uncaughtException', (error) => {
@@ -118,7 +119,7 @@ const initializeServices = () => {
     console.log('🚨 Anti-nuke protection active');
 };
 
-// Load commands recursively
+// Load commands recursively with enhanced validation
 function loadCommands(dir) {
     const files = fs.readdirSync(dir);
     
@@ -130,13 +131,60 @@ function loadCommands(dir) {
             loadCommands(filePath);
         } else if (file.endsWith('.js')) {
             try {
+                // Clear require cache to ensure fresh load
+                delete require.cache[require.resolve(filePath)];
+                
                 const command = require(filePath);
-                if (command.data && command.execute) {
-                    client.commands.set(command.data.name, command);
-                    console.log(`✅ Loaded command: ${command.data.name}`);
+                
+                // Validate command structure
+                if (!command.data) {
+                    console.warn(`⚠️  Command ${file} missing 'data' property - skipped`);
+                    continue;
                 }
+                
+                if (!command.execute) {
+                    console.warn(`⚠️  Command ${file} missing 'execute' function - skipped`);
+                    continue;
+                }
+                
+                if (!command.data.name) {
+                    console.warn(`⚠️  Command ${file} missing name in data - skipped`);
+                    continue;
+                }
+                
+                if (!command.data.description) {
+                    console.warn(`⚠️  Command ${file} missing description - skipped`);
+                    continue;
+                }
+                
+                // Wrap execute function with error handler
+                const originalExecute = command.execute;
+                command.execute = async function(interaction) {
+                    try {
+                        await originalExecute.call(this, interaction);
+                    } catch (error) {
+                        console.error(`❌ Error in ${command.data.name} command:`, error);
+                        console.error('Error stack:', error.stack);
+                        
+                        const errorMessage = `❌ An error occurred while executing the command.\n\`\`\`${error.message}\`\`\``;
+                        
+                        try {
+                            if (interaction.deferred) {
+                                await interaction.editReply({ content: errorMessage }).catch(console.error);
+                            } else if (!interaction.replied) {
+                                await interaction.reply({ content: errorMessage, flags: 64 }).catch(console.error);
+                            }
+                        } catch (replyError) {
+                            console.error('Failed to send error message:', replyError);
+                        }
+                    }
+                };
+                
+                client.commands.set(command.data.name, command);
+                PolishedLogger.module(command.data.name, 'loaded');
+                
             } catch (error) {
-                console.error(`❌ Error loading command ${file}:`, error.message);
+                PolishedLogger.error(`Failed to load ${file}`, error.message);
             }
         }
     }
@@ -164,7 +212,9 @@ if (fs.existsSync(verificationPath)) {
 
 // Bot ready event (updated for Discord.js v14+ compatibility)
 client.on('ready', async () => {
-    console.log(`✅ ${client.user.tag} is online!`);
+    PolishedLogger.startup('Skyfall Bot', '2.0.0');
+    PolishedLogger.success(`${client.user.tag} is online!`);
+    PolishedLogger.info(`Serving ${client.guilds.cache.size} guilds`);
     
     // Populate available commands list for API
     global.availableCommands = Array.from(client.commands.values()).map(cmd => ({
@@ -173,17 +223,20 @@ client.on('ready', async () => {
         category: cmd.category || 'General'
     }));
     
-    console.log(`📋 Loaded ${global.availableCommands.length} commands for API`);
+    PolishedLogger.success(`Loaded ${global.availableCommands.length} commands`);
     
     // Initialize database and services after client is ready
     try {
+        PolishedLogger.section('Initializing Systems');
         const database = require('./src/database/connection');
         await database.initializeTables();
-        console.log('✅ Database initialized successfully');
+        PolishedLogger.success('Database initialized');
         
         initializeServices();
+        PolishedLogger.success('All systems operational');
+        PolishedLogger.separator();
     } catch (error) {
-        console.error('❌ Error initializing services:', error);
+        PolishedLogger.error('Failed to initialize services', error.message);
     }
 });
 
@@ -405,20 +458,32 @@ client.on('interactionCreate', async interaction => {
             if (interaction.customId?.startsWith('appeal_modal_')) {
                 const { handleAppealModal } = require('./src/utils/appealHandler');
                 await handleAppealModal(interaction);
+                return;
             }
 
             // Handle appeal review modals
             if (interaction.customId?.includes('appeal_approve_modal_') || interaction.customId?.includes('appeal_reject_modal_')) {
                 const { handleAppealReviewModal } = require('./src/utils/appealButtonHandler');
                 await handleAppealReviewModal(interaction);
+                return;
             }
         } catch (error) {
             console.error('❌ Modal submission error:', error);
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: '❌ An error occurred processing your submission.',
-                    flags: 64
-                });
+            console.error('Error stack:', error.stack);
+            
+            try {
+                if (interaction.deferred) {
+                    await interaction.editReply({
+                        content: '❌ An error occurred processing your submission. Please try again or contact server staff.'
+                    }).catch(console.error);
+                } else if (!interaction.replied) {
+                    await interaction.reply({
+                        content: '❌ An error occurred processing your submission. Please try again or contact server staff.',
+                        flags: 64
+                    }).catch(console.error);
+                }
+            } catch (replyError) {
+                console.error('Failed to send error message:', replyError);
             }
         }
     }

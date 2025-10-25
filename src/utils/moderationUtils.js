@@ -38,7 +38,20 @@ class ModerationManager {
     }
 
     generateCaseId() {
-        return ++this.caseCounter;
+        // Generate consistent 8-character case ID
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (I, O, 0, 1)
+        let code = '';
+        for (let i = 0; i < 8; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        // Ensure uniqueness by checking existing cases
+        while (this.data.cases[code]) {
+            code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+        }
+        return code;
     }
 
     createCase(data) {

@@ -144,23 +144,7 @@ async function showAppealModal(interaction) {
     });
   }
 
-  // Check if user is banned
-  try {
-    const ban = await guild.bans.fetch(user.id).catch(() => null);
-    if (!ban) {
-      return interaction.reply({
-        content: '❌ You are not banned from this server!',
-        flags: 64
-      });
-    }
-  } catch (error) {
-    return interaction.reply({
-      content: '❌ Could not verify your ban status.',
-      flags: 64
-    });
-  }
-
-  // Check if already appealed
+  // Check if already appealed (skip ban check as banned users can't interact in guild)
   const appeals = loadDB(APPEALS_DB, {});
   const guildAppeals = appeals[guild.id] || {};
   const existingAppeal = Object.values(guildAppeals).find(
@@ -227,7 +211,16 @@ async function handleAppealSubmission(interaction) {
     const appeals = loadDB(APPEALS_DB, {});
     if (!appeals[guild.id]) appeals[guild.id] = {};
 
-    const appealId = `appeal-${Date.now()}`;
+    // Generate consistent 8-character appeal ID
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let appealId = '';
+    do {
+      appealId = '';
+      for (let i = 0; i < 8; i++) {
+        appealId += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+    } while (appeals[guild.id][appealId]); // Ensure uniqueness
+
     const appealData = {
       appealId,
       userId: user.id,

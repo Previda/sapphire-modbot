@@ -25,12 +25,14 @@ async function saveCasesData(casesData) {
     }
 }
 
-// Generate unique case ID
+// Generate unique case ID (consistent 8-character format)
 function generateCaseId(guildId) {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substr(2, 4);
-    const guildShort = guildId.slice(-4);
-    return `${guildShort}${timestamp}${random}`.toUpperCase();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (I, O, 0, 1)
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
 }
 
 // Create a new case

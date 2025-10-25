@@ -12,11 +12,11 @@ class AppealLibrary {
         await fs.mkdir(this.appealsPath, { recursive: true });
     }
 
-    // Generate random appeal code (shorter - 6 characters)
+    // Generate random appeal code (consistent 8-character format)
     generateAppealCode() {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (I, O, 0, 1)
         let code = '';
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 8; i++) {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return code;

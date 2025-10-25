@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
 const { loadGuildConfig, saveGuildConfig } = require('../../utils/configManager');
+const advancedVerification = require('../../systems/advancedVerification');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -162,48 +163,13 @@ async function handleCreate(interaction) {
 async function handlePanel(interaction) {
     await interaction.deferReply({ flags: 64 });
 
-    try {
-        const config = await loadGuildConfig(interaction.guild.id);
-
-        if (!config.verificationEnabled) {
-            return interaction.editReply({
-                content: '❌ Verification is not enabled! Use `/verify-setup create` first.'
-            });
-        }
-
-        const embed = new EmbedBuilder()
-            .setTitle('🔐 Server Verification')
-            .setDescription(
-                '**Welcome to the server!**\n\n' +
-                'To access all channels, please verify yourself by clicking the button below.\n\n' +
-                '**Why verify?**\n' +
-                '• Protects against bots and spam\n' +
-                '• Ensures you\'re a real person\n' +
-                '• Keeps our community safe\n\n' +
-                '**Click the button below to get started!**'
-            )
-            .setColor('#00ff00')
-            .setFooter({ text: 'This is a one-time verification' })
-            .setTimestamp();
-
-        const button = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('verify_button')
-                    .setLabel('Verify')
-                    .setEmoji('✅')
-                    .setStyle(ButtonStyle.Success)
-            );
-
-        await interaction.channel.send({ embeds: [embed], components: [button] });
-        await interaction.editReply({ content: '✅ Verification panel sent!' });
-
-    } catch (error) {
-        console.error('Error sending panel:', error);
-        await interaction.editReply({
-            content: `❌ Failed to send panel: ${error.message}`
-        });
-    }
+    const channel = interaction.options.getChannel('channel');
+    
+    await advancedVerification.setupPanel(interaction);
+    
+    await interaction.editReply({
+        content: `✅ Advanced verification panel created in ${channel || interaction.channel}!`
+    });
 }
 
 async function handleConfig(interaction) {

@@ -206,8 +206,10 @@ client.on('interactionCreate', async (interaction) => {
             // Handle button interactions
             console.log(`🔘 Button clicked: ${interaction.customId} by ${interaction.user.tag}`);
             
+            // Verification button - Use advanced verification system
             if (interaction.customId === 'verify_button') {
-                await verification.handleVerificationButton(interaction);
+                const advancedVerification = require('./systems/advancedVerification');
+                await advancedVerification.handleVerificationButton(interaction);
             } 
             // Ticket panel buttons (from /panel command)
             else if (interaction.customId.startsWith('create_ticket_')) {
@@ -308,7 +310,18 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.isModalSubmit()) {
             // Handle modal submissions
-            if (interaction.customId === 'appeal_modal') {
+            
+            // Verification modals
+            if (interaction.customId === 'verify_captcha_modal') {
+                const advancedVerification = require('./systems/advancedVerification');
+                await advancedVerification.handleCaptchaModal(interaction);
+            }
+            else if (interaction.customId === 'verify_math_modal') {
+                const advancedVerification = require('./systems/advancedVerification');
+                await advancedVerification.handleMathModal(interaction);
+            }
+            // Appeal modals
+            else if (interaction.customId === 'appeal_modal') {
                 await appeals.handleAppealSubmission(interaction);
             }
             else if (interaction.customId === 'appeal_config_modal') {
@@ -317,6 +330,7 @@ client.on('interactionCreate', async (interaction) => {
             else if (interaction.customId.startsWith('appeal_submit_')) {
                 await handleAppealSubmit(interaction);
             }
+            // Ticket modals
             else if (interaction.customId === 'ticket_create_modal') {
                 await handleTicketCreateSubmit(interaction);
             }
@@ -741,6 +755,44 @@ async function handleTicketCreation(interaction, category) {
         
         const user = interaction.user;
         const guild = interaction.guild;
+        
+        // Check if user is blacklisted
+        const fs = require('fs');
+        const path = require('path');
+        const blacklistPath = path.join(__dirname, '../data/ticket-blacklist.json');
+        
+        let blacklist = {};
+        if (fs.existsSync(blacklistPath)) {
+            try {
+                blacklist = JSON.parse(fs.readFileSync(blacklistPath, 'utf8'));
+            } catch (error) {
+                console.error('Error reading blacklist:', error);
+            }
+        }
+        
+        // Check if user is blacklisted in this guild
+        if (blacklist[guild.id]?.users?.includes(user.id)) {
+            const blacklistInfo = blacklist[guild.id].details?.[user.id];
+            const reason = blacklistInfo?.reason || 'No reason provided';
+            const blacklistedBy = blacklistInfo?.blacklistedBy || 'Unknown';
+            const date = blacklistInfo?.date ? `<t:${Math.floor(new Date(blacklistInfo.date).getTime() / 1000)}:F>` : 'Unknown';
+            
+            const embed = new EmbedBuilder()
+                .setTitle('🚫 User Status: Blacklisted')
+                .setDescription(`${user} is blacklisted from creating tickets.`)
+                .addFields(
+                    { name: '👤 User', value: `${user.tag}\n\`${user.id}\``, inline: true },
+                    { name: '👮 Blacklisted By', value: `<@${blacklistedBy}>`, inline: true },
+                    { name: '📅 Date', value: date, inline: true },
+                    { name: '📝 Reason', value: reason, inline: false }
+                )
+                .setColor(0xED4245)
+                .setTimestamp();
+            
+            return interaction.editReply({
+                embeds: [embed]
+            });
+        }
         
         // Generate ticket ID
         const ticketID = `ticket-${Date.now()}`;
