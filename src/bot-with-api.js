@@ -42,6 +42,7 @@ try {
     console.log('🎵 Music system initialized');
 } catch (error) {
     console.log('⚠️ Music system not available:', error.message);
+    console.log('Full error:', error.stack);
 }
 
 function loadCommands(dir) {
