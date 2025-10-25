@@ -33,20 +33,16 @@ const client = new Client({
 // Load all commands
 client.commands = new Collection();
 
-// Initialize music system (disabled - requires Node 20+)
-// Uncomment when Node is upgraded
-/*
+// Initialize music system
 let musicSystem = null;
 try {
-    const MusicSystem = require('./systems/musicSystem');
-    musicSystem = new MusicSystem(client);
-    client.distube = musicSystem.getDistube();
-    console.log('🎵 Music system initialized');
+    const SimpleMusicSystem = require('./systems/simpleMusicSystem');
+    musicSystem = new SimpleMusicSystem(client);
+    client.musicSystem = musicSystem;
+    console.log('🎵 Music system initialized (Node 18 compatible)');
 } catch (error) {
     console.log('⚠️ Music system not available:', error.message);
 }
-*/
-console.log('⚠️ Music system disabled (requires Node.js 20+, current: ' + process.version + ')');
 
 function loadCommands(dir) {
     const files = fs.readdirSync(dir);

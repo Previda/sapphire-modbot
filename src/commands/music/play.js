@@ -28,27 +28,12 @@ module.exports = {
                 });
             }
 
-            // Check bot permissions
-            const permissions = voiceChannel.permissionsFor(interaction.client.user);
-            if (!permissions.has(PermissionFlagsBits.Connect) || !permissions.has(PermissionFlagsBits.Speak)) {
-                return interaction.reply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xED4245)
-                        .setTitle('❌ Missing Permissions')
-                        .setDescription('I need permissions to join and speak in your voice channel!')
-                        .setTimestamp()
-                    ],
-                    ephemeral: true
-                });
-            }
-
-            // Check if music system is available
-            if (!interaction.client.distube) {
+            if (!interaction.client.musicSystem) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
                         .setTitle('❌ Music System Unavailable')
-                        .setDescription('The music system is not initialized. Please contact an administrator.')
+                        .setDescription('The music system is not initialized.')
                         .setTimestamp()
                     ],
                     ephemeral: true
@@ -57,35 +42,68 @@ module.exports = {
 
             await interaction.deferReply();
 
-            // Play the song
-            await interaction.client.distube.play(voiceChannel, query, {
-                member: interaction.member,
-                textChannel: interaction.channel,
-                interaction
-            });
+            const result = await interaction.client.musicSystem.play(interaction, query);
 
-            await interaction.editReply({
-                embeds: [new EmbedBuilder()
-                    .setColor(0x5865F2)
-                    .setTitle('🔍 Searching...')
-                    .setDescription(`Searching for: **${query}**`)
-                    .setTimestamp()
-                ]
-            });
+            if (result.error) {
+                return interaction.editReply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setTitle('❌ Error')
+                        .setDescription(result.error)
+                        .setTimestamp()
+                    ]
+                });
+            }
+
+            if (result.nowPlaying) {
+                const song = result.nowPlaying;
+                await interaction.editReply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0x57F287)
+                        .setTitle('🎵 Now Playing')
+                        .setDescription(`**[${song.title}](${song.url})**`)
+                        .addFields(
+                            { name: '⏱️ Duration', value: song.duration, inline: true },
+                            { name: '👤 Requested by', value: song.requestedBy.toString(), inline: true }
+                        )
+                        .setThumbnail(song.thumbnail)
+                        .setTimestamp()
+                    ]
+                });
+            } else if (result.addedToQueue) {
+                const song = result.addedToQueue;
+                await interaction.editReply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0x5865F2)
+                        .setTitle('➕ Added to Queue')
+                        .setDescription(`**[${song.title}](${song.url})**`)
+                        .addFields(
+                            { name: '⏱️ Duration', value: song.duration, inline: true },
+                            { name: '👤 Requested by', value: song.requestedBy.toString(), inline: true },
+                            { name: '📍 Position', value: `#${result.position}`, inline: true }
+                        )
+                        .setThumbnail(song.thumbnail)
+                        .setTimestamp()
+                    ]
+                });
+            }
 
         } catch (error) {
             console.error('Play command error:', error);
-            
-            const errorEmbed = new EmbedBuilder()
-                .setColor(0xED4245)
-                .setTitle('❌ Error Playing Music')
-                .setDescription(`An error occurred: ${error.message}`)
-                .setTimestamp();
-            
-            if (interaction.deferred || interaction.replied) {
-                await interaction.editReply({ embeds: [errorEmbed] });
+            const reply = {
+                embeds: [new EmbedBuilder()
+                    .setColor(0xED4245)
+                    .setTitle('❌ Error')
+                    .setDescription(`An error occurred: ${error.message}`)
+                    .setTimestamp()
+                ],
+                ephemeral: true
+            };
+
+            if (interaction.deferred) {
+                await interaction.editReply(reply);
             } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                await interaction.reply(reply);
             }
         }
     }

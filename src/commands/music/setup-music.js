@@ -63,7 +63,7 @@ module.exports = {
             await fs.writeFile(MUSIC_CONFIG_FILE, JSON.stringify(allConfigs, null, 2));
 
             // Check if music system is available
-            const musicAvailable = !!interaction.client.distube;
+            const musicAvailable = !!interaction.client.musicSystem;
 
             const embed = new EmbedBuilder()
                 .setTitle('🎵 Music System Setup')

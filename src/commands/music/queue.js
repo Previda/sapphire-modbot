@@ -7,7 +7,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            if (!interaction.client.distube) {
+            if (!interaction.client.musicSystem) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
@@ -19,7 +19,7 @@ module.exports = {
                 });
             }
 
-            const queue = interaction.client.distube.getQueue(interaction.guild.id);
+            const queue = interaction.client.musicSystem.getQueue(interaction.guild.id);
             
             if (!queue || queue.songs.length === 0) {
                 return interaction.reply({
@@ -35,7 +35,7 @@ module.exports = {
 
             const currentSong = queue.songs[0];
             const upNext = queue.songs.slice(1, 11).map((song, index) => 
-                `${index + 1}. **[${song.name}](${song.url})**\n   ⏱️ ${song.formattedDuration} | 👤 ${song.user}`
+                `${index + 1}. **[${song.title}](${song.url})**\n   ⏱️ ${song.duration} | 👤 ${song.requestedBy}`
             );
 
             const queueEmbed = new EmbedBuilder()
@@ -44,7 +44,7 @@ module.exports = {
                 .addFields(
                     { 
                         name: '🎵 Now Playing', 
-                        value: `**[${currentSong.name}](${currentSong.url})**\n⏱️ ${currentSong.formattedDuration} | 👤 ${currentSong.user}`,
+                        value: `**[${currentSong.title}](${currentSong.url})**\n⏱️ ${currentSong.duration} | 👤 ${currentSong.requestedBy}`,
                         inline: false
                     }
                 )

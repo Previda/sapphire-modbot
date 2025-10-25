@@ -28,7 +28,7 @@ module.exports = {
                 });
             }
 
-            if (!interaction.client.distube) {
+            if (!interaction.client.musicSystem) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
@@ -40,21 +40,19 @@ module.exports = {
                 });
             }
 
-            const queue = interaction.client.distube.getQueue(interaction.guild.id);
+            const result = interaction.client.musicSystem.setVolume(interaction.guild.id, volume);
             
-            if (!queue) {
+            if (result.error) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
                         .setTitle('❌ Nothing Playing')
-                        .setDescription('There\'s no music currently playing!')
+                        .setDescription(result.error)
                         .setTimestamp()
                     ],
                     ephemeral: true
                 });
             }
-
-            await interaction.client.distube.setVolume(interaction.guild.id, volume);
 
             const volumeEmbed = new EmbedBuilder()
                 .setColor(0x57F287)
