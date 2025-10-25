@@ -33,7 +33,9 @@ const client = new Client({
 // Load all commands
 client.commands = new Collection();
 
-// Initialize music system
+// Initialize music system (disabled - requires Node 20+)
+// Uncomment when Node is upgraded
+/*
 let musicSystem = null;
 try {
     const MusicSystem = require('./systems/musicSystem');
@@ -42,8 +44,9 @@ try {
     console.log('🎵 Music system initialized');
 } catch (error) {
     console.log('⚠️ Music system not available:', error.message);
-    console.log('Full error:', error.stack);
 }
+*/
+console.log('⚠️ Music system disabled (requires Node.js 20+, current: ' + process.version + ')');
 
 function loadCommands(dir) {
     const files = fs.readdirSync(dir);

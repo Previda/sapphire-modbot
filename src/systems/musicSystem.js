@@ -1,18 +1,13 @@
-const { DisTube } = require('distube');
+const { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
+const play = require('play-dl');
 const { EmbedBuilder } = require('discord.js');
 
 class MusicSystem {
     constructor(client) {
         this.client = client;
-        this.distube = new DisTube(client, {
-            emitNewSongOnly: true,
-            leaveOnEmpty: true,
-            leaveOnFinish: false,
-            leaveOnStop: true,
-            emptyCooldown: 60
-        });
-
-        this.setupEvents();
+        this.queues = new Map(); // guildId -> { songs: [], player: AudioPlayer, connection: VoiceConnection }
+        
+        console.log('🎵 Music system initialized (play-dl)');
     }
 
     setupEvents() {
