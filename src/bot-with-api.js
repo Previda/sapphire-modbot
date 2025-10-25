@@ -211,6 +211,13 @@ client.on('interactionCreate', async (interaction) => {
                 const advancedVerification = require('./systems/advancedVerification');
                 await advancedVerification.handleVerificationButton(interaction);
             }
+            // Roblox verification button
+            else if (interaction.customId === 'roblox_verify_start') {
+                await handleRobloxVerifyStart(interaction);
+            }
+            else if (interaction.customId === 'roblox_verify_confirm') {
+                await handleRobloxVerifyConfirm(interaction);
+            }
             // New ticket system button
             else if (interaction.customId === 'create_ticket') {
                 await handleNewTicketCreation(interaction);
@@ -337,6 +344,10 @@ client.on('interactionCreate', async (interaction) => {
             // Ticket modals
             else if (interaction.customId === 'ticket_create_modal') {
                 await handleTicketCreateSubmit(interaction);
+            }
+            // Roblox modals
+            else if (interaction.customId === 'roblox_username_modal') {
+                await handleRobloxUsernameSubmit(interaction);
             }
         } else if (interaction.isStringSelectMenu()) {
             // Handle select menu interactions
@@ -1355,8 +1366,41 @@ async function handleNewTicketCreation(interaction) {
     const fs = require('fs').promises;
     const path = require('path');
     const configFile = path.join(__dirname, '../data/ticket-config.json');
+    const blacklistFile = path.join(__dirname, '../data/ticket-blacklist.json');
     
     try {
+        // Check blacklist first
+        try {
+            const blacklistData = await fs.readFile(blacklistFile, 'utf8');
+            const blacklist = JSON.parse(blacklistData);
+            
+            if (blacklist[interaction.guild.id]?.users?.includes(interaction.user.id)) {
+                const blacklistInfo = blacklist[interaction.guild.id].details?.[interaction.user.id];
+                const reason = blacklistInfo?.reason || 'No reason provided';
+                const blacklistedBy = blacklistInfo?.blacklistedBy || 'Unknown';
+                const date = blacklistInfo?.date ? `<t:${Math.floor(new Date(blacklistInfo.date).getTime() / 1000)}:F>` : 'Unknown';
+
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setTitle('🚫 Ticket Access Denied')
+                        .setDescription(`You are blacklisted from creating tickets in this server.`)
+                        .addFields(
+                            { name: '👤 User', value: `${interaction.user.tag}\n\`${interaction.user.id}\``, inline: true },
+                            { name: '👮 Blacklisted By', value: `<@${blacklistedBy}>`, inline: true },
+                            { name: '📅 Date', value: date, inline: true },
+                            { name: '📝 Reason', value: reason, inline: false }
+                        )
+                        .setColor(0xED4245)
+                        .setFooter({ text: 'Contact an administrator if you believe this is a mistake' })
+                        .setTimestamp()
+                    ],
+                    flags: 64
+                });
+            }
+        } catch (error) {
+            // Blacklist file doesn't exist or error reading it - continue
+        }
+        
         // Load config
         const data = await fs.readFile(configFile, 'utf8');
         const allConfigs = JSON.parse(data);
@@ -1401,13 +1445,292 @@ async function handleNewTicketCreation(interaction) {
     }
 }
 
+// Roblox verification handlers
+async function handleRobloxVerifyStart(interaction) {
+    const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    
+    const modal = new ModalBuilder()
+        .setCustomId('roblox_username_modal')
+        .setTitle('🎮 Roblox Verification');
+
+    const usernameInput = new TextInputBuilder()
+        .setCustomId('roblox_username')
+        .setLabel('Enter your Roblox username')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('YourRobloxUsername')
+        .setRequired(true)
+        .setMaxLength(20);
+
+    const row = new ActionRowBuilder().addComponents(usernameInput);
+    modal.addComponents(row);
+
+    await interaction.showModal(modal);
+}
+
+async function handleRobloxUsernameSubmit(interaction) {
+    const axios = require('axios');
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    await interaction.deferReply({ flags: 64 });
+    
+    const username = interaction.fields.getTextInputValue('roblox_username');
+    
+    try {
+        // Get Roblox user ID from username
+        const searchResponse = await axios.post('https://users.roblox.com/v1/usernames/users', {
+            usernames: [username],
+            excludeBannedUsers: false
+        });
+        
+        if (!searchResponse.data.data || searchResponse.data.data.length === 0) {
+            return interaction.editReply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xED4245)
+                    .setTitle('❌ User Not Found')
+                    .setDescription(`Roblox user "${username}" not found.\n\nPlease check the spelling and try again.`)
+                    .setTimestamp()
+                ]
+            });
+        }
+        
+        const robloxUser = searchResponse.data.data[0];
+        const robloxId = robloxUser.id;
+        
+        // Generate verification code
+        const verificationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        
+        // Store pending verification
+        const pendingFile = path.join(__dirname, '../data/roblox-pending.json');
+        let pending = {};
+        try {
+            const data = await fs.readFile(pendingFile, 'utf8');
+            pending = JSON.parse(data);
+        } catch (error) {
+            // File doesn't exist
+        }
+        
+        pending[interaction.user.id] = {
+            robloxId,
+            robloxUsername: robloxUser.name,
+            verificationCode,
+            guildId: interaction.guild.id,
+            timestamp: Date.now()
+        };
+        
+        await fs.mkdir(path.dirname(pendingFile), { recursive: true });
+        await fs.writeFile(pendingFile, JSON.stringify(pending, null, 2));
+        
+        // Send instructions
+        const embed = new EmbedBuilder()
+            .setColor(0x5865F2)
+            .setTitle('🎮 Roblox Verification - Step 2')
+            .setDescription(
+                `**Roblox Account Found!**\n\n` +
+                `**Username:** ${robloxUser.name}\n` +
+                `**User ID:** ${robloxId}\n\n` +
+                `**To complete verification:**\n\n` +
+                `1. Go to your Roblox profile: https://www.roblox.com/users/${robloxId}/profile\n` +
+                `2. Click "Edit Profile"\n` +
+                `3. Add this code to your **About/Description**:\n\n` +
+                `\`\`\`${verificationCode}\`\`\`\n\n` +
+                `4. Save your profile\n` +
+                `5. Click the "Confirm Verification" button below\n\n` +
+                `⏱️ **This code expires in 10 minutes**`
+            )
+            .setThumbnail(`https://www.roblox.com/headshot-thumbnail/image?userId=${robloxId}&width=150&height=150&format=png`)
+            .setFooter({ text: 'Make sure to save your profile after adding the code!' })
+            .setTimestamp();
+        
+        const button = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('roblox_verify_confirm')
+                    .setLabel('Confirm Verification')
+                    .setEmoji('✅')
+                    .setStyle(ButtonStyle.Success)
+            );
+        
+        await interaction.editReply({
+            embeds: [embed],
+            components: [button]
+        });
+        
+    } catch (error) {
+        console.error('Roblox verification error:', error);
+        await interaction.editReply({
+            embeds: [new EmbedBuilder()
+                .setColor(0xED4245)
+                .setTitle('❌ Verification Error')
+                .setDescription('An error occurred while looking up your Roblox account.\n\nPlease try again later.')
+                .setTimestamp()
+            ]
+        });
+    }
+}
+
+async function handleRobloxVerifyConfirm(interaction) {
+    const axios = require('axios');
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    await interaction.deferReply({ flags: 64 });
+    
+    try {
+        // Load pending verification
+        const pendingFile = path.join(__dirname, '../data/roblox-pending.json');
+        const data = await fs.readFile(pendingFile, 'utf8');
+        const pending = JSON.parse(data);
+        
+        const userPending = pending[interaction.user.id];
+        if (!userPending) {
+            return interaction.editReply({
+                content: '❌ No pending verification found. Please start the verification process again.'
+            });
+        }
+        
+        // Check if expired (10 minutes)
+        if (Date.now() - userPending.timestamp > 600000) {
+            delete pending[interaction.user.id];
+            await fs.writeFile(pendingFile, JSON.stringify(pending, null, 2));
+            
+            return interaction.editReply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xED4245)
+                    .setTitle('⏱️ Verification Expired')
+                    .setDescription('Your verification code has expired.\n\nPlease start the verification process again.')
+                    .setTimestamp()
+                ]
+            });
+        }
+        
+        // Get Roblox profile description
+        const profileResponse = await axios.get(`https://users.roblox.com/v1/users/${userPending.robloxId}`);
+        const description = profileResponse.data.description || '';
+        
+        // Check if code is in description
+        if (!description.includes(userPending.verificationCode)) {
+            return interaction.editReply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xED4245)
+                    .setTitle('❌ Verification Code Not Found')
+                    .setDescription(
+                        `I couldn't find the verification code in your Roblox profile description.\n\n` +
+                        `**Make sure you:**\n` +
+                        `1. Added the code: \`${userPending.verificationCode}\`\n` +
+                        `2. Saved your profile\n` +
+                        `3. Waited a few seconds for Roblox to update\n\n` +
+                        `Then try clicking "Confirm Verification" again.`
+                    )
+                    .setTimestamp()
+                ]
+            });
+        }
+        
+        // Verification successful!
+        const configFile = path.join(__dirname, '../data/roblox-config.json');
+        const verifiedFile = path.join(__dirname, '../data/roblox-verified.json');
+        
+        // Load config
+        const configData = await fs.readFile(configFile, 'utf8');
+        const allConfigs = JSON.parse(configData);
+        const config = allConfigs[userPending.guildId];
+        
+        // Save verified user
+        let verified = {};
+        try {
+            const verifiedData = await fs.readFile(verifiedFile, 'utf8');
+            verified = JSON.parse(verifiedData);
+        } catch (error) {
+            // File doesn't exist
+        }
+        
+        if (!verified[userPending.guildId]) {
+            verified[userPending.guildId] = {};
+        }
+        
+        verified[userPending.guildId][interaction.user.id] = {
+            robloxId: userPending.robloxId,
+            robloxUsername: userPending.robloxUsername,
+            verifiedAt: new Date().toISOString()
+        };
+        
+        await fs.writeFile(verifiedFile, JSON.stringify(verified, null, 2));
+        
+        // Remove from pending
+        delete pending[interaction.user.id];
+        await fs.writeFile(pendingFile, JSON.stringify(pending, null, 2));
+        
+        // Add role
+        if (config.verifiedRole) {
+            const member = interaction.guild.members.cache.get(interaction.user.id);
+            await member.roles.add(config.verifiedRole);
+        }
+        
+        // Success message
+        await interaction.editReply({
+            embeds: [new EmbedBuilder()
+                .setColor(0x57F287)
+                .setTitle('✅ Roblox Verification Successful!')
+                .setDescription(
+                    `**Congratulations!** Your Roblox account has been verified!\n\n` +
+                    `**Roblox Username:** ${userPending.robloxUsername}\n` +
+                    `**Roblox ID:** ${userPending.robloxId}\n\n` +
+                    `You now have access to Roblox-verified features! 🎉`
+                )
+                .setThumbnail(`https://www.roblox.com/headshot-thumbnail/image?userId=${userPending.robloxId}&width=150&height=150&format=png`)
+                .setFooter({ text: 'You can now remove the code from your Roblox profile' })
+                .setTimestamp()
+            ]
+        });
+        
+    } catch (error) {
+        console.error('Roblox confirm error:', error);
+        await interaction.editReply({
+            embeds: [new EmbedBuilder()
+                .setColor(0xED4245)
+                .setTitle('❌ Verification Error')
+                .setDescription('An error occurred while confirming your verification.\n\nPlease try again.')
+                .setTimestamp()
+            ]
+        });
+    }
+}
+
 // Handle ticket category selection
 async function handleTicketCategorySelection(interaction) {
     const fs = require('fs').promises;
     const path = require('path');
     const configFile = path.join(__dirname, '../data/ticket-config.json');
+    const blacklistFile = path.join(__dirname, '../data/ticket-blacklist.json');
     
     try {
+        // Check blacklist first
+        try {
+            const blacklistData = await fs.readFile(blacklistFile, 'utf8');
+            const blacklist = JSON.parse(blacklistData);
+            
+            if (blacklist[interaction.guild.id]?.users?.includes(interaction.user.id)) {
+                const blacklistInfo = blacklist[interaction.guild.id].details?.[interaction.user.id];
+                const reason = blacklistInfo?.reason || 'No reason provided';
+
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setTitle('🚫 Ticket Access Denied')
+                        .setDescription(`You are blacklisted from creating tickets.`)
+                        .addFields(
+                            { name: '📝 Reason', value: reason }
+                        )
+                        .setColor(0xED4245)
+                        .setTimestamp()
+                    ],
+                    flags: 64
+                });
+            }
+        } catch (error) {
+            // Blacklist file doesn't exist - continue
+        }
+        
         await interaction.deferReply({ flags: 64 });
         
         const categoryName = interaction.values[0];
