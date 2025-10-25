@@ -25,12 +25,24 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildModeration
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildVoiceStates
     ]
 });
 
 // Load all commands
 client.commands = new Collection();
+
+// Initialize music system
+let musicSystem = null;
+try {
+    const MusicSystem = require('./systems/musicSystem');
+    musicSystem = new MusicSystem(client);
+    client.distube = musicSystem.getDistube();
+    console.log('🎵 Music system initialized');
+} catch (error) {
+    console.log('⚠️ Music system not available:', error.message);
+}
 
 function loadCommands(dir) {
     const files = fs.readdirSync(dir);

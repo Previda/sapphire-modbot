@@ -1,8 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-// Simple queue system (in production, use a database)
-const musicQueues = new Map();
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('queue')
@@ -10,49 +7,65 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            // Check music permissions
-            const setupCommand = require('./setup-music.js');
-            const permissionCheck = await setupCommand.checkMusicPermission(interaction);
-            
-            if (!permissionCheck.allowed) {
+            if (!interaction.client.distube) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('🚫 Access Denied')
-                        .setDescription(permissionCheck.reason)],
+                        .setColor(0xED4245)
+                        .setTitle('❌ Music System Unavailable')
+                        .setDescription('The music system is not initialized.')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            const guildQueue = musicQueues.get(interaction.guild.id);
+            const queue = interaction.client.distube.getQueue(interaction.guild.id);
             
-            if (!guildQueue || guildQueue.length === 0) {
+            if (!queue || queue.songs.length === 0) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
+                        .setColor(0xED4245)
                         .setTitle('📋 Queue Empty')
-                        .setDescription('The music queue is currently empty!')],
+                        .setDescription('The music queue is currently empty!')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            const queueList = guildQueue.map((song, index) => 
-                `${index + 1}. **${song.title}** - ${song.artist} [${song.duration}]`
-            ).slice(0, 10); // Show max 10 songs
+            const currentSong = queue.songs[0];
+            const upNext = queue.songs.slice(1, 11).map((song, index) => 
+                `${index + 1}. **[${song.name}](${song.url})**\n   ⏱️ ${song.formattedDuration} | 👤 ${song.user}`
+            );
 
             const queueEmbed = new EmbedBuilder()
-                .setColor(0x5865f2)
+                .setColor(0x5865F2)
                 .setTitle('📋 Music Queue')
-                .setDescription(queueList.join('\n'))
+                .addFields(
+                    { 
+                        name: '🎵 Now Playing', 
+                        value: `**[${currentSong.name}](${currentSong.url})**\n⏱️ ${currentSong.formattedDuration} | 👤 ${currentSong.user}`,
+                        inline: false
+                    }
+                )
+                .setThumbnail(currentSong.thumbnail)
                 .setFooter({ 
-                    text: `${guildQueue.length} song(s) in queue • Requested by ${interaction.user.tag}` 
+                    text: `${queue.songs.length} song(s) in queue | Volume: ${queue.volume}%` 
                 })
                 .setTimestamp();
 
-            if (guildQueue.length > 10) {
+            if (upNext.length > 0) {
+                queueEmbed.addFields({
+                    name: '⏭️ Up Next',
+                    value: upNext.join('\n\n'),
+                    inline: false
+                });
+            }
+
+            if (queue.songs.length > 11) {
                 queueEmbed.addFields({
                     name: '➕ More Songs',
-                    value: `...and ${guildQueue.length - 10} more songs`,
+                    value: `...and ${queue.songs.length - 11} more song(s)`,
                     inline: false
                 });
             }
@@ -60,38 +73,16 @@ module.exports = {
             await interaction.reply({ embeds: [queueEmbed] });
 
         } catch (error) {
-            console.error('❌ Queue command error:', error);
+            console.error('Queue command error:', error);
             await interaction.reply({
                 embeds: [new EmbedBuilder()
-                    .setColor(0xff0000)
+                    .setColor(0xED4245)
                     .setTitle('❌ Error')
-                    .setDescription('Failed to display queue.')],
+                    .setDescription(`Failed to display queue: ${error.message}`)
+                    .setTimestamp()
+                ],
                 ephemeral: true
             });
         }
-    },
-
-    // Helper functions for queue management
-    addToQueue(guildId, song) {
-        if (!musicQueues.has(guildId)) {
-            musicQueues.set(guildId, []);
-        }
-        musicQueues.get(guildId).push(song);
-    },
-
-    getQueue(guildId) {
-        return musicQueues.get(guildId) || [];
-    },
-
-    removeFromQueue(guildId) {
-        const queue = musicQueues.get(guildId);
-        if (queue && queue.length > 0) {
-            return queue.shift();
-        }
-        return null;
-    },
-
-    clearQueue(guildId) {
-        musicQueues.delete(guildId);
     }
 };

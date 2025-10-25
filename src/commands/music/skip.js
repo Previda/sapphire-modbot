@@ -1,14 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-// Try to load voice, but don't fail if not available
-let getVoiceConnection;
-try {
-    const voice = require('@discordjs/voice');
-    getVoiceConnection = voice.getVoiceConnection;
-} catch (error) {
-    getVoiceConnection = null;
-}
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('skip')
@@ -16,66 +7,67 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            // Check music permissions
-            const setupCommand = require('./setup-music.js');
-            const permissionCheck = await setupCommand.checkMusicPermission(interaction);
-            
-            if (!permissionCheck.allowed) {
-                return interaction.reply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('🚫 Access Denied')
-                        .setDescription(permissionCheck.reason)],
-                    ephemeral: true
-                });
-            }
-
             const voiceChannel = interaction.member.voice.channel;
             
             if (!voiceChannel) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
+                        .setColor(0xED4245)
                         .setTitle('❌ Not in Voice Channel')
-                        .setDescription('You need to be in a voice channel to use this command!')],
+                        .setDescription('You need to be in a voice channel to use this command!')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            const connection = getVoiceConnection(interaction.guild.id);
-            
-            if (!connection) {
+            if (!interaction.client.distube) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Nothing Playing')
-                        .setDescription('There\'s no music currently playing!')],
+                        .setColor(0xED4245)
+                        .setTitle('❌ Music System Unavailable')
+                        .setDescription('The music system is not initialized.')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            // Stop current player (this will trigger the 'idle' event)
-            const player = connection.state.subscription?.player;
-            if (player) {
-                player.stop();
+            const queue = interaction.client.distube.getQueue(interaction.guild.id);
+            
+            if (!queue) {
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setTitle('❌ Nothing Playing')
+                        .setDescription('There\'s no music currently playing!')
+                        .setTimestamp()
+                    ],
+                    ephemeral: true
+                });
             }
 
-            const skipEmbed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setTitle('⏭️ Song Skipped')
-                .setDescription('Skipped to the next song')
-                .setFooter({ text: `Skipped by ${interaction.user.tag}` })
-                .setTimestamp();
+            await interaction.client.distube.skip(interaction.guild.id);
 
-            await interaction.reply({ embeds: [skipEmbed] });
-
-        } catch (error) {
-            console.error('❌ Skip command error:', error);
             await interaction.reply({
                 embeds: [new EmbedBuilder()
-                    .setColor(0xff0000)
+                    .setColor(0x57F287)
+                    .setTitle('⏭️ Song Skipped')
+                    .setDescription('Skipped to the next song!')
+                    .setFooter({ text: `Skipped by ${interaction.user.tag}` })
+                    .setTimestamp()
+                ]
+            });
+
+        } catch (error) {
+            console.error('Skip command error:', error);
+            await interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xED4245)
                     .setTitle('❌ Error')
-                    .setDescription('Failed to skip song.')],
+                    .setDescription(`Failed to skip song: ${error.message}`)
+                    .setTimestamp()
+                ],
                 ephemeral: true
             });
         }

@@ -1,77 +1,73 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-// Try to load voice, but don't fail if not available
-let getVoiceConnection;
-try {
-    const voice = require('@discordjs/voice');
-    getVoiceConnection = voice.getVoiceConnection;
-} catch (error) {
-    getVoiceConnection = null;
-}
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('stop')
-        .setDescription('Stop music and disconnect from voice channel'),
+        .setDescription('Stop music and clear the queue'),
 
     async execute(interaction) {
         try {
-            // Check music permissions
-            const setupCommand = require('./setup-music.js');
-            const permissionCheck = await setupCommand.checkMusicPermission(interaction);
-            
-            if (!permissionCheck.allowed) {
-                return interaction.reply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('🚫 Access Denied')
-                        .setDescription(permissionCheck.reason)],
-                    ephemeral: true
-                });
-            }
-
             const voiceChannel = interaction.member.voice.channel;
             
             if (!voiceChannel) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
+                        .setColor(0xED4245)
                         .setTitle('❌ Not in Voice Channel')
-                        .setDescription('You need to be in a voice channel to use this command!')],
+                        .setDescription('You need to be in a voice channel to use this command!')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            const connection = getVoiceConnection(interaction.guild.id);
-            
-            if (!connection) {
+            if (!interaction.client.distube) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ Not Playing')
-                        .setDescription('I\'m not currently playing any music!')],
+                        .setColor(0xED4245)
+                        .setTitle('❌ Music System Unavailable')
+                        .setDescription('The music system is not initialized.')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            connection.destroy();
+            const queue = interaction.client.distube.getQueue(interaction.guild.id);
+            
+            if (!queue) {
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setTitle('❌ Not Playing')
+                        .setDescription('I\'m not currently playing any music!')
+                        .setTimestamp()
+                    ],
+                    ephemeral: true
+                });
+            }
 
-            const stopEmbed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setTitle('⏹️ Music Stopped')
-                .setDescription('Disconnected from voice channel')
-                .setFooter({ text: `Stopped by ${interaction.user.tag}` })
-                .setTimestamp();
+            await interaction.client.distube.stop(interaction.guild.id);
 
-            await interaction.reply({ embeds: [stopEmbed] });
-
-        } catch (error) {
-            console.error('❌ Stop command error:', error);
             await interaction.reply({
                 embeds: [new EmbedBuilder()
-                    .setColor(0xff0000)
+                    .setColor(0x57F287)
+                    .setTitle('⏹️ Music Stopped')
+                    .setDescription('Stopped playback and cleared the queue!')
+                    .setFooter({ text: `Stopped by ${interaction.user.tag}` })
+                    .setTimestamp()
+                ]
+            });
+
+        } catch (error) {
+            console.error('Stop command error:', error);
+            await interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xED4245)
                     .setTitle('❌ Error')
-                    .setDescription('Failed to stop music.')],
+                    .setDescription(`Failed to stop music: ${error.message}`)
+                    .setTimestamp()
+                ],
                 ephemeral: true
             });
         }

@@ -1,85 +1,64 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-// Try to load voice, but don't fail if not available
-let getVoiceConnection;
-try {
-    const voice = require('@discordjs/voice');
-    getVoiceConnection = voice.getVoiceConnection;
-} catch (error) {
-    getVoiceConnection = null;
-}
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('volume')
-        .setDescription('Set the music volume (0-100)')
+        .setDescription('Set the music volume (0-200)')
         .addIntegerOption(option =>
             option.setName('level')
-                .setDescription('Volume level (0-100)')
+                .setDescription('Volume level (0-200, default is 100)')
                 .setRequired(true)
                 .setMinValue(0)
-                .setMaxValue(100)),
+                .setMaxValue(200)),
 
     async execute(interaction) {
         try {
-            // Check music permissions
-            const setupCommand = require('./setup-music.js');
-            const permissionCheck = await setupCommand.checkMusicPermission(interaction);
-            
-            if (!permissionCheck.allowed) {
-                return interaction.reply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('🚫 Access Denied')
-                        .setDescription(permissionCheck.reason)],
-                    ephemeral: true
-                });
-            }
-
             const voiceChannel = interaction.member.voice.channel;
             const volume = interaction.options.getInteger('level');
             
             if (!voiceChannel) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
+                        .setColor(0xED4245)
                         .setTitle('❌ Not in Voice Channel')
-                        .setDescription('You need to be in a voice channel to use this command!')],
+                        .setDescription('You need to be in a voice channel to use this command!')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            const connection = getVoiceConnection(interaction.guild.id);
-            
-            if (!connection) {
+            if (!interaction.client.distube) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
+                        .setColor(0xED4245)
+                        .setTitle('❌ Music System Unavailable')
+                        .setDescription('The music system is not initialized.')
+                        .setTimestamp()
+                    ],
+                    ephemeral: true
+                });
+            }
+
+            const queue = interaction.client.distube.getQueue(interaction.guild.id);
+            
+            if (!queue) {
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xED4245)
                         .setTitle('❌ Nothing Playing')
-                        .setDescription('There\'s no music currently playing!')],
+                        .setDescription('There\'s no music currently playing!')
+                        .setTimestamp()
+                    ],
                     ephemeral: true
                 });
             }
 
-            const player = connection.state.subscription?.player;
-            if (!player) {
-                return interaction.reply({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle('❌ No Audio Player')
-                        .setDescription('No active audio player found!')],
-                    ephemeral: true
-                });
-            }
+            await interaction.client.distube.setVolume(interaction.guild.id, volume);
 
-            // Set volume (Discord.js voice uses 0-1 range)
-            const volumeLevel = volume / 100;
-            
-            // Note: Volume control requires additional audio processing
-            // This is a basic implementation
             const volumeEmbed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setTitle('🔊 Volume Set')
+                .setColor(0x57F287)
+                .setTitle('🔊 Volume Adjusted')
                 .setDescription(`Volume set to **${volume}%**`)
                 .setFooter({ text: `Adjusted by ${interaction.user.tag}` })
                 .setTimestamp();
@@ -87,12 +66,14 @@ module.exports = {
             await interaction.reply({ embeds: [volumeEmbed] });
 
         } catch (error) {
-            console.error('❌ Volume command error:', error);
+            console.error('Volume command error:', error);
             await interaction.reply({
                 embeds: [new EmbedBuilder()
-                    .setColor(0xff0000)
+                    .setColor(0xED4245)
                     .setTitle('❌ Error')
-                    .setDescription('Failed to adjust volume.')],
+                    .setDescription(`Failed to adjust volume: ${error.message}`)
+                    .setTimestamp()
+                ],
                 ephemeral: true
             });
         }
