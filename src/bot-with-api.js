@@ -210,7 +210,11 @@ client.on('interactionCreate', async (interaction) => {
             if (interaction.customId === 'verify_button') {
                 const advancedVerification = require('./systems/advancedVerification');
                 await advancedVerification.handleVerificationButton(interaction);
-            } 
+            }
+            // New ticket system button
+            else if (interaction.customId === 'create_ticket') {
+                await handleNewTicketCreation(interaction);
+            }
             // Ticket panel buttons (from /panel command)
             else if (interaction.customId.startsWith('create_ticket_')) {
                 const category = interaction.customId.replace('create_ticket_', '');
@@ -336,7 +340,10 @@ client.on('interactionCreate', async (interaction) => {
             }
         } else if (interaction.isStringSelectMenu()) {
             // Handle select menu interactions
-            if (interaction.customId === 'ticket_category') {
+            if (interaction.customId === 'ticket_category_select') {
+                await handleTicketCategorySelection(interaction);
+            }
+            else if (interaction.customId === 'ticket_category') {
                 const category = interaction.values[0];
                 await advancedTickets.handleCategorySelection(interaction, category);
             }
@@ -1342,6 +1349,141 @@ app.get('/api/status', (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// New ticket system handler
+async function handleNewTicketCreation(interaction) {
+    const fs = require('fs').promises;
+    const path = require('path');
+    const configFile = path.join(__dirname, '../data/ticket-config.json');
+    
+    try {
+        // Load config
+        const data = await fs.readFile(configFile, 'utf8');
+        const allConfigs = JSON.parse(data);
+        const config = allConfigs[interaction.guild.id];
+        
+        if (!config || !config.enabled) {
+            return interaction.reply({
+                content: '❌ Ticket system not configured!',
+                flags: 64
+            });
+        }
+        
+        // Show category selection
+        const { StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+        
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('ticket_category_select')
+            .setPlaceholder('Select a category')
+            .addOptions(
+                config.categories.map(cat => ({
+                    label: cat.name,
+                    description: cat.description,
+                    emoji: cat.emoji,
+                    value: cat.name
+                }))
+            );
+        
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        
+        await interaction.reply({
+            content: '🎫 **Select a ticket category:**',
+            components: [row],
+            flags: 64
+        });
+        
+    } catch (error) {
+        console.error('Ticket creation error:', error);
+        await interaction.reply({
+            content: '❌ Error creating ticket!',
+            flags: 64
+        });
+    }
+}
+
+// Handle ticket category selection
+async function handleTicketCategorySelection(interaction) {
+    const fs = require('fs').promises;
+    const path = require('path');
+    const configFile = path.join(__dirname, '../data/ticket-config.json');
+    
+    try {
+        await interaction.deferReply({ flags: 64 });
+        
+        const categoryName = interaction.values[0];
+        const data = await fs.readFile(configFile, 'utf8');
+        const allConfigs = JSON.parse(data);
+        const config = allConfigs[interaction.guild.id];
+        
+        const category = config.categories.find(c => c.name === categoryName);
+        if (!category) {
+            return interaction.editReply({ content: '❌ Category not found!' });
+        }
+        
+        // Create ticket channel
+        const ticketNumber = ++config.ticketCount;
+        await fs.writeFile(configFile, JSON.stringify(allConfigs, null, 2));
+        
+        const ticketChannel = await interaction.guild.channels.create({
+            name: `ticket-${ticketNumber}`,
+            type: ChannelType.GuildText,
+            parent: category.categoryChannel || config.categoryChannel,
+            topic: `${category.emoji} ${categoryName} ticket by ${interaction.user.tag}`,
+            permissionOverwrites: [
+                {
+                    id: interaction.guild.roles.everyone,
+                    deny: [PermissionFlagsBits.ViewChannel]
+                },
+                {
+                    id: interaction.user.id,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory]
+                },
+                {
+                    id: interaction.guild.members.me,
+                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels]
+                }
+            ]
+        });
+        
+        // Send welcome message
+        const welcomeEmbed = new EmbedBuilder()
+            .setColor(0x5865F2)
+            .setTitle(`${category.emoji} ${categoryName} Ticket`)
+            .setDescription(
+                `Welcome ${interaction.user}!\n\n` +
+                `**Category:** ${categoryName}\n` +
+                `**Description:** ${category.description}\n\n` +
+                `Our team will be with you shortly. Please describe your issue in detail.`
+            )
+            .setFooter({ text: `Ticket #${ticketNumber}` })
+            .setTimestamp();
+        
+        const closeButton = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('ticket_close_button')
+                    .setLabel('Close Ticket')
+                    .setEmoji('🔒')
+                    .setStyle(ButtonStyle.Danger)
+            );
+        
+        await ticketChannel.send({
+            content: category.pingRole ? `<@&${category.pingRole}>` : null,
+            embeds: [welcomeEmbed],
+            components: [closeButton]
+        });
+        
+        await interaction.editReply({
+            content: `✅ Ticket created! ${ticketChannel}`
+        });
+        
+    } catch (error) {
+        console.error('Category selection error:', error);
+        await interaction.editReply({
+            content: '❌ Error creating ticket channel!'
+        });
+    }
+}
 
 app.get('/api/commands', (req, res) => {
     try {

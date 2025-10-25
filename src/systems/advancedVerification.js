@@ -55,6 +55,42 @@ class AdvancedVerification {
         }
     }
 
+    // Save configuration
+    async saveConfig(guildId, config) {
+        try {
+            let allConfigs = {};
+            try {
+                const data = await fs.readFile(this.configFile, 'utf8');
+                allConfigs = JSON.parse(data);
+            } catch (error) {
+                // File doesn't exist yet
+            }
+            allConfigs[guildId] = config;
+            await fs.writeFile(this.configFile, JSON.stringify(allConfigs, null, 2));
+        } catch (error) {
+            console.error('Error saving config:', error);
+        }
+    }
+
+    // Get verification stats
+    async getVerificationStats(guildId) {
+        const verifiedUsers = await this.loadVerifiedUsers();
+        const guildData = verifiedUsers[guildId] || {};
+        return {
+            totalVerified: Object.keys(guildData).length,
+            users: guildData
+        };
+    }
+
+    // Reset user verification
+    async resetUser(guildId, userId) {
+        const verifiedUsers = await this.loadVerifiedUsers();
+        if (verifiedUsers[guildId] && verifiedUsers[guildId][userId]) {
+            delete verifiedUsers[guildId][userId];
+            await this.saveVerifiedUsers(verifiedUsers);
+        }
+    }
+
     // Default configuration
     getDefaultConfig() {
         return {
