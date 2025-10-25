@@ -66,15 +66,56 @@ async function handleCreate(interaction) {
     try {
         const guild = interaction.guild;
 
+        // Check if verification system already exists
+        const existingChannel = guild.channels.cache.find(c => c.name === '🔐-verify' || c.name === 'verify');
+        if (existingChannel) {
+            return interaction.editReply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xFEE75C)
+                    .setTitle('⚠️ Verification Already Exists')
+                    .setDescription(`A verification channel already exists: ${existingChannel}\n\nUse \`/verify-setup panel\` to send a new panel to that channel instead.`)
+                    .setTimestamp()
+                ]
+            });
+        }
+
         // Create verified role if it doesn't exist
-        let verifiedRole = guild.roles.cache.find(r => r.name === '✅ Verified');
+        let verifiedRole = guild.roles.cache.find(r => r.name === '✅ Verified' || r.name === 'Verified');
         if (!verifiedRole) {
             verifiedRole = await guild.roles.create({
-                name: '✅ Verified',
-                color: '#00ff00',
-                reason: 'Verification system setup'
+                name: 'Verified',
+                color: 0x57F287,
+                reason: 'Verification system setup',
+                position: 1 // Create at low position
             });
             console.log(`✅ Created verified role: ${verifiedRole.name}`);
+        } else {
+            console.log(`✅ Using existing verified role: ${verifiedRole.name}`);
+        }
+
+        // Check bot role hierarchy
+        const botMember = guild.members.cache.get(interaction.client.user.id);
+        const botHighestRole = botMember.roles.highest;
+        
+        if (botHighestRole.position <= verifiedRole.position) {
+            return interaction.editReply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xED4245)
+                    .setTitle('❌ Role Hierarchy Issue')
+                    .setDescription(
+                        `My role is not high enough to manage the Verified role!\n\n` +
+                        `**How to fix:**\n` +
+                        `1. Go to **Server Settings** → **Roles**\n` +
+                        `2. Drag my role **above** the "${verifiedRole.name}" role\n` +
+                        `3. Run this command again\n\n` +
+                        `💡 **Current positions:**\n` +
+                        `• My role: **${botHighestRole.name}** (position ${botHighestRole.position})\n` +
+                        `• Verified role: **${verifiedRole.name}** (position ${verifiedRole.position})`
+                    )
+                    .setFooter({ text: 'My role must be higher than roles I manage' })
+                    .setTimestamp()
+                ]
+            });
         }
 
         // Create verification channel

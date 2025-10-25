@@ -524,7 +524,33 @@ class AdvancedVerification {
                 verifiedRole = await guild.roles.create({
                     name: config.verifiedRoleName,
                     color: 0x57F287,
-                    reason: 'Advanced Verification System'
+                    reason: 'Advanced Verification System',
+                    position: 1 // Place low in hierarchy
+                });
+            }
+
+            // Check if bot can manage this role
+            const botMember = guild.members.cache.get(interaction.client.user.id);
+            const botHighestRole = botMember.roles.highest;
+            
+            if (botHighestRole.position <= verifiedRole.position) {
+                return interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setTitle('❌ Permission Error')
+                        .setDescription(
+                            `I cannot assign the **${verifiedRole.name}** role!\n\n` +
+                            `**Issue:** My highest role is not above the Verified role.\n\n` +
+                            `**How to fix:**\n` +
+                            `1. Go to **Server Settings** → **Roles**\n` +
+                            `2. Drag my role **above** the "${verifiedRole.name}" role\n` +
+                            `3. Try verifying again\n\n` +
+                            `💡 **Tip:** My role must be higher in the list than roles I manage.`
+                        )
+                        .setFooter({ text: 'Contact a server administrator for help' })
+                        .setTimestamp()
+                    ],
+                    flags: 64
                 });
             }
 
