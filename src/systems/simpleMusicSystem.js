@@ -100,11 +100,20 @@ class SimpleMusicSystem {
             player.on(AudioPlayerStatus.Idle, () => {
                 queue.songs.shift();
                 if (queue.songs.length > 0) {
-                    this.playSong(interaction.guild.id, queue.songs[0]);
+                    this.playSong(interaction.guild.id, queue.songs[0]).catch(err => {
+                        console.error('Auto-play error:', err);
+                    });
                 } else {
                     setTimeout(() => {
-                        if (queue.songs.length === 0) {
-                            connection.destroy();
+                        const currentQueue = this.queues.get(interaction.guild.id);
+                        if (currentQueue && currentQueue.songs.length === 0) {
+                            try {
+                                if (currentQueue.connection.state.status !== 'destroyed') {
+                                    currentQueue.connection.destroy();
+                                }
+                            } catch (e) {
+                                console.error('Connection cleanup error:', e.message);
+                            }
                             this.queues.delete(interaction.guild.id);
                         }
                     }, 60000); // Leave after 60 seconds if no songs
@@ -146,10 +155,14 @@ class SimpleMusicSystem {
             const stream = ytdl(song.url, {
                 filter: 'audioonly',
                 quality: 'highestaudio',
-                highWaterMark: 1 << 25
+                highWaterMark: 1 << 25,
+                dlChunkSize: 0, // Disable chunking
+                liveBuffer: 20000 // Buffer for live streams
             });
 
-            const resource = createAudioResource(stream);
+            const resource = createAudioResource(stream, {
+                inlineVolume: true
+            });
             queue.player.play(resource);
             queue.playing = true;
 
@@ -203,7 +216,15 @@ class SimpleMusicSystem {
             
             queue.songs = [];
             queue.player.stop();
-            queue.connection.destroy();
+            
+            try {
+                if (queue.connection.state.status !== 'destroyed') {
+                    queue.connection.destroy();
+                }
+            } catch (e) {
+                console.error('Connection destroy error:', e.message);
+            }
+            
             this.queues.delete(guildId);
             return { success: true };
         } catch (error) {
