@@ -50,7 +50,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.14",
-    "ytdl-core": "^4.11.5",
+    "@distube/ytdl-core": "^4.14.4",
     "youtube-sr": "^4.3.11"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 // Quick test for music dependencies
-const ytdl = require('ytdl-core');
+const ytdl = require('@distube/ytdl-core');
 const ytsr = require('youtube-sr').default;
 
 async function test() {

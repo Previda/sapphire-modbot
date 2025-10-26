@@ -1,5 +1,5 @@
 const { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
-const ytdl = require('ytdl-core');
+const ytdl = require('@distube/ytdl-core');
 const ytsr = require('youtube-sr').default;
 const { EmbedBuilder } = require('discord.js');
 
