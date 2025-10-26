@@ -8,6 +8,7 @@ class MusicSystem {
         this.queues = new Map(); // guildId -> { songs: [], player: AudioPlayer, connection: VoiceConnection }
         
         console.log('🎵 Music system initialized (play-dl)');
+
     }
 
     setupEvents() {

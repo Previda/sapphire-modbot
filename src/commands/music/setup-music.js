@@ -100,7 +100,7 @@ module.exports = {
                         '• `/volume` - Adjust volume (0-200%)',
                     inline: false
                 })
-                .setFooter({ text: 'Music system powered by DisTube' })
+                .setFooter({ text: 'Music system powered by play-dl' })
                 .setTimestamp();
 
             await interaction.editReply({ embeds: [embed] });

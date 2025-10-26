@@ -27,7 +27,9 @@
     "pi:pm2": "pm2 start src/index.js --name skyfall-bot",
     "pi:restart": "pm2 restart skyfall-bot",
     "pi:stop": "pm2 stop skyfall-bot",
-    "pi:logs": "pm2 logs skyfall-bot"
+    "pi:logs": "pm2 logs skyfall-bot",
+    "pi:delete": "pm2 delete skyfall-bot",
+    "kill-port": "bash kill-port.sh"
   },
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
@@ -50,8 +52,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.14",
-    "@distube/ytdl-core": "^4.14.4",
-    "youtube-sr": "^4.3.11"
+    "play-dl": "^1.9.7"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",

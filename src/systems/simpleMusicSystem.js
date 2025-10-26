@@ -1,6 +1,5 @@
 const { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
-const ytdl = require('@distube/ytdl-core');
-const ytsr = require('youtube-sr').default;
+const play = require('play-dl');
 const { EmbedBuilder } = require('discord.js');
 
 class SimpleMusicSystem {
@@ -20,37 +19,34 @@ class SimpleMusicSystem {
                 return { error: 'You need to be in a voice channel!' };
             }
 
-            // Search for song with timeout
+            // Search for song
             let songInfo;
             try {
                 console.log('[Music] Searching for:', query);
-                const searchPromise = ytdl.validateURL(query) 
-                    ? ytdl.getInfo(query)
-                    : ytsr.search(query, { limit: 1 }).then(results => {
-                        console.log('[Music] Search results:', results?.length || 0);
-                        if (!results || results.length === 0) {
-                            throw new Error('No results found');
-                        }
-                        console.log('[Music] Found:', results[0].title);
-                        return ytdl.getInfo(results[0].url);
-                    });
-
-                // 10 second timeout for search
-                songInfo = await Promise.race([
-                    searchPromise,
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 10000))
-                ]);
-                console.log('[Music] Got song info:', songInfo.videoDetails.title);
+                
+                // Check if it's a URL
+                if (play.yt_validate(query) === 'video') {
+                    songInfo = await play.video_info(query);
+                } else {
+                    // Search YouTube
+                    const searched = await play.search(query, { limit: 1 });
+                    if (!searched || searched.length === 0) {
+                        throw new Error('No results found');
+                    }
+                    songInfo = searched[0];
+                }
+                
+                console.log('[Music] Found:', songInfo.video_details.title);
             } catch (error) {
-                console.error('[Music] Search error:', error.message, error.stack);
-                return { error: error.message === 'Search timeout' ? 'Search took too long, try again!' : `Failed to find song: ${error.message}` };
+                console.error('[Music] Search error:', error.message);
+                return { error: `Failed to find song: ${error.message}` };
             }
 
         const song = {
-            title: songInfo.videoDetails.title,
-            url: songInfo.videoDetails.video_url,
-            duration: this.formatDuration(parseInt(songInfo.videoDetails.lengthSeconds)),
-            thumbnail: songInfo.videoDetails.thumbnails[0]?.url,
+            title: songInfo.video_details.title,
+            url: songInfo.video_details.url,
+            duration: this.formatDuration(songInfo.video_details.durationInSec),
+            thumbnail: songInfo.video_details.thumbnails[0]?.url,
             requestedBy: interaction.user
         };
 
@@ -152,15 +148,10 @@ class SimpleMusicSystem {
         if (!queue) return;
 
         try {
-            const stream = ytdl(song.url, {
-                filter: 'audioonly',
-                quality: 'highestaudio',
-                highWaterMark: 1 << 25,
-                dlChunkSize: 0, // Disable chunking
-                liveBuffer: 20000 // Buffer for live streams
-            });
+            const stream = await play.stream(song.url);
 
-            const resource = createAudioResource(stream, {
+            const resource = createAudioResource(stream.stream, {
+                inputType: stream.type,
                 inlineVolume: true
             });
             queue.player.play(resource);

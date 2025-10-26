@@ -1,10 +1,21 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus, getVoiceConnection } = require('@discordjs/voice');
-const ytdl = require('ytdl-core');
-const ytSearch = require('yt-search');
+const play = require('play-dl');
 
 // Music queue for each guild
 const queues = new Map();
+
+// Helper function to format duration
+function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
 
 // Get or create queue for guild
 function getQueue(guildId) {
@@ -42,26 +53,26 @@ async function play(interaction) {
 
     // Search for song
     let song;
-    if (ytdl.validateURL(query)) {
-      const info = await ytdl.getInfo(query);
+    if (play.yt_validate(query) === 'video') {
+      const info = await play.video_info(query);
       song = {
-        title: info.videoDetails.title,
-        url: info.videoDetails.video_url,
-        duration: parseInt(info.videoDetails.lengthSeconds),
-        thumbnail: info.videoDetails.thumbnails[0].url,
+        title: info.video_details.title,
+        url: info.video_details.url,
+        duration: formatDuration(info.video_details.durationInSec),
+        thumbnail: info.video_details.thumbnails[0]?.url,
         requester: interaction.user.tag
       };
     } else {
-      const searchResults = await ytSearch(query);
-      if (!searchResults.videos.length) {
+      const searchResults = await play.search(query, { limit: 1 });
+      if (!searchResults || searchResults.length === 0) {
         return interaction.editReply('❌ No results found!');
       }
-      const video = searchResults.videos[0];
+      const video = searchResults[0];
       song = {
         title: video.title,
         url: video.url,
-        duration: video.timestamp,
-        thumbnail: video.thumbnail,
+        duration: formatDuration(video.durationInSec),
+        thumbnail: video.thumbnails[0]?.url,
         requester: interaction.user.tag
       };
     }
@@ -149,13 +160,10 @@ async function playSong(guild, voiceChannel) {
     }
 
     // Create audio resource
-    const stream = ytdl(song.url, {
-      filter: 'audioonly',
-      quality: 'highestaudio',
-      highWaterMark: 1 << 25
-    });
+    const stream = await play.stream(song.url);
 
-    const resource = createAudioResource(stream, {
+    const resource = createAudioResource(stream.stream, {
+      inputType: stream.type,
       inlineVolume: true
     });
     resource.volume.setVolume(queue.volume / 100);

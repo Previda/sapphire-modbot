@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const SimpleMusicSystem = require('./systems/simpleMusicSystem');
 
 // Initialize Discord client
 const client = new Client({
@@ -11,7 +12,8 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildModeration
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildVoiceStates
     ]
 });
 
@@ -29,6 +31,10 @@ const config = {
 
 // Collections for commands and data
 client.commands = new Collection();
+
+// Initialize music system
+client.musicSystem = new SimpleMusicSystem(client);
+
 const botData = {
     guilds: [],
     commands: [],
@@ -37,28 +43,44 @@ const botData = {
     startTime: Date.now()
 };
 
-// Load commands
+// Load commands recursively
 const commandsPath = path.join(__dirname, 'commands');
-if (fs.existsSync(commandsPath)) {
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+function loadCommands(dir) {
+    const files = fs.readdirSync(dir);
     
-    for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
         
-        if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command);
-            botData.commands.push({
-                id: command.data.name,
-                name: command.data.name,
-                description: command.data.description,
-                category: command.category || 'general',
-                enabled: true,
-                usageCount: Math.floor(Math.random() * 100),
-                cooldown: command.cooldown || 0
-            });
+        if (stat.isDirectory()) {
+            loadCommands(filePath);
+        } else if (file.endsWith('.js')) {
+            try {
+                const command = require(filePath);
+                
+                if ('data' in command && 'execute' in command) {
+                    client.commands.set(command.data.name, command);
+                    botData.commands.push({
+                        id: command.data.name,
+                        name: command.data.name,
+                        description: command.data.description,
+                        category: command.category || path.basename(dir),
+                        enabled: true,
+                        usageCount: Math.floor(Math.random() * 100),
+                        cooldown: command.cooldown || 0
+                    });
+                    console.log(`✅ Loaded command: ${command.data.name}`);
+                }
+            } catch (error) {
+                console.error(`❌ Failed to load command ${file}:`, error.message);
+            }
         }
     }
+}
+
+if (fs.existsSync(commandsPath)) {
+    loadCommands(commandsPath);
+    console.log(`📦 Loaded ${botData.commands.length} commands`);
 }
 
 // Default commands if no files found
@@ -313,14 +335,27 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start the server
-app.listen(config.port, () => {
+// Start the server with error handling
+const server = app.listen(config.port, () => {
     console.log(`🌐 Skyfall API server running on port ${config.port}`);
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${config.port} is already in use!`);
+        console.log('💡 Solutions:');
+        console.log(`   1. Stop the other process using port ${config.port}`);
+        console.log(`   2. Change the port in your .env file (PORT=3002)`);
+        console.log(`   3. Kill the process: lsof -ti:${config.port} | xargs kill -9`);
+        process.exit(1);
+    } else {
+        console.error('❌ Server error:', err);
+        process.exit(1);
+    }
 });
 
 // Login to Discord
 client.login(config.token).catch(error => {
     console.error('❌ Failed to login to Discord:', error);
+    server.close();
     process.exit(1);
 });
 
