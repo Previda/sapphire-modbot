@@ -5,10 +5,13 @@
 ```bash
 cd ~/sapphire-modbot
 git pull
+npm install  # Install/update dependencies
 bash start-bot.sh
 ```
 
 That's it! The script handles everything automatically.
+
+**Note:** The start script will auto-install dependencies if missing, but it's good practice to run `npm install` after pulling.
 
 ## What the Script Does
 

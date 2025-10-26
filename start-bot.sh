@@ -6,6 +6,13 @@ echo ""
 # Navigate to bot directory
 cd ~/sapphire-modbot
 
+# Check if node_modules exists and install if needed
+if [ ! -d "node_modules" ] || [ ! -d "node_modules/play-dl" ]; then
+    echo "📦 Installing dependencies..."
+    npm install
+    echo ""
+fi
+
 # Check for port conflicts
 echo "🔍 Checking for port conflicts..."
 PORT_PID=$(lsof -ti:3001 2>/dev/null)
