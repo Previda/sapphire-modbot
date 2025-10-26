@@ -6,6 +6,32 @@ echo ""
 # Navigate to bot directory
 cd ~/sapphire-modbot
 
+# Check if .env file exists
+if [ ! -f ".env" ]; then
+    echo "❌ .env file not found!"
+    echo ""
+    echo "Please run the setup wizard first:"
+    echo "  node setup-bot.js"
+    echo ""
+    echo "Or create .env manually with:"
+    echo "  DISCORD_BOT_TOKEN=your_token_here"
+    echo "  DISCORD_CLIENT_ID=your_client_id_here"
+    echo "  PORT=3001"
+    echo "  API_PORT=3001"
+    echo ""
+    exit 1
+fi
+
+# Validate token in .env
+if grep -q "YOUR.*TOKEN" .env || grep -q "<paste" .env; then
+    echo "❌ Invalid token detected in .env file!"
+    echo ""
+    echo "Your .env file contains placeholder text."
+    echo "Please run: node setup-bot.js"
+    echo ""
+    exit 1
+fi
+
 # Check if node_modules exists and install if needed
 if [ ! -d "node_modules" ] || [ ! -d "node_modules/play-dl" ]; then
     echo "📦 Installing dependencies..."

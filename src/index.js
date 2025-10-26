@@ -4,6 +4,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const SimpleMusicSystem = require('./systems/simpleMusicSystem');
+const authManager = require('./utils/auth');
 
 // Initialize Discord client
 const client = new Client({
@@ -352,12 +353,28 @@ const server = app.listen(config.port, () => {
     }
 });
 
-// Login to Discord
-client.login(config.token).catch(error => {
-    console.error('❌ Failed to login to Discord:', error);
-    server.close();
-    process.exit(1);
-});
+// Login to Discord with enhanced authentication
+(async () => {
+    const loginResult = await authManager.login(client);
+    
+    if (!loginResult.success) {
+        console.error('\n' + '='.repeat(70));
+        console.error('❌ AUTHENTICATION FAILED');
+        console.error('='.repeat(70));
+        console.error(`\nError: ${loginResult.error}`);
+        if (loginResult.details) {
+            console.error(`Details: ${loginResult.details}`);
+        }
+        if (loginResult.help) {
+            console.error(loginResult.help);
+        }
+        console.error('='.repeat(70) + '\n');
+        server.close();
+        process.exit(1);
+    }
+    
+    console.log(loginResult.message);
+})();
 
 // Graceful shutdown
 process.on('SIGINT', () => {
