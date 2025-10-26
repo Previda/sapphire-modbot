@@ -1,0 +1,33 @@
+===============================================
+   RUN THIS ON YOUR RASPBERRY PI
+===============================================
+
+cd ~/sapphire-modbot
+git pull
+npm install
+bash start-bot.sh
+
+===============================================
+
+That's it! The script will:
+✅ Install play-dl if missing
+✅ Kill port 3001 if in use
+✅ Stop old bot instances
+✅ Start fresh bot with PM2
+✅ Show you the logs
+
+===============================================
+   IF IT STILL FAILS
+===============================================
+
+Option 1 - Manual install:
+  npm install play-dl
+
+Option 2 - Full reinstall:
+  rm -rf node_modules
+  npm install
+
+Then run:
+  bash start-bot.sh
+
+===============================================
