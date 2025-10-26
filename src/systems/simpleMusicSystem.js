@@ -23,12 +23,15 @@ class SimpleMusicSystem {
             // Search for song with timeout
             let songInfo;
             try {
+                console.log('[Music] Searching for:', query);
                 const searchPromise = ytdl.validateURL(query) 
                     ? ytdl.getInfo(query)
                     : ytsr.search(query, { limit: 1 }).then(results => {
+                        console.log('[Music] Search results:', results?.length || 0);
                         if (!results || results.length === 0) {
                             throw new Error('No results found');
                         }
+                        console.log('[Music] Found:', results[0].title);
                         return ytdl.getInfo(results[0].url);
                     });
 
@@ -37,9 +40,10 @@ class SimpleMusicSystem {
                     searchPromise,
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 10000))
                 ]);
+                console.log('[Music] Got song info:', songInfo.videoDetails.title);
             } catch (error) {
-                console.error('Search error:', error.message);
-                return { error: error.message === 'Search timeout' ? 'Search took too long, try again!' : 'Failed to find song!' };
+                console.error('[Music] Search error:', error.message, error.stack);
+                return { error: error.message === 'Search timeout' ? 'Search took too long, try again!' : `Failed to find song: ${error.message}` };
             }
 
         const song = {
