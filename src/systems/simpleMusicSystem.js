@@ -14,27 +14,33 @@ class SimpleMusicSystem {
     }
 
     async play(interaction, query) {
-        const voiceChannel = interaction.member.voice.channel;
-        if (!voiceChannel) {
-            return { error: 'You need to be in a voice channel!' };
-        }
-
-        // Search for song
-        let songInfo;
         try {
-            if (ytdl.validateURL(query)) {
-                songInfo = await ytdl.getInfo(query);
-            } else {
-                const results = await ytsr.search(query, { limit: 1 });
-                if (!results || results.length === 0) {
-                    return { error: 'No results found!' };
-                }
-                songInfo = await ytdl.getInfo(results[0].url);
+            const voiceChannel = interaction.member.voice.channel;
+            if (!voiceChannel) {
+                return { error: 'You need to be in a voice channel!' };
             }
-        } catch (error) {
-            console.error('Search error:', error);
-            return { error: 'Failed to find song!' };
-        }
+
+            // Search for song with timeout
+            let songInfo;
+            try {
+                const searchPromise = ytdl.validateURL(query) 
+                    ? ytdl.getInfo(query)
+                    : ytsr.search(query, { limit: 1 }).then(results => {
+                        if (!results || results.length === 0) {
+                            throw new Error('No results found');
+                        }
+                        return ytdl.getInfo(results[0].url);
+                    });
+
+                // 10 second timeout for search
+                songInfo = await Promise.race([
+                    searchPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Search timeout')), 10000))
+                ]);
+            } catch (error) {
+                console.error('Search error:', error.message);
+                return { error: error.message === 'Search timeout' ? 'Search took too long, try again!' : 'Failed to find song!' };
+            }
 
         const song = {
             title: songInfo.videoDetails.title,
@@ -67,6 +73,24 @@ class SimpleMusicSystem {
 
             this.queues.set(interaction.guild.id, queue);
 
+            // Handle connection errors
+            connection.on(VoiceConnectionStatus.Disconnected, async () => {
+                try {
+                    await Promise.race([
+                        entersState(connection, VoiceConnectionStatus.Signalling, 5000),
+                        entersState(connection, VoiceConnectionStatus.Connecting, 5000),
+                    ]);
+                } catch (error) {
+                    console.error('Connection lost:', error);
+                    connection.destroy();
+                    this.queues.delete(interaction.guild.id);
+                }
+            });
+
+            connection.on('error', error => {
+                console.error('Voice connection error:', error);
+            });
+
             connection.subscribe(player);
 
             player.on(AudioPlayerStatus.Idle, () => {
@@ -95,12 +119,18 @@ class SimpleMusicSystem {
                 });
             });
 
-            this.playSong(interaction.guild.id, song);
+            this.playSong(interaction.guild.id, song).catch(err => {
+                console.error('Play song error:', err);
+            });
             return { nowPlaying: song };
         } else {
             // Add to queue
             queue.songs.push(song);
             return { addedToQueue: song, position: queue.songs.length };
+        }
+        } catch (error) {
+            console.error('Play command error:', error);
+            return { error: 'An unexpected error occurred!' };
         }
     }
 
@@ -131,45 +161,66 @@ class SimpleMusicSystem {
                 .setThumbnail(song.thumbnail)
                 .setTimestamp();
 
-            queue.textChannel.send({ embeds: [embed] });
+            queue.textChannel.send({ embeds: [embed] }).catch(err => console.error('Send embed error:', err));
         } catch (error) {
             console.error('Play error:', error);
-            queue.textChannel.send({
-                embeds: [new EmbedBuilder()
-                    .setColor(0xED4245)
-                    .setTitle('❌ Playback Error')
-                    .setDescription('Failed to play song')
-                    .setTimestamp()
-                ]
-            });
+            try {
+                queue.textChannel.send({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setTitle('❌ Playback Error')
+                        .setDescription('Failed to play song')
+                        .setTimestamp()
+                    ]
+                }).catch(err => console.error('Error sending error message:', err));
+            } catch (e) {
+                console.error('Critical error in playSong:', e);
+            }
         }
     }
 
     skip(guildId) {
-        const queue = this.queues.get(guildId);
-        if (!queue) return { error: 'Nothing playing!' };
-        
-        queue.player.stop();
-        return { success: true };
+        try {
+            const queue = this.queues.get(guildId);
+            if (!queue) return { error: 'Nothing playing!' };
+            
+            queue.player.stop();
+            return { success: true };
+        } catch (error) {
+            console.error('Skip error:', error);
+            return { error: 'Failed to skip song!' };
+        }
     }
 
     stop(guildId) {
-        const queue = this.queues.get(guildId);
-        if (!queue) return { error: 'Nothing playing!' };
-        
-        queue.songs = [];
-        queue.player.stop();
-        queue.connection.destroy();
-        this.queues.delete(guildId);
-        return { success: true };
+        try {
+            const queue = this.queues.get(guildId);
+            if (!queue) return { error: 'Nothing playing!' };
+            
+            queue.songs = [];
+            queue.player.stop();
+            queue.connection.destroy();
+            this.queues.delete(guildId);
+            return { success: true };
+        } catch (error) {
+            console.error('Stop error:', error);
+            // Try to clean up anyway
+            this.queues.delete(guildId);
+            return { error: 'Stopped with errors' };
+        }
     }
 
     setVolume(guildId, volume) {
-        const queue = this.queues.get(guildId);
-        if (!queue) return { error: 'Nothing playing!' };
-        
-        queue.volume = volume;
-        return { success: true, volume };
+        try {
+            const queue = this.queues.get(guildId);
+            if (!queue) return { error: 'Nothing playing!' };
+            
+            queue.volume = volume;
+            return { success: true, volume };
+        } catch (error) {
+            console.error('Volume error:', error);
+            return { error: 'Failed to set volume!' };
+        }
     }
 
     formatDuration(seconds) {
