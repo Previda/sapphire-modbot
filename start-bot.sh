@@ -6,6 +6,16 @@ echo ""
 # Navigate to bot directory
 cd ~/sapphire-modbot
 
+# Detect Raspberry Pi 2 and use optimized script
+if [ -f /proc/device-tree/model ]; then
+    MODEL=$(cat /proc/device-tree/model 2>/dev/null)
+    if [[ "$MODEL" == *"Raspberry Pi 2"* ]]; then
+        echo "🍓 Raspberry Pi 2 detected! Using optimized startup..."
+        echo ""
+        exec bash start-pi2.sh
+    fi
+fi
+
 # Check if .env file exists
 if [ ! -f ".env" ]; then
     echo "❌ .env file not found!"

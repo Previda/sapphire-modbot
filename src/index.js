@@ -6,7 +6,15 @@ const path = require('path');
 const SimpleMusicSystem = require('./systems/simpleMusicSystem');
 const authManager = require('./utils/auth');
 
-// Initialize Discord client
+// Raspberry Pi 2 Optimization: Enable aggressive garbage collection
+if (global.gc) {
+    console.log('⚡ Manual GC enabled for Pi 2 optimization');
+    setInterval(() => {
+        if (global.gc) global.gc();
+    }, 60000); // Run GC every minute
+}
+
+// Initialize Discord client with Pi 2 optimizations
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -15,7 +23,29 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildVoiceStates
-    ]
+    ],
+    // Pi 2 Optimizations
+    makeCache: require('discord.js').Options.cacheWithLimits({
+        MessageManager: 50,        // Limit message cache
+        GuildMemberManager: 100,   // Limit member cache
+        UserManager: 100,          // Limit user cache
+        PresenceManager: 0,        // Disable presence cache (saves memory)
+        ReactionManager: 0,        // Disable reaction cache
+        GuildBanManager: 0,        // Disable ban cache
+        ThreadManager: 25,         // Limit thread cache
+        StageInstanceManager: 0,   // Disable stage instance cache
+        VoiceStateManager: 25      // Limit voice state cache
+    }),
+    sweepers: {
+        messages: {
+            interval: 300,         // Sweep every 5 minutes
+            lifetime: 900          // Keep messages for 15 minutes
+        },
+        users: {
+            interval: 600,         // Sweep every 10 minutes
+            filter: () => user => user.bot && user.id !== client.user.id
+        }
+    }
 });
 
 // Initialize Express server
