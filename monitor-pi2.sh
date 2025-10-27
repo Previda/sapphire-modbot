@@ -11,7 +11,8 @@ echo ""
 get_temp() {
     if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
         temp=$(cat /sys/class/thermal/thermal_zone0/temp)
-        echo "scale=1; $temp/1000" | bc
+        # Use awk instead of bc (bc may not be installed)
+        echo "$temp" | awk '{printf "%.1f", $1/1000}'
     else
         echo "N/A"
     fi
@@ -74,7 +75,8 @@ while true; do
         
         # Memory warning
         BOT_MEM_MB=$(pm2 jlist | jq -r '.[] | select(.name=="skyfall-bot") | .monit.memory' | awk '{print $1/1024/1024}')
-        if (( $(echo "$BOT_MEM_MB > 350" | bc -l) )); then
+        # Use awk instead of bc for comparison
+        if [ "$(echo "$BOT_MEM_MB 350" | awk '{if ($1 > $2) print 1; else print 0}')" -eq 1 ]; then
             echo ""
             echo "⚠️  WARNING: High memory usage! Bot will restart at 400MB"
         fi
@@ -90,7 +92,8 @@ while true; do
     
     # Check if system is under stress
     LOAD=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | cut -d',' -f1)
-    if (( $(echo "$LOAD > 3.0" | bc -l) )); then
+    # Use awk instead of bc for comparison
+    if [ "$(echo "$LOAD 3.0" | awk '{if ($1 > $2) print 1; else print 0}')" -eq 1 ]; then
         echo "⚠️  High system load ($LOAD)"
         echo "   Consider reducing background processes"
     fi
