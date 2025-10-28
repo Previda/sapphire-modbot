@@ -34,3 +34,7 @@ Thumbs.db
 *.log
 
 .vercel
+
+# Token update scripts (contain sensitive data)
+update-env.bat
+update-token.ps1

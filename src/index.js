@@ -4,6 +4,8 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const SimpleMusicSystem = require('./systems/simpleMusicSystem');
+const AdvancedAutomod = require('./systems/advancedAutomod');
+const DiscordSDKSystem = require('./systems/discordSDK');
 const authManager = require('./utils/auth');
 
 // Raspberry Pi 2 Optimization: Enable aggressive garbage collection
@@ -65,6 +67,12 @@ client.commands = new Collection();
 
 // Initialize music system
 client.musicSystem = new SimpleMusicSystem(client);
+
+// Initialize advanced automod system
+client.automod = new AdvancedAutomod(client);
+
+// Initialize Discord SDK system
+client.discordSDK = new DiscordSDKSystem(client);
 
 const botData = {
     guilds: [],
@@ -133,6 +141,14 @@ client.once('ready', () => {
     console.log(`✅ Skyfall bot is online! Logged in as ${client.user.tag}`);
     console.log(`🏰 Serving ${client.guilds.cache.size} guilds`);
     console.log(`🌐 API Server running on port ${config.port}`);
+    
+    // Initialize advanced automod system
+    client.automod.initialize();
+    console.log(`🛡️ Advanced Auto-Moderation System active`);
+    
+    // Initialize Discord SDK system
+    client.discordSDK.initialize();
+    console.log(`🎮 Discord SDK System active`);
     
     // Update guild data
     updateGuildData();
