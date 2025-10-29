@@ -728,6 +728,117 @@ async function handleButtonInteraction(interaction) {
         return;
     }
 
+    // Manage menu buttons
+    if (customId === 'ticket_list') {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const fs = require('fs').promises;
+        const path = require('path');
+        const { EmbedBuilder } = require('discord.js');
+        
+        try {
+            const ticketsFile = path.join(__dirname, '../data/tickets.json');
+            const data = await fs.readFile(ticketsFile, 'utf8');
+            const allTickets = JSON.parse(data);
+            const guildTickets = Object.values(allTickets).filter(t => 
+                t.guildID === interaction.guild.id && t.status === 'open'
+            );
+
+            if (guildTickets.length === 0) {
+                return interaction.editReply({
+                    content: '📋 No open tickets found.'
+                });
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle('📋 Open Tickets')
+                .setColor(0x00ff00)
+                .setDescription(`Found ${guildTickets.length} open ticket(s)`)
+                .setTimestamp();
+
+            for (const ticket of guildTickets.slice(0, 10)) {
+                const channel = interaction.guild.channels.cache.get(ticket.channelID);
+                const user = await interaction.client.users.fetch(ticket.userID).catch(() => null);
+                
+                embed.addFields({
+                    name: `🎫 ${ticket.ticketID}`,
+                    value: `**User:** ${user ? user.tag : 'Unknown'}\n**Channel:** ${channel ? channel.toString() : 'Deleted'}\n**Created:** <t:${Math.floor(new Date(ticket.createdAt).getTime() / 1000)}:R>`,
+                    inline: true
+                });
+            }
+
+            await interaction.editReply({ embeds: [embed] });
+        } catch (error) {
+            await interaction.editReply({ content: '📋 No tickets found yet.' });
+        }
+        return;
+    }
+
+    if (customId === 'ticket_create' || customId === 'ticket_close_menu' || 
+        customId === 'ticket_add_user' || customId === 'ticket_remove_user' || 
+        customId === 'ticket_slowmode' || customId === 'ticket_transcript' || 
+        customId === 'ticket_settings') {
+        
+        const messages = {
+            'ticket_create': '➕ Use `/manage create` to create a ticket for a user',
+            'ticket_close_menu': '🔒 Use `/ticket-manage close` to close this ticket',
+            'ticket_add_user': '👤 Use `/ticket add` to add a user to this ticket',
+            'ticket_remove_user': '👤 Use `/ticket remove` to remove a user from this ticket',
+            'ticket_slowmode': '⏱️ Use `/ticket slowmode` to set slowmode',
+            'ticket_transcript': '📄 Use the "Save Transcript" button or `/ticket-manage save`',
+            'ticket_settings': '⚙️ Use `/manage settings` to configure ticket system'
+        };
+        
+        await interaction.reply({
+            content: messages[customId] || '💡 Use the appropriate slash command',
+            ephemeral: true
+        });
+        return;
+    }
+
+    // Settings buttons
+    if (customId.startsWith('settings_')) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const settingsType = customId.replace('settings_', '');
+        const messages = {
+            'categories': {
+                title: '🏷️ Ticket Categories',
+                description: 'Available ticket categories:\n\n• **General** - General support\n• **Appeal** - Ban appeals\n• **Report** - User reports\n• **Bug** - Bug reports\n• **Staff** - Staff applications',
+                color: 0x0099ff
+            },
+            'permissions': {
+                title: '🔐 Permission Settings',
+                description: 'Staff roles detected: `staff`, `mod`, `moderator`, `admin`, `administrator`, `support`\n\n• Staff can view all tickets\n• Users can only view their tickets\n• Admins can delete tickets',
+                color: 0xff9900
+            },
+            'channels': {
+                title: '📍 Channel Setup',
+                description: '**Setup Instructions:**\n1. Create category: **"🎫 Tickets"**\n2. Create channel: **"ticket-logs"**\n3. Set permissions for staff roles\n4. Run `/manage menu` to test',
+                color: 0x00ff00
+            },
+            'features': {
+                title: '⚡ Feature Settings',
+                description: '**Active Features:**\n• Auto Transcripts\n• DM Transcripts\n• Staff Mentions\n• Control Buttons\n• Permission Management\n• Logs Channel',
+                color: 0x9900ff
+            }
+        };
+        
+        const setting = messages[settingsType];
+        if (setting) {
+            await interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setTitle(setting.title)
+                    .setDescription(setting.description)
+                    .setColor(setting.color)
+                    .setTimestamp()
+                ],
+                ephemeral: true
+            });
+        }
+        return;
+    }
+
     // Ticket creation button
     if (customId === 'create_ticket') {
         const fs = require('fs').promises;
