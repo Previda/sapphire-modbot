@@ -115,12 +115,15 @@ class SimpleMusicSystem {
             connection.subscribe(player);
 
             player.on(AudioPlayerStatus.Idle, () => {
+                console.log('[Music] Player went idle, checking queue...');
                 queue.songs.shift();
                 if (queue.songs.length > 0) {
+                    console.log('[Music] Playing next song in queue...');
                     this.playSong(interaction.guild.id, queue.songs[0]).catch(err => {
                         console.error('Auto-play error:', err);
                     });
                 } else {
+                    console.log('[Music] Queue empty, will disconnect in 60s if no new songs');
                     setTimeout(() => {
                         const currentQueue = this.queues.get(interaction.guild.id);
                         if (currentQueue && currentQueue.songs.length === 0) {
@@ -132,18 +135,28 @@ class SimpleMusicSystem {
                                 console.error('Connection cleanup error:', e.message);
                             }
                             this.queues.delete(interaction.guild.id);
+                            console.log('[Music] Disconnected due to inactivity');
                         }
                     }, 60000); // Leave after 60 seconds if no songs
                 }
             });
 
+            player.on(AudioPlayerStatus.Playing, () => {
+                console.log('[Music] Player status: Playing');
+            });
+
+            player.on(AudioPlayerStatus.Paused, () => {
+                console.log('[Music] Player status: Paused');
+            });
+
             player.on('error', error => {
-                console.error('Player error:', error);
+                console.error('[Music] Player error:', error);
+                console.error('[Music] Error resource:', error.resource);
                 queue.textChannel.send({
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
                         .setTitle('❌ Playback Error')
-                        .setDescription('An error occurred during playback')
+                        .setDescription(`An error occurred during playback: ${error.message}`)
                         .setTimestamp()
                     ]
                 });
@@ -196,9 +209,16 @@ class SimpleMusicSystem {
                 inlineVolume: true
             });
             
+            // Set volume
+            if (resource.volume) {
+                resource.volume.setVolume(queue.volume / 100);
+            }
+            
             console.log('[Music] Playing resource...');
             queue.player.play(resource);
             queue.playing = true;
+            
+            console.log('[Music] Player state:', queue.player.state.status);
 
             const embed = new EmbedBuilder()
                 .setColor(0x57F287)
