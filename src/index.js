@@ -670,6 +670,7 @@ async function handleButtonInteraction(interaction) {
 
             const fs = require('fs').promises;
             const path = require('path');
+            const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
             
             const transcriptDir = path.join(__dirname, '../data/transcripts');
             await fs.mkdir(transcriptDir, { recursive: true });
@@ -679,7 +680,8 @@ async function handleButtonInteraction(interaction) {
             
             await fs.writeFile(filepath, transcript);
 
-            const { EmbedBuilder } = require('discord.js');
+            // Create attachment
+            const attachment = new AttachmentBuilder(filepath, { name: filename });
             
             await interaction.editReply({
                 embeds: [new EmbedBuilder()
@@ -687,8 +689,44 @@ async function handleButtonInteraction(interaction) {
                     .setTitle('💾 Transcript Saved')
                     .setDescription(`Transcript saved as \`${filename}\`\n\nTotal messages: ${messages.size}`)
                     .setTimestamp()
-                ]
+                ],
+                files: [attachment]
             });
+
+            // Find ticket creator from channel permissions
+            let ticketCreator = null;
+            const permissions = interaction.channel.permissionOverwrites.cache;
+            for (const [id, perm] of permissions) {
+                if (id !== interaction.guild.id && id !== interaction.client.user.id) {
+                    const member = await interaction.guild.members.fetch(id).catch(() => null);
+                    if (member && !member.user.bot) {
+                        ticketCreator = member.user;
+                        break;
+                    }
+                }
+            }
+
+            // Send DM to ticket creator
+            if (ticketCreator) {
+                try {
+                    await ticketCreator.send({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0x5865F2)
+                            .setTitle('📜 Your Ticket Transcript')
+                            .setDescription(
+                                `**Ticket:** ${interaction.channel.name}\n` +
+                                `**Server:** ${interaction.guild.name}\n` +
+                                `**Messages:** ${messages.size}\n` +
+                                `**Saved by:** ${interaction.user.tag}`
+                            )
+                            .setTimestamp()
+                        ],
+                        files: [new AttachmentBuilder(filepath, { name: filename })]
+                    });
+                } catch (dmError) {
+                    console.log('[Ticket] Could not DM transcript to user:', dmError.message);
+                }
+            }
 
             // Try to send to transcript channel if configured
             const configFile = path.join(__dirname, '../data/ticket-config.json');
@@ -707,11 +745,12 @@ async function handleButtonInteraction(interaction) {
                                 .setDescription(
                                     `**Ticket:** ${interaction.channel.name}\n` +
                                     `**Saved by:** ${interaction.user}\n` +
-                                    `**Messages:** ${messages.size}\n` +
-                                    `**File:** \`${filename}\``
+                                    `**Ticket Creator:** ${ticketCreator ? ticketCreator.tag : 'Unknown'}\n` +
+                                    `**Messages:** ${messages.size}`
                                 )
                                 .setTimestamp()
-                            ]
+                            ],
+                            files: [new AttachmentBuilder(filepath, { name: filename })]
                         });
                     }
                 }
