@@ -164,15 +164,37 @@ class SimpleMusicSystem {
 
     async playSong(guildId, song) {
         const queue = this.queues.get(guildId);
-        if (!queue) return;
+        if (!queue) {
+            console.error('[Music] Queue not found for guild:', guildId);
+            return;
+        }
 
         try {
-            const stream = await play.stream(song.url);
+            console.log('[Music] Attempting to stream:', song.url);
+            
+            // Get stream with error handling
+            let stream;
+            try {
+                stream = await play.stream(song.url, {
+                    quality: 2 // Use high quality
+                });
+            } catch (streamError) {
+                console.error('[Music] Stream error:', streamError.message);
+                throw new Error(`Failed to get audio stream: ${streamError.message}`);
+            }
+
+            if (!stream || !stream.stream) {
+                throw new Error('Invalid stream received');
+            }
+
+            console.log('[Music] Stream obtained, creating resource...');
 
             const resource = createAudioResource(stream.stream, {
                 inputType: stream.type,
                 inlineVolume: true
             });
+            
+            console.log('[Music] Playing resource...');
             queue.player.play(resource);
             queue.playing = true;
 
@@ -189,14 +211,17 @@ class SimpleMusicSystem {
                 .setTimestamp();
 
             queue.textChannel.send({ embeds: [embed] }).catch(err => console.error('Send embed error:', err));
+            console.log('[Music] Playback started successfully');
         } catch (error) {
-            console.error('Play error:', error);
+            console.error('[Music] Playback error:', error);
+            console.error('[Music] Error details:', error.stack);
+            
             try {
                 queue.textChannel.send({
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
                         .setTitle('❌ Playback Error')
-                        .setDescription('Failed to play song')
+                        .setDescription(`Failed to play song: ${error.message}\n\nThis might be due to:\n• Age-restricted video\n• Region-locked content\n• Invalid URL\n• YouTube API issues`)
                         .setTimestamp()
                     ]
                 }).catch(err => console.error('Error sending error message:', err));
