@@ -1,6 +1,5 @@
 const { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 const ytdl = require('@distube/ytdl-core');
-const ytsr = require('ytsr');
 const { EmbedBuilder } = require('discord.js');
 
 class YtdlMusicSystem {
@@ -20,42 +19,30 @@ class YtdlMusicSystem {
                 return { error: 'You need to be in a voice channel!' };
             }
 
-            // Search for song
+            // Only accept YouTube URLs for now (search is broken)
             let url;
-            try {
-                console.log('[Music] Searching for:', query);
-                
-                // Check if it's already a URL
-                if (query.includes('youtube.com') || query.includes('youtu.be')) {
-                    url = query;
-                } else {
-                    // Search YouTube
-                    const searchResults = await ytsr(query, { limit: 1 });
-                    if (!searchResults || !searchResults.items || searchResults.items.length === 0) {
-                        throw new Error('No results found');
-                    }
-                    
-                    const video = searchResults.items.find(item => item.type === 'video');
-                    if (!video) {
-                        throw new Error('No video results found');
-                    }
-                    
-                    url = video.url;
-                }
-                
-                console.log('[Music] Found URL:', url);
-            } catch (error) {
-                console.error('[Music] Search error:', error.message);
-                return { error: `Failed to find song: ${error.message}` };
+            console.log('[Music] Processing:', query);
+            
+            if (query.includes('youtube.com') || query.includes('youtu.be')) {
+                url = query;
+                console.log('[Music] Using URL:', url);
+            } else {
+                return { 
+                    error: '⚠️ Music search is currently unavailable due to YouTube API changes.\n\n' +
+                           '**Please use direct YouTube URLs:**\n' +
+                           '• Go to YouTube and copy the video URL\n' +
+                           '• Use `/play <youtube url>`\n\n' +
+                           'Example: `/play https://www.youtube.com/watch?v=dQw4w9WgXcQ`'
+                };
             }
 
-            // Get video info
+            // Get basic video info
             let videoInfo;
             try {
-                videoInfo = await ytdl.getInfo(url);
+                videoInfo = await ytdl.getBasicInfo(url);
             } catch (error) {
                 console.error('[Music] Failed to get video info:', error.message);
-                return { error: 'Failed to get video information' };
+                return { error: 'Failed to get video information. Make sure the URL is valid and the video is not private or age-restricted.' };
             }
 
             const song = {
