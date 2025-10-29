@@ -36,19 +36,38 @@ class SimpleMusicSystem {
                     songInfo = searched[0];
                 }
                 
-                console.log('[Music] Found:', songInfo.video_details.title);
+                console.log('[Music] Found:', songInfo?.video_details?.title || songInfo?.title || 'Unknown');
             } catch (error) {
                 console.error('[Music] Search error:', error.message);
                 return { error: `Failed to find song: ${error.message}` };
             }
 
-        const song = {
-            title: songInfo.video_details.title,
-            url: songInfo.video_details.url,
-            duration: this.formatDuration(songInfo.video_details.durationInSec),
-            thumbnail: songInfo.video_details.thumbnails[0]?.url,
-            requestedBy: interaction.user
-        };
+            // Handle different response formats
+            let song;
+            if (songInfo.video_details) {
+                // play-dl video_info format
+                song = {
+                    title: songInfo.video_details.title || 'Unknown Title',
+                    url: songInfo.video_details.url || query,
+                    duration: this.formatDuration(songInfo.video_details.durationInSec || 0),
+                    thumbnail: songInfo.video_details.thumbnails?.[0]?.url || null,
+                    requestedBy: interaction.user
+                };
+            } else {
+                // play-dl search format
+                song = {
+                    title: songInfo.title || 'Unknown Title',
+                    url: songInfo.url || query,
+                    duration: this.formatDuration(songInfo.durationInSec || 0),
+                    thumbnail: songInfo.thumbnails?.[0]?.url || null,
+                    requestedBy: interaction.user
+                };
+            }
+
+            if (!song.title || song.title === 'Unknown Title') {
+                console.error('[Music] Invalid song data:', songInfo);
+                return { error: 'Failed to retrieve song information' };
+            }
 
         let queue = this.queues.get(interaction.guild.id);
 
