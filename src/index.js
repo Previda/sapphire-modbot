@@ -889,6 +889,29 @@ async function handleButtonInteraction(interaction) {
         return;
     }
 
+    // Roblox verification button
+    if (customId === 'roblox_verify_start') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+        
+        const modal = new ModalBuilder()
+            .setCustomId('roblox_verify_modal')
+            .setTitle('🎮 Roblox Verification');
+
+        const usernameInput = new TextInputBuilder()
+            .setCustomId('roblox_username')
+            .setLabel('Enter your Roblox username')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('YourRobloxUsername')
+            .setRequired(true)
+            .setMaxLength(20);
+
+        const row = new ActionRowBuilder().addComponents(usernameInput);
+        modal.addComponents(row);
+
+        await interaction.showModal(modal);
+        return;
+    }
+
     // Ticket creation button
     if (customId === 'create_ticket') {
         const fs = require('fs').promises;
