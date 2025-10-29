@@ -487,7 +487,248 @@ const server = app.listen(config.port, () => {
 async function handleButtonInteraction(interaction) {
     const { customId } = interaction;
     
-    // Ticket system
+    // Ticket close button
+    if (customId === 'ticket_close') {
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({
+                content: '❌ This can only be used in ticket channels!',
+                ephemeral: true
+            });
+        }
+
+        const { EmbedBuilder } = require('discord.js');
+        
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor(0xED4245)
+                .setTitle('🔒 Closing Ticket')
+                .setDescription(`This ticket will be closed in 5 seconds...\n\n**Closed by:** ${interaction.user}`)
+                .setTimestamp()
+            ]
+        });
+
+        setTimeout(async () => {
+            try {
+                await interaction.channel.delete();
+            } catch (error) {
+                console.error('Error closing ticket:', error);
+            }
+        }, 5000);
+        return;
+    }
+
+    // Ticket claim button
+    if (customId === 'ticket_claim') {
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({
+                content: '❌ This can only be used in ticket channels!',
+                ephemeral: true
+            });
+        }
+
+        const { EmbedBuilder } = require('discord.js');
+        
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor(0x57F287)
+                .setTitle('✋ Ticket Claimed')
+                .setDescription(`${interaction.user} is now handling this ticket.`)
+                .setTimestamp()
+            ]
+        });
+        return;
+    }
+
+    // Ticket pause button
+    if (customId === 'ticket_pause') {
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({
+                content: '❌ This can only be used in ticket channels!',
+                ephemeral: true
+            });
+        }
+
+        try {
+            await interaction.channel.permissionOverwrites.edit(interaction.guild.roles.everyone, {
+                SendMessages: false
+            });
+
+            const { EmbedBuilder } = require('discord.js');
+            
+            await interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0xFEE75C)
+                    .setTitle('⏸️ Ticket Paused')
+                    .setDescription(`This ticket has been paused by ${interaction.user}.\n\nThe channel is now locked.`)
+                    .setTimestamp()
+                ]
+            });
+        } catch (error) {
+            await interaction.reply({
+                content: '❌ Failed to pause ticket!',
+                ephemeral: true
+            });
+        }
+        return;
+    }
+
+    // Ticket resume button
+    if (customId === 'ticket_resume') {
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({
+                content: '❌ This can only be used in ticket channels!',
+                ephemeral: true
+            });
+        }
+
+        try {
+            await interaction.channel.permissionOverwrites.edit(interaction.guild.roles.everyone, {
+                SendMessages: null
+            });
+
+            const { EmbedBuilder } = require('discord.js');
+            
+            await interaction.reply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0x57F287)
+                    .setTitle('▶️ Ticket Resumed')
+                    .setDescription(`This ticket has been resumed by ${interaction.user}.\n\nThe channel is now unlocked.`)
+                    .setTimestamp()
+                ]
+            });
+        } catch (error) {
+            await interaction.reply({
+                content: '❌ Failed to resume ticket!',
+                ephemeral: true
+            });
+        }
+        return;
+    }
+
+    // Ticket priority button
+    if (customId === 'ticket_priority') {
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({
+                content: '❌ This can only be used in ticket channels!',
+                ephemeral: true
+            });
+        }
+
+        const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+        
+        const selectMenu = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('ticket_priority_select')
+                    .setPlaceholder('Select priority level')
+                    .addOptions([
+                        {
+                            label: 'High Priority',
+                            description: 'Urgent issue requiring immediate attention',
+                            value: 'high',
+                            emoji: '🔴'
+                        },
+                        {
+                            label: 'Medium Priority',
+                            description: 'Standard issue',
+                            value: 'medium',
+                            emoji: '🟡'
+                        },
+                        {
+                            label: 'Low Priority',
+                            description: 'Non-urgent issue',
+                            value: 'low',
+                            emoji: '🟢'
+                        }
+                    ])
+            );
+
+        await interaction.reply({
+            content: '🏷️ Select ticket priority:',
+            components: [selectMenu],
+            ephemeral: true
+        });
+        return;
+    }
+
+    // Ticket save transcript button
+    if (customId === 'ticket_save') {
+        if (!interaction.channel.name.startsWith('ticket-')) {
+            return interaction.reply({
+                content: '❌ This can only be used in ticket channels!',
+                ephemeral: true
+            });
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        try {
+            const messages = await interaction.channel.messages.fetch({ limit: 100 });
+            const transcript = messages.reverse().map(m => 
+                `[${m.createdAt.toLocaleString()}] ${m.author.tag}: ${m.content}`
+            ).join('\n');
+
+            const fs = require('fs').promises;
+            const path = require('path');
+            
+            const transcriptDir = path.join(__dirname, '../data/transcripts');
+            await fs.mkdir(transcriptDir, { recursive: true });
+            
+            const filename = `${interaction.channel.name}-${Date.now()}.txt`;
+            const filepath = path.join(transcriptDir, filename);
+            
+            await fs.writeFile(filepath, transcript);
+
+            const { EmbedBuilder } = require('discord.js');
+            
+            await interaction.editReply({
+                embeds: [new EmbedBuilder()
+                    .setColor(0x57F287)
+                    .setTitle('💾 Transcript Saved')
+                    .setDescription(`Transcript saved as \`${filename}\`\n\nTotal messages: ${messages.size}`)
+                    .setTimestamp()
+                ]
+            });
+
+            // Try to send to transcript channel if configured
+            const configFile = path.join(__dirname, '../data/ticket-config.json');
+            try {
+                const data = await fs.readFile(configFile, 'utf8');
+                const allConfigs = JSON.parse(data);
+                const config = allConfigs[interaction.guild.id];
+                
+                if (config && config.transcriptChannel) {
+                    const transcriptChannel = interaction.guild.channels.cache.get(config.transcriptChannel);
+                    if (transcriptChannel) {
+                        await transcriptChannel.send({
+                            embeds: [new EmbedBuilder()
+                                .setColor(0x5865F2)
+                                .setTitle('📜 Ticket Transcript')
+                                .setDescription(
+                                    `**Ticket:** ${interaction.channel.name}\n` +
+                                    `**Saved by:** ${interaction.user}\n` +
+                                    `**Messages:** ${messages.size}\n` +
+                                    `**File:** \`${filename}\``
+                                )
+                                .setTimestamp()
+                            ]
+                        });
+                    }
+                }
+            } catch (err) {
+                // Transcript channel not configured, skip
+            }
+
+        } catch (error) {
+            console.error('Error saving transcript:', error);
+            await interaction.editReply({
+                content: '❌ Failed to save transcript!'
+            });
+        }
+        return;
+    }
+
+    // Ticket creation button
     if (customId === 'create_ticket') {
         const fs = require('fs').promises;
         const path = require('path');
@@ -540,6 +781,45 @@ async function handleButtonInteraction(interaction) {
 
 async function handleSelectMenuInteraction(interaction) {
     const { customId, values } = interaction;
+    
+    // Ticket priority selection
+    if (customId === 'ticket_priority_select') {
+        const level = values[0];
+        
+        const priorityEmojis = {
+            high: '🔴',
+            medium: '🟡',
+            low: '🟢'
+        };
+
+        const priorityColors = {
+            high: 0xED4245,
+            medium: 0xFEE75C,
+            low: 0x57F287
+        };
+
+        const { EmbedBuilder } = require('discord.js');
+
+        await interaction.update({
+            content: null,
+            embeds: [new EmbedBuilder()
+                .setColor(priorityColors[level])
+                .setTitle(`${priorityEmojis[level]} Priority Set`)
+                .setDescription(`This ticket's priority has been set to **${level.toUpperCase()}**`)
+                .setTimestamp()
+            ],
+            components: []
+        });
+
+        // Send notification in channel
+        await interaction.channel.send({
+            embeds: [new EmbedBuilder()
+                .setColor(priorityColors[level])
+                .setDescription(`${priorityEmojis[level]} Priority changed to **${level.toUpperCase()}** by ${interaction.user}`)
+            ]
+        });
+        return;
+    }
     
     // Ticket category selection
     if (customId === 'ticket_category') {
@@ -619,7 +899,9 @@ async function handleSelectMenuInteraction(interaction) {
         allConfigs[interaction.guild.id] = config;
         await fs.writeFile(configFile, JSON.stringify(allConfigs, null, 2));
         
-        // Send welcome message
+        // Send welcome message with buttons
+        const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+        
         const embed = new EmbedBuilder()
             .setColor(0x5865F2)
             .setTitle(`${category.emoji} ${categoryName} Ticket`)
@@ -632,8 +914,27 @@ async function handleSelectMenuInteraction(interaction) {
             .setFooter({ text: `Ticket #${ticketNumber}` })
             .setTimestamp();
         
+        const buttons = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('ticket_close')
+                    .setLabel('Close')
+                    .setEmoji('🔒')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('ticket_claim')
+                    .setLabel('Claim')
+                    .setEmoji('✋')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('ticket_save')
+                    .setLabel('Save Transcript')
+                    .setEmoji('💾')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+        
         const pingMessage = category.pingRole ? `<@&${category.pingRole}>` : '';
-        await ticketChannel.send({ content: pingMessage, embeds: [embed] });
+        await ticketChannel.send({ content: pingMessage, embeds: [embed], components: [buttons] });
         
         await interaction.editReply({
             content: `✅ Ticket created! ${ticketChannel}`
