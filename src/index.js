@@ -7,6 +7,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const SimpleMusicSystem = require('./systems/simpleMusicSystem');
+const YtdlMusicSystem = require('./systems/ytdlMusicSystem');
 const AdvancedAutomod = require('./systems/advancedAutomod');
 const DiscordSDKSystem = require('./systems/discordSDK');
 const authManager = require('./utils/auth');
@@ -68,8 +69,14 @@ const config = {
 // Collections for commands and data
 client.commands = new Collection();
 
-// Initialize music system
-client.musicSystem = new SimpleMusicSystem(client);
+// Initialize music system (try ytdl first, fallback to play-dl)
+try {
+    client.musicSystem = new YtdlMusicSystem(client);
+    console.log('🎵 Using ytdl-core music system');
+} catch (error) {
+    console.log('⚠️ ytdl-core not available, using play-dl');
+    client.musicSystem = new SimpleMusicSystem(client);
+}
 
 // Initialize advanced automod system
 client.automod = new AdvancedAutomod(client);
