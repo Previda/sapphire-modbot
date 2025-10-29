@@ -48,7 +48,8 @@ if (fs.existsSync(commandsPath)) {
 console.log(`📋 Total commands to deploy: ${commands.length}`);
 
 // Construct and prepare an instance of the REST module
-const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+const token = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_TOKEN;
+const rest = new REST({ version: '10' }).setToken(token);
 
 // Deploy commands
 (async () => {
@@ -56,13 +57,13 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
         console.log('🚀 Started refreshing application (/) commands...');
 
         // Check if token exists
-        if (!process.env.DISCORD_TOKEN) {
-            console.error('❌ DISCORD_TOKEN not found in environment variables!');
+        if (!token) {
+            console.error('❌ DISCORD_BOT_TOKEN not found in environment variables!');
             process.exit(1);
         }
 
         // Get application ID from .env file
-        const clientId = process.env.CLIENT_ID || process.env.APPLICATION_ID;
+        const clientId = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID || process.env.APPLICATION_ID;
         
         if (!clientId) {
             console.error('❌ CLIENT_ID or APPLICATION_ID not found in .env file!');
