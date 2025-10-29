@@ -190,11 +190,25 @@ class SimpleMusicSystem {
             // Get stream with error handling
             let stream;
             try {
-                stream = await play.stream(song.url, {
-                    quality: 2 // Use high quality
-                });
+                // Validate URL first
+                const urlType = play.yt_validate(song.url);
+                console.log('[Music] URL validation:', urlType);
+                
+                if (urlType === 'video' || urlType === 'search') {
+                    stream = await play.stream(song.url, {
+                        quality: 2 // Use high quality
+                    });
+                } else {
+                    // Try to get fresh video info
+                    console.log('[Music] Re-fetching video info...');
+                    const videoInfo = await play.video_info(song.url);
+                    stream = await play.stream(videoInfo.video_details.url, {
+                        quality: 2
+                    });
+                }
             } catch (streamError) {
                 console.error('[Music] Stream error:', streamError.message);
+                console.error('[Music] Stream error details:', streamError);
                 throw new Error(`Failed to get audio stream: ${streamError.message}`);
             }
 
