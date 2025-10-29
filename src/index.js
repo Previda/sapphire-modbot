@@ -499,13 +499,15 @@ async function handleButtonInteraction(interaction) {
         if (!interaction.channel.name.startsWith('ticket-')) {
             return interaction.reply({
                 content: '❌ This can only be used in ticket channels!',
-                ephemeral: true
+                flags: 64 // EPHEMERAL
             });
         }
 
         const { EmbedBuilder } = require('discord.js');
         
-        await interaction.reply({
+        await interaction.deferReply();
+        
+        await interaction.editReply({
             embeds: [new EmbedBuilder()
                 .setColor(0xED4245)
                 .setTitle('🔒 Closing Ticket')
@@ -529,13 +531,15 @@ async function handleButtonInteraction(interaction) {
         if (!interaction.channel.name.startsWith('ticket-')) {
             return interaction.reply({
                 content: '❌ This can only be used in ticket channels!',
-                ephemeral: true
+                flags: 64 // EPHEMERAL
             });
         }
 
         const { EmbedBuilder } = require('discord.js');
         
-        await interaction.reply({
+        await interaction.deferReply();
+        
+        await interaction.editReply({
             embeds: [new EmbedBuilder()
                 .setColor(0x57F287)
                 .setTitle('✋ Ticket Claimed')
@@ -663,11 +667,11 @@ async function handleButtonInteraction(interaction) {
         if (!interaction.channel.name.startsWith('ticket-')) {
             return interaction.reply({
                 content: '❌ This can only be used in ticket channels!',
-                ephemeral: true
+                flags: 64 // EPHEMERAL
             });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 }); // EPHEMERAL
 
         try {
             const messages = await interaction.channel.messages.fetch({ limit: 100 });
