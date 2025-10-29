@@ -173,6 +173,55 @@ client.on('guildDelete', (guild) => {
 });
 
 client.on('interactionCreate', async (interaction) => {
+    // Handle button interactions
+    if (interaction.isButton()) {
+        try {
+            await handleButtonInteraction(interaction);
+        } catch (error) {
+            console.error('Button interaction error:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ An error occurred!',
+                    ephemeral: true
+                }).catch(console.error);
+            }
+        }
+        return;
+    }
+
+    // Handle select menu interactions
+    if (interaction.isStringSelectMenu()) {
+        try {
+            await handleSelectMenuInteraction(interaction);
+        } catch (error) {
+            console.error('Select menu interaction error:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ An error occurred!',
+                    ephemeral: true
+                }).catch(console.error);
+            }
+        }
+        return;
+    }
+
+    // Handle modal submissions
+    if (interaction.isModalSubmit()) {
+        try {
+            await handleModalSubmit(interaction);
+        } catch (error) {
+            console.error('Modal submit error:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ An error occurred!',
+                    ephemeral: true
+                }).catch(console.error);
+            }
+        }
+        return;
+    }
+
+    // Handle slash commands
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
@@ -190,7 +239,16 @@ client.on('interactionCreate', async (interaction) => {
         
     } catch (error) {
         console.error('Command execution error:', error);
+        console.error(error);
         addLog('error', 'System', `Command error: ${interaction.commandName}`, 'error');
+        
+        // Reply with error if interaction hasn't been replied to
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ An error occurred while executing this command!',
+                ephemeral: true
+            }).catch(console.error);
+        }
     }
 });
 
@@ -424,6 +482,169 @@ const server = app.listen(config.port, () => {
     
     console.log(loginResult.message);
 })();
+
+// Interaction handlers
+async function handleButtonInteraction(interaction) {
+    const { customId } = interaction;
+    
+    // Ticket system
+    if (customId === 'create_ticket') {
+        const fs = require('fs').promises;
+        const path = require('path');
+        const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
+        
+        const configFile = path.join(__dirname, '../data/ticket-config.json');
+        let config;
+        
+        try {
+            const data = await fs.readFile(configFile, 'utf8');
+            const allConfigs = JSON.parse(data);
+            config = allConfigs[interaction.guild.id];
+        } catch (error) {
+            return interaction.reply({
+                content: '❌ Ticket system not configured!',
+                ephemeral: true
+            });
+        }
+        
+        if (!config || config.categories.length === 0) {
+            return interaction.reply({
+                content: '❌ No ticket categories available!',
+                ephemeral: true
+            });
+        }
+        
+        // Show category selection
+        const selectMenu = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('ticket_category')
+                    .setPlaceholder('Select a category')
+                    .addOptions(
+                        config.categories.map(cat => ({
+                            label: cat.name,
+                            description: cat.description,
+                            value: cat.name,
+                            emoji: cat.emoji
+                        }))
+                    )
+            );
+        
+        await interaction.reply({
+            content: '🎫 Please select a ticket category:',
+            components: [selectMenu],
+            ephemeral: true
+        });
+    }
+}
+
+async function handleSelectMenuInteraction(interaction) {
+    const { customId, values } = interaction;
+    
+    // Ticket category selection
+    if (customId === 'ticket_category') {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const fs = require('fs').promises;
+        const path = require('path');
+        const { EmbedBuilder, ChannelType, PermissionFlagsBits } = require('discord.js');
+        
+        const configFile = path.join(__dirname, '../data/ticket-config.json');
+        let config;
+        
+        try {
+            const data = await fs.readFile(configFile, 'utf8');
+            const allConfigs = JSON.parse(data);
+            config = allConfigs[interaction.guild.id];
+        } catch (error) {
+            return interaction.editReply({
+                content: '❌ Error loading ticket configuration!'
+            });
+        }
+        
+        const categoryName = values[0];
+        const category = config.categories.find(c => c.name === categoryName);
+        
+        if (!category) {
+            return interaction.editReply({
+                content: '❌ Category not found!'
+            });
+        }
+        
+        // Create ticket channel
+        config.ticketCount = (config.ticketCount || 0) + 1;
+        const ticketNumber = config.ticketCount;
+        
+        const ticketChannel = await interaction.guild.channels.create({
+            name: `ticket-${ticketNumber}`,
+            type: ChannelType.GuildText,
+            parent: category.categoryChannel || config.categoryChannel,
+            topic: `${category.emoji} ${categoryName} ticket for ${interaction.user.tag}`,
+            permissionOverwrites: [
+                {
+                    id: interaction.guild.roles.everyone,
+                    deny: [PermissionFlagsBits.ViewChannel]
+                },
+                {
+                    id: interaction.user.id,
+                    allow: [
+                        PermissionFlagsBits.ViewChannel,
+                        PermissionFlagsBits.SendMessages,
+                        PermissionFlagsBits.ReadMessageHistory,
+                        PermissionFlagsBits.AttachFiles
+                    ]
+                },
+                {
+                    id: client.user.id,
+                    allow: [
+                        PermissionFlagsBits.ViewChannel,
+                        PermissionFlagsBits.SendMessages,
+                        PermissionFlagsBits.ManageChannels
+                    ]
+                }
+            ]
+        });
+        
+        // Add ping role if configured
+        if (category.pingRole) {
+            await ticketChannel.permissionOverwrites.create(category.pingRole, {
+                ViewChannel: true,
+                SendMessages: true,
+                ReadMessageHistory: true
+            });
+        }
+        
+        // Save updated config
+        const allConfigs = JSON.parse(await fs.readFile(configFile, 'utf8'));
+        allConfigs[interaction.guild.id] = config;
+        await fs.writeFile(configFile, JSON.stringify(allConfigs, null, 2));
+        
+        // Send welcome message
+        const embed = new EmbedBuilder()
+            .setColor(0x5865F2)
+            .setTitle(`${category.emoji} ${categoryName} Ticket`)
+            .setDescription(
+                `Welcome ${interaction.user}!\n\n` +
+                `**Category:** ${categoryName}\n` +
+                `**Description:** ${category.description}\n\n` +
+                `Please describe your issue and our team will assist you shortly.`
+            )
+            .setFooter({ text: `Ticket #${ticketNumber}` })
+            .setTimestamp();
+        
+        const pingMessage = category.pingRole ? `<@&${category.pingRole}>` : '';
+        await ticketChannel.send({ content: pingMessage, embeds: [embed] });
+        
+        await interaction.editReply({
+            content: `✅ Ticket created! ${ticketChannel}`
+        });
+    }
+}
+
+async function handleModalSubmit(interaction) {
+    // Handle modal submissions here
+    console.log('Modal submitted:', interaction.customId);
+}
 
 // Graceful shutdown
 process.on('SIGINT', () => {
