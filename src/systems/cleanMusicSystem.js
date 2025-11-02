@@ -188,10 +188,43 @@ class CleanMusicSystem {
         try {
             console.log('[Music] Streaming:', song.url);
 
+            // Add better options to avoid 403 errors
             const stream = ytdl(song.url, {
                 filter: 'audioonly',
                 quality: 'highestaudio',
-                highWaterMark: 1 << 25
+                highWaterMark: 1 << 25,
+                requestOptions: {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                    }
+                }
+            });
+
+            // Handle stream errors
+            stream.on('error', (error) => {
+                console.error('[Music] Stream error:', error);
+                if (error.statusCode === 403) {
+                    queue.textChannel.send({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xED4245)
+                            .setTitle('❌ YouTube Access Blocked')
+                            .setDescription(
+                                '**YouTube is blocking this video (403 error)**\n\n' +
+                                '**Possible reasons:**\n' +
+                                '• Age-restricted video\n' +
+                                '• Region-locked content\n' +
+                                '• YouTube rate limiting\n' +
+                                '• Video requires sign-in\n\n' +
+                                '**Try:**\n' +
+                                '• A different video\n' +
+                                '• Wait a few minutes and try again\n' +
+                                '• Use a non-restricted video'
+                            )
+                            .setTimestamp()
+                        ]
+                    }).catch(console.error);
+                }
             });
 
             const resource = createAudioResource(stream, {
@@ -221,14 +254,40 @@ class CleanMusicSystem {
             console.log('[Music] Playback started successfully');
         } catch (error) {
             console.error('[Music] Playback error:', error);
+            
+            let errorMessage = `Failed to play: ${error.message}`;
+            
+            // Specific error messages
+            if (error.statusCode === 403 || error.message.includes('403')) {
+                errorMessage = '**YouTube Access Blocked (403)**\n\n' +
+                    'This video cannot be played due to YouTube restrictions.\n\n' +
+                    '**Common causes:**\n' +
+                    '• Age-restricted content\n' +
+                    '• Region-locked video\n' +
+                    '• Requires YouTube sign-in\n' +
+                    '• Too many requests (rate limit)\n\n' +
+                    '**Solution:** Try a different video or wait a few minutes.';
+            } else if (error.message.includes('Video unavailable')) {
+                errorMessage = '**Video Unavailable**\n\nThis video is private, deleted, or doesn\'t exist.';
+            }
+            
             queue.textChannel.send({
                 embeds: [new EmbedBuilder()
                     .setColor(0xED4245)
                     .setTitle('❌ Playback Error')
-                    .setDescription(`Failed to play: ${error.message}`)
+                    .setDescription(errorMessage)
                     .setTimestamp()
                 ]
             }).catch(console.error);
+            
+            // Skip to next song if available
+            if (queue.songs.length > 1) {
+                console.log('[Music] Skipping to next song due to error...');
+                queue.songs.shift();
+                setTimeout(() => {
+                    this.playSong(guildId, queue.songs[0]).catch(console.error);
+                }, 2000);
+            }
         }
     }
 
