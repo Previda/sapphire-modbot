@@ -155,14 +155,42 @@ class CleanMusicSystem {
 
                 player.on('error', error => {
                     console.error('[Music] Player error:', error);
+                    console.error('[Music] Error details:', error.resource?.metadata);
+                    
+                    let errorMessage = 'An error occurred during playback.';
+                    
+                    // Check for specific errors
+                    if (error.message.includes('403') || error.message.includes('Forbidden')) {
+                        errorMessage = '**YouTube Access Blocked (403)**\n\n' +
+                            'This video is restricted and cannot be played.\n\n' +
+                            '**Try:**\n' +
+                            '• A different video\n' +
+                            '• Non-age-restricted content\n' +
+                            '• Official uploads';
+                    } else if (error.message.includes('Status code: 410')) {
+                        errorMessage = '**Video Expired (410)**\n\nThe video link has expired. Try playing it again.';
+                    } else if (error.message.includes('ECONNRESET') || error.message.includes('ETIMEDOUT')) {
+                        errorMessage = '**Connection Error**\n\nNetwork issue while streaming. Check your internet connection.';
+                    }
+                    
                     queue.textChannel.send({
                         embeds: [new EmbedBuilder()
                             .setColor(0xED4245)
                             .setTitle('❌ Playback Error')
-                            .setDescription(`An error occurred: ${error.message}`)
+                            .setDescription(errorMessage)
+                            .setFooter({ text: error.message })
                             .setTimestamp()
                         ]
                     }).catch(console.error);
+                    
+                    // Skip to next song
+                    if (queue.songs.length > 1) {
+                        console.log('[Music] Auto-skipping due to player error...');
+                        queue.songs.shift();
+                        setTimeout(() => {
+                            this.playSong(interaction.guild.id, queue.songs[0]).catch(console.error);
+                        }, 2000);
+                    }
                 });
 
                 this.playSong(interaction.guild.id, song).catch(console.error);
@@ -238,20 +266,30 @@ class CleanMusicSystem {
             queue.player.play(resource);
             queue.playing = true;
 
-            const embed = new EmbedBuilder()
-                .setColor(0x57F287)
-                .setTitle('🎵 Now Playing')
-                .setDescription(`**[${song.title}](${song.url})**`)
-                .addFields(
-                    { name: '⏱️ Duration', value: song.duration, inline: true },
-                    { name: '👤 Requested by', value: song.requestedBy.toString(), inline: true },
-                    { name: '🔊 Volume', value: `${queue.volume}%`, inline: true }
-                )
-                .setThumbnail(song.thumbnail)
-                .setTimestamp();
+            // Wait a moment to ensure stream is stable before announcing
+            await new Promise(resolve => setTimeout(resolve, 500));
 
-            queue.textChannel.send({ embeds: [embed] }).catch(console.error);
-            console.log('[Music] Playback started successfully');
+            // Check if player is still playing (not errored immediately)
+            if (queue.player.state.status === AudioPlayerStatus.Playing || 
+                queue.player.state.status === AudioPlayerStatus.Buffering) {
+                
+                const embed = new EmbedBuilder()
+                    .setColor(0x57F287)
+                    .setTitle('🎵 Now Playing')
+                    .setDescription(`**[${song.title}](${song.url})**`)
+                    .addFields(
+                        { name: '⏱️ Duration', value: song.duration, inline: true },
+                        { name: '👤 Requested by', value: song.requestedBy.toString(), inline: true },
+                        { name: '🔊 Volume', value: `${queue.volume}%`, inline: true }
+                    )
+                    .setThumbnail(song.thumbnail)
+                    .setTimestamp();
+
+                queue.textChannel.send({ embeds: [embed] }).catch(console.error);
+                console.log('[Music] Playback started successfully');
+            } else {
+                console.log('[Music] Playback failed immediately, not sending Now Playing message');
+            }
         } catch (error) {
             console.error('[Music] Playback error:', error);
             
