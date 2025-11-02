@@ -53,10 +53,36 @@ class CleanMusicSystem {
                 };
             }
 
-            // Get video info
+            // Get video info and validate
             let videoInfo;
             try {
+                console.log('[Music] Getting video info...');
                 videoInfo = await ytdl.getBasicInfo(url);
+                console.log('[Music] Video info retrieved:', videoInfo.videoDetails.title);
+                
+                // Check if video is playable
+                if (videoInfo.videoDetails.isPrivate) {
+                    return { error: '❌ **Video is Private**\n\nThis video cannot be played.' };
+                }
+                
+                if (videoInfo.videoDetails.age_restricted) {
+                    return { 
+                        error: '❌ **Age-Restricted Video**\n\n' +
+                               'This video requires age verification and cannot be played by the bot.\n\n' +
+                               '**Try:**\n' +
+                               '• A non-age-restricted version\n' +
+                               '• A different video\n' +
+                               '• Official uploads (usually not restricted)'
+                    };
+                }
+                
+                // Check if video has audio
+                const hasAudio = videoInfo.formats.some(f => f.hasAudio);
+                if (!hasAudio) {
+                    return { error: '❌ **No Audio Available**\n\nThis video has no audio stream.' };
+                }
+                
+                console.log('[Music] Video validation passed');
             } catch (error) {
                 console.error('[Music] Failed to get video info:', error.message);
                 return { 
@@ -65,8 +91,9 @@ class CleanMusicSystem {
                            '• Invalid URL\n' +
                            '• Private or deleted video\n' +
                            '• Age-restricted content\n' +
-                           '• Region-locked video\n\n' +
-                           'Try a different video!'
+                           '• Region-locked video\n' +
+                           '• Video unavailable\n\n' +
+                           '**Try a different video!**'
                 };
             }
 
