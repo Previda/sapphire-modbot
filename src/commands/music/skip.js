@@ -17,7 +17,7 @@ module.exports = {
                         .setDescription('You need to be in a voice channel to use this command!')
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -29,21 +29,21 @@ module.exports = {
                         .setDescription('The music system is not initialized.')
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
             const result = interaction.client.musicSystem.skip(interaction.guild.id);
             
-            if (result.error) {
+            if (!result || result.error) {
                 return interaction.reply({
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
                         .setTitle('❌ Nothing Playing')
-                        .setDescription(result.error)
+                        .setDescription(result?.error || 'No music is currently playing!')
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -59,15 +59,21 @@ module.exports = {
 
         } catch (error) {
             console.error('Skip command error:', error);
-            await interaction.reply({
+            const reply = {
                 embeds: [new EmbedBuilder()
                     .setColor(0xED4245)
                     .setTitle('❌ Error')
                     .setDescription(`Failed to skip song: ${error.message}`)
                     .setTimestamp()
                 ],
-                ephemeral: true
-            });
+                flags: 64
+            };
+            
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(reply);
+            } else {
+                await interaction.reply(reply);
+            }
         }
     }
 };

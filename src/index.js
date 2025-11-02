@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const SimpleMusicSystem = require('./systems/simpleMusicSystem');
 const YtdlMusicSystem = require('./systems/ytdlMusicSystem');
+const CleanMusicSystem = require('./systems/cleanMusicSystem');
 const AdvancedAutomod = require('./systems/advancedAutomod');
 const DiscordSDKSystem = require('./systems/discordSDK');
 const authManager = require('./utils/auth');
@@ -69,13 +70,19 @@ const config = {
 // Collections for commands and data
 client.commands = new Collection();
 
-// Initialize music system (try ytdl first, fallback to play-dl)
+// Initialize music system (use clean optimized version)
 try {
-    client.musicSystem = new YtdlMusicSystem(client);
-    console.log('🎵 Using ytdl-core music system');
+    client.musicSystem = new CleanMusicSystem(client);
+    console.log('🎵 Using Clean Music System (ytdl-core)');
 } catch (error) {
-    console.log('⚠️ ytdl-core not available, using play-dl');
-    client.musicSystem = new SimpleMusicSystem(client);
+    console.log('⚠️ Clean music system failed, trying fallback...');
+    try {
+        client.musicSystem = new YtdlMusicSystem(client);
+        console.log('🎵 Using ytdl-core music system');
+    } catch (error2) {
+        console.log('⚠️ ytdl-core not available, using play-dl');
+        client.musicSystem = new SimpleMusicSystem(client);
+    }
 }
 
 // Initialize advanced automod system

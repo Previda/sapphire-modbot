@@ -15,7 +15,7 @@ module.exports = {
                         .setDescription('The music system is not initialized.')
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -29,7 +29,7 @@ module.exports = {
                         .setDescription('The music queue is currently empty!')
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 

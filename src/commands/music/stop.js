@@ -17,7 +17,7 @@ module.exports = {
                         .setDescription('You need to be in a voice channel to use this command!')
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -29,7 +29,7 @@ module.exports = {
                         .setDescription('The music system is not initialized.')
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
@@ -43,7 +43,7 @@ module.exports = {
                         .setDescription(result.error)
                         .setTimestamp()
                     ],
-                    ephemeral: true
+                    flags: 64
                 });
             }
 
