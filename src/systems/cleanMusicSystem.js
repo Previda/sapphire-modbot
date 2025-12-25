@@ -99,8 +99,12 @@ class CleanMusicSystem {
                     };
                 }
                 
-                // Check if video has audio
-                const hasAudio = videoInfo.formats.some(f => f.hasAudio);
+                // Check if video has audio (guard against missing formats array)
+                let hasAudio = true;
+                if (Array.isArray(videoInfo.formats)) {
+                    hasAudio = videoInfo.formats.some(f => f.hasAudio);
+                }
+
                 if (!hasAudio) {
                     return { error: '❌ **No Audio Available**\n\nThis video has no audio stream.' };
                 }

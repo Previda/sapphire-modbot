@@ -48,6 +48,10 @@ module.exports = {
                     opt.setName('company_logo')
                         .setDescription('Logo image URL to show on the receipt')
                         .setRequired(false))
+                .addAttachmentOption(opt =>
+                    opt.setName('company_logo_file')
+                        .setDescription('Upload a logo image to show on the receipt')
+                        .setRequired(false))
                 // Optional line items (up to 3)
                 .addStringOption(opt =>
                     opt.setName('item1_desc')
@@ -128,7 +132,14 @@ async function handleCreateReceipt(interaction) {
     const description = interaction.options.getString('description', true);
     const ticketChannel = interaction.options.getChannel('ticket_channel');
     const companyName = interaction.options.getString('company_name') || null;
-    const companyLogoUrl = interaction.options.getString('company_logo') || null;
+
+    // Prefer uploaded image attachment if provided; fall back to URL string
+    const logoAttachment = interaction.options.getAttachment('company_logo_file');
+    let companyLogoUrl = interaction.options.getString('company_logo') || null;
+
+    if (logoAttachment && (!logoAttachment.contentType || logoAttachment.contentType.startsWith('image/'))) {
+        companyLogoUrl = logoAttachment.url;
+    }
 
     const items = [];
     for (let i = 1; i <= 3; i++) {
