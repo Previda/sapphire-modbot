@@ -113,7 +113,7 @@ module.exports = {
             console.error('Receipt command error:', error);
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
-                    content: '❌ An error occurred while handling the receipt command.',
+                    content: `❌ An error occurred while handling the receipt command: ${error.message || 'Unknown error'}`,
                     ephemeral: true
                 });
             }
@@ -218,11 +218,49 @@ async function handleCreateReceipt(interaction) {
         const customerMember = await interaction.client.users.fetch(customer.id);
         await customerMember.send({
             embeds: [
-                new EmbedBuilder()
-                    .setTitle('🧾 Your Receipt')
-                    .setColor(0x57F287)
-                    .setDescription('Thank you! Here is your receipt for your order.')
-                    .setTimestamp(new Date(receipt.createdAt))
+                (() => {
+                    const dmEmbed = new EmbedBuilder()
+                        .setTitle('🧾 Your Receipt')
+                        .setColor(0x57F287)
+                        .setDescription('Thank you! Here is your receipt for your order.')
+                        .setTimestamp(new Date(receipt.createdAt));
+
+                    // Company branding in DM too
+                    if (receipt.companyName) {
+                        if (receipt.companyLogoUrl) {
+                            dmEmbed.setAuthor({ name: receipt.companyName, iconURL: receipt.companyLogoUrl });
+                        } else {
+                            dmEmbed.setAuthor({ name: receipt.companyName });
+                        }
+                    } else if (receipt.companyLogoUrl) {
+                        dmEmbed.setThumbnail(receipt.companyLogoUrl);
+                    }
+
+                    dmEmbed.addFields(
+                        { name: 'Invoice / Order ID', value: receipt.orderNumber, inline: true },
+                        { name: 'Customer', value: `${customer.tag} (${customer.id})`, inline: true },
+                        { name: 'Amount', value: `${receipt.amount.toFixed(2)} ${receipt.currency}`, inline: true },
+                        { name: 'Product / Description', value: receipt.description, inline: false },
+                        { name: 'Server', value: interaction.guild.name, inline: false }
+                    );
+
+                    if (receipt.items && receipt.items.length > 0) {
+                        const lines = receipt.items
+                            .map(it => `• ${it.description} — ${it.price.toFixed(2)} ${it.currency}`)
+                            .join('\n');
+                        dmEmbed.addFields({ name: 'Items', value: lines, inline: false });
+                    }
+
+                    if (receipt.ticketChannelId) {
+                        dmEmbed.addFields({
+                            name: 'Ticket',
+                            value: `<#${receipt.ticketChannelId}>`,
+                            inline: false
+                        });
+                    }
+
+                    return dmEmbed;
+                })()
             ]
         }).catch(() => {});
     } catch {

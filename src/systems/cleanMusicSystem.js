@@ -14,6 +14,7 @@ const {
 } = require('@discordjs/voice');
 const ytdl = require('@distube/ytdl-core');
 const { EmbedBuilder } = require('discord.js');
+const { URL } = require('url');
 
 class CleanMusicSystem {
     constructor(client) {
@@ -35,9 +36,31 @@ class CleanMusicSystem {
             // Only accept YouTube URLs (search is broken due to YouTube API changes)
             let url;
             console.log('[Music] Processing:', query);
-            
+
             if (query.includes('youtube.com') || query.includes('youtu.be')) {
-                url = query;
+                // Normalize common YouTube URL variants (playlists, radio, etc.)
+                try {
+                    const raw = query.startsWith('http') ? query : `https://${query}`;
+                    const parsed = new URL(raw);
+
+                    // Canonical watch URL with ?v=VIDEO_ID when available
+                    if (parsed.hostname.includes('youtube.com')) {
+                        const videoId = parsed.searchParams.get('v');
+                        if (videoId) {
+                            url = `https://www.youtube.com/watch?v=${videoId}`;
+                        } else {
+                            url = parsed.toString();
+                        }
+                    } else {
+                        // youtu.be or other YouTube host
+                        url = parsed.toString();
+                    }
+                } catch (e) {
+                    // Fallback to raw query if parsing fails
+                    console.warn('[Music] Failed to normalize URL, using raw query:', e.message);
+                    url = query;
+                }
+
                 console.log('[Music] Using URL:', url);
             } else {
                 return { 
