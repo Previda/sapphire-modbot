@@ -1,4 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { loadGuildConfig } = require('./configManager');
 
 async function handleTicketButtons(interaction) {
     const buttonId = interaction.customId;
@@ -78,43 +79,38 @@ async function listAllTickets(interaction) {
 }
 
 async function showCreateTicketModal(interaction) {
-    // Check if user is blacklisted first
-    const fs = require('fs');
-    const path = require('path');
-    const blacklistPath = path.join(__dirname, '../../data/ticket-blacklist.json');
-    
-    let blacklist = {};
-    if (fs.existsSync(blacklistPath)) {
-        try {
-            blacklist = JSON.parse(fs.readFileSync(blacklistPath, 'utf8'));
-        } catch (error) {
-            console.error('Error reading blacklist:', error);
+    // Check if user is blacklisted first (use unified config-based blacklist)
+    try {
+        const config = await loadGuildConfig(interaction.guild.id);
+        const ticketsConfig = config.tickets || {};
+        const blacklist = ticketsConfig.blacklist || [];
+
+        const entry = blacklist.find(e => e.userId === interaction.user.id);
+        if (entry) {
+            const date = entry.timestamp ? `<t:${Math.floor(new Date(entry.timestamp).getTime() / 1000)}:F>` : 'Unknown';
+            const blacklistedBy = entry.moderatorId || 'Unknown';
+            const reason = entry.reason || 'No reason provided';
+
+            const embed = new EmbedBuilder()
+                .setTitle('🚫 User Status: Blacklisted')
+                .setDescription(`${interaction.user} is blacklisted from creating tickets.`)
+                .addFields(
+                    { name: '👤 User', value: `${interaction.user.tag}\n\`${interaction.user.id}\``, inline: true },
+                    { name: '👮 Blacklisted By', value: `<@${blacklistedBy}>`, inline: true },
+                    { name: '📅 Date', value: date, inline: true },
+                    { name: '📝 Reason', value: reason, inline: false }
+                )
+                .setColor(0xED4245)
+                .setTimestamp();
+
+            return interaction.reply({
+                embeds: [embed],
+                flags: 64
+            });
         }
-    }
-    
-    // Check if user is blacklisted in this guild
-    if (blacklist[interaction.guild.id]?.users?.includes(interaction.user.id)) {
-        const blacklistInfo = blacklist[interaction.guild.id].details?.[interaction.user.id];
-        const reason = blacklistInfo?.reason || 'No reason provided';
-        const blacklistedBy = blacklistInfo?.blacklistedBy || 'Unknown';
-        const date = blacklistInfo?.date ? `<t:${Math.floor(new Date(blacklistInfo.date).getTime() / 1000)}:F>` : 'Unknown';
-        
-        const embed = new EmbedBuilder()
-            .setTitle('🚫 User Status: Blacklisted')
-            .setDescription(`${interaction.user} is blacklisted from creating tickets.`)
-            .addFields(
-                { name: '👤 User', value: `${interaction.user.tag}\n\`${interaction.user.id}\``, inline: true },
-                { name: '👮 Blacklisted By', value: `<@${blacklistedBy}>`, inline: true },
-                { name: '📅 Date', value: date, inline: true },
-                { name: '📝 Reason', value: reason, inline: false }
-            )
-            .setColor(0xED4245)
-            .setTimestamp();
-        
-        return interaction.reply({
-            embeds: [embed],
-            flags: 64
-        });
+    } catch (error) {
+        console.error('Error checking ticket blacklist:', error);
+        // If blacklist check fails, continue to show modal instead of blocking
     }
     
     // Determine ticket type from button ID

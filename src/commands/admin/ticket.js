@@ -176,103 +176,144 @@ async function handleSetup(interaction) {
         const guild = interaction.guild;
         const config = await loadConfig(guild.id);
 
-        // Create ticket category
-        const ticketCategory = await guild.channels.create({
-            name: '📋 TICKETS',
-            type: ChannelType.GuildCategory,
-            permissionOverwrites: [
-                {
-                    id: guild.roles.everyone,
-                    deny: [PermissionFlagsBits.ViewChannel]
-                },
-                {
-                    id: guild.members.me,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageChannels]
-                }
-            ]
-        });
+        // Try to reuse existing channels if they are already configured
+        let ticketCategory = config.categoryChannel ? guild.channels.cache.get(config.categoryChannel) : null;
+        let panelChannel = config.ticketChannel ? guild.channels.cache.get(config.ticketChannel) : null;
+        let transcriptChannel = config.transcriptChannel ? guild.channels.cache.get(config.transcriptChannel) : null;
 
-        // Create ticket panel channel
-        const panelChannel = await guild.channels.create({
-            name: '🎫-create-ticket',
-            type: ChannelType.GuildText,
-            topic: 'Click the button below to create a support ticket',
-            permissionOverwrites: [
-                {
-                    id: guild.roles.everyone,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
-                    deny: [PermissionFlagsBits.SendMessages]
-                },
-                {
-                    id: guild.members.me,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-                }
-            ]
-        });
+        const created = {
+            category: false,
+            panel: false,
+            transcript: false
+        };
 
-        // Create transcript channel
-        const transcriptChannel = await guild.channels.create({
-            name: '📜-ticket-logs',
-            type: ChannelType.GuildText,
-            parent: ticketCategory,
-            permissionOverwrites: [
-                {
-                    id: guild.roles.everyone,
-                    deny: [PermissionFlagsBits.ViewChannel]
-                },
-                {
-                    id: guild.members.me,
-                    allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-                }
-            ]
-        });
+        // Create ticket category if missing
+        if (!ticketCategory) {
+            ticketCategory = await guild.channels.create({
+                name: '📋 TICKETS',
+                type: ChannelType.GuildCategory,
+                permissionOverwrites: [
+                    {
+                        id: guild.roles.everyone,
+                        deny: [PermissionFlagsBits.ViewChannel]
+                    },
+                    {
+                        id: guild.members.me,
+                        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageChannels]
+                    }
+                ]
+            });
+            created.category = true;
+        }
 
-        // Add default categories
+        // Create ticket panel channel if missing
+        if (!panelChannel) {
+            panelChannel = await guild.channels.create({
+                name: '🎫-create-ticket',
+                type: ChannelType.GuildText,
+                topic: 'Click the button below to create a support ticket',
+                permissionOverwrites: [
+                    {
+                        id: guild.roles.everyone,
+                        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
+                        deny: [PermissionFlagsBits.SendMessages]
+                    },
+                    {
+                        id: guild.members.me,
+                        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+                    }
+                ]
+            });
+            created.panel = true;
+        }
+
+        // Create transcript channel if missing
+        if (!transcriptChannel) {
+            transcriptChannel = await guild.channels.create({
+                name: '📜-ticket-logs',
+                type: ChannelType.GuildText,
+                parent: ticketCategory,
+                permissionOverwrites: [
+                    {
+                        id: guild.roles.everyone,
+                        deny: [PermissionFlagsBits.ViewChannel]
+                    },
+                    {
+                        id: guild.members.me,
+                        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+                    }
+                ]
+            });
+            created.transcript = true;
+        }
+
+        // Ensure basic config is enabled and linked to these channels
         config.enabled = true;
         config.ticketChannel = panelChannel.id;
         config.transcriptChannel = transcriptChannel.id;
         config.categoryChannel = ticketCategory.id;
-        config.categories = [
-            {
-                name: 'Support',
-                emoji: '🆘',
-                description: 'Get help from our support team',
-                pingRole: null
-            },
-            {
-                name: 'Report',
-                emoji: '⚠️',
-                description: 'Report a user or issue',
-                pingRole: null
-            },
-            {
-                name: 'Question',
-                emoji: '❓',
-                description: 'Ask a question',
-                pingRole: null
-            }
-        ];
+
+        // If no categories yet, seed defaults; otherwise keep existing
+        if (!Array.isArray(config.categories) || config.categories.length === 0) {
+            config.categories = [
+                {
+                    name: 'Support',
+                    emoji: '🆘',
+                    description: 'Get help from our support team',
+                    pingRole: null
+                },
+                {
+                    name: 'Report',
+                    emoji: '⚠️',
+                    description: 'Report a user or issue',
+                    pingRole: null
+                },
+                {
+                    name: 'Question',
+                    emoji: '❓',
+                    description: 'Ask a question',
+                    pingRole: null
+                }
+            ];
+        }
 
         await saveConfig(guild.id, config);
 
-        // Send panel
-        await sendTicketPanel(panelChannel, config);
+        // Only send a new panel message if we just created the panel channel
+        if (created.panel) {
+            await sendTicketPanel(panelChannel, config);
+        }
+
+        const statusLines = [];
+        statusLines.push(created.category
+            ? '✅ Ticket category channel created.'
+            : '↩️ Reusing existing ticket category channel.');
+        statusLines.push(created.panel
+            ? '✅ Panel channel created and panel sent.'
+            : '↩️ Reusing existing panel channel.');
+        statusLines.push(created.transcript
+            ? '✅ Transcript channel created.'
+            : '↩️ Reusing existing transcript channel.');
 
         await interaction.editReply({
             embeds: [new EmbedBuilder()
                 .setColor(0x57F287)
-                .setTitle('✅ Ticket System Created!')
-                .setDescription('The ticket system is now active!')
+                .setTitle('✅ Ticket System Ready')
+                .setDescription('Ticket system is configured for this server.')
                 .addFields(
                     { name: '🎫 Panel Channel', value: panelChannel.toString(), inline: true },
                     { name: '📋 Category', value: ticketCategory.toString(), inline: true },
                     { name: '📜 Logs', value: transcriptChannel.toString(), inline: true }
                 )
                 .addFields({
+                    name: '📝 Status',
+                    value: statusLines.join('\n')
+                })
+                .addFields({
                     name: '📝 Next Steps',
-                    value: 
+                    value:
                         '• Use `/ticket category` to add custom categories\n' +
-                        '• Use `/ticket panel` to send a new panel\n' +
+                        '• Use `/ticket panel` to send or refresh the panel\n' +
                         '• Users can now create tickets!'
                 })
                 .setTimestamp()
@@ -282,7 +323,7 @@ async function handleSetup(interaction) {
     } catch (error) {
         console.error('Ticket setup error:', error);
         await interaction.editReply({
-            content: `❌ Setup failed: ${error.message}`
+            content: '❌ Setup failed: ' + error.message
         });
     }
 }
