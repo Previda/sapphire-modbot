@@ -109,8 +109,9 @@ class AuthManager {
    * @returns {Object} Validation result with credentials
    */
   loadCredentials() {
-    const token = process.env.DISCORD_BOT_TOKEN;
-    const clientId = process.env.DISCORD_CLIENT_ID;
+    // Support both common environment variable names
+    const token = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_TOKEN;
+    const clientId = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID;
 
     const tokenValidation = this.validateToken(token);
     if (!tokenValidation.valid) {
@@ -167,8 +168,8 @@ Your bot credentials are missing or invalid. Follow these steps:
 
 3. Update your .env file:
    • Open .env file in the bot directory
-   • Set DISCORD_BOT_TOKEN=<your token here>
-   • Set DISCORD_CLIENT_ID=<your client ID here>
+   • Set DISCORD_BOT_TOKEN=<your token here> (or DISCORD_TOKEN)
+   • Set DISCORD_CLIENT_ID=<your client ID here> (or CLIENT_ID)
 
 4. Restart the bot:
    • pm2 restart skyfall-bot --update-env

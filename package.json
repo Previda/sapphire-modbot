@@ -33,7 +33,8 @@
   },
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
-    "@discordjs/voice": "^0.16.1",
+    "@discordjs/voice": "^0.17.0",
+    "@distube/ytdl-core": "^4.14.4",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "autoprefixer": "^10.4.20",
@@ -44,14 +45,17 @@
     "express": "^4.21.1",
     "ffmpeg-static": "^5.2.0",
     "framer-motion": "^11.11.11",
+    "libsodium-wrappers": "^0.7.13",
     "lucide-react": "^0.547.0",
     "next": "^15.0.3",
     "next-auth": "^4.24.10",
+    "opusscript": "^0.1.1",
     "pg": "^8.11.3",
     "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.14",
+    "ytdl-core": "^4.11.5",
     "play-dl": "^1.9.7"
   },
   "devDependencies": {

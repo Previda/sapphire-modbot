@@ -20,15 +20,24 @@ class CommandDeployer {
     }
 
     validateEnvironment() {
-        const required = ['DISCORD_TOKEN', 'CLIENT_ID'];
-        const missing = required.filter(key => !process.env[key]);
+        // Support both naming conventions
+        const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN;
+        const clientId = process.env.CLIENT_ID || process.env.DISCORD_CLIENT_ID;
         
-        if (missing.length > 0) {
-            throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+        if (!token) {
+            throw new Error('Missing required environment variable: DISCORD_TOKEN or DISCORD_BOT_TOKEN');
         }
+        
+        if (!clientId) {
+            throw new Error('Missing required environment variable: CLIENT_ID or DISCORD_CLIENT_ID');
+        }
+        
+        // Set standardized names for use in the script
+        process.env.DISCORD_TOKEN = token;
+        process.env.CLIENT_ID = clientId;
 
         console.log('✅ Environment variables validated');
-        console.log(`🤖 Client ID: ${process.env.CLIENT_ID}`);
+        console.log(`🤖 Client ID: ${clientId}`);
         console.log(`🏠 Guild ID: ${process.env.GUILD_ID || 'Global deployment'}`);
     }
 
