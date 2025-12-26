@@ -333,4 +333,4 @@ async function showTicketSettings(interaction) {
     await interaction.reply({ embeds: [embed], flags: 64 });
 }
 
-module.exports = { handleTicketButtons };
+module.exports = { handleTicketButtons, showCreateTicketModal };

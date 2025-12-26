@@ -12,6 +12,8 @@ const CleanMusicSystem = require('./systems/cleanMusicSystem');
 const AdvancedAutomod = require('./systems/advancedAutomod');
 const DiscordSDKSystem = require('./systems/discordSDK');
 const authManager = require('./utils/auth');
+const { loadGuildConfig } = require('./utils/configManager');
+const { showCreateTicketModal } = require('./utils/ticketButtons');
 
 // Raspberry Pi 2 Optimization: Enable aggressive garbage collection
 if (global.gc) {
@@ -500,6 +502,25 @@ const server = app.listen(config.port, () => {
 // Interaction handlers
 async function handleButtonInteraction(interaction) {
     const { customId } = interaction;
+    
+    // New ticket panel buttons (created by /panel)
+    // These use IDs like create_ticket_general, create_ticket_technical, etc.
+    // Route them through the shared ticket modal helper which enforces the
+    // config-based ticket blacklist before allowing ticket creation.
+    if (customId.startsWith('create_ticket_')) {
+        try {
+            await showCreateTicketModal(interaction);
+        } catch (error) {
+            console.error('Error handling ticket panel button:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ An error occurred while opening the ticket form.',
+                    ephemeral: true
+                }).catch(console.error);
+            }
+        }
+        return;
+    }
     
     // Ticket close button
     if (customId === 'ticket_close') {

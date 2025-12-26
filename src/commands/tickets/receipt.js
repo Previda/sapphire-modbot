@@ -133,11 +133,25 @@ async function handleCreateReceipt(interaction) {
     const ticketChannel = interaction.options.getChannel('ticket_channel');
     const companyName = interaction.options.getString('company_name') || null;
 
-    // Prefer uploaded image attachment if provided; fall back to URL string
+    // Prefer uploaded image attachment if provided; validate it's an image (jpg, png, etc.)
     const logoAttachment = interaction.options.getAttachment('company_logo_file');
     let companyLogoUrl = interaction.options.getString('company_logo') || null;
 
-    if (logoAttachment && (!logoAttachment.contentType || logoAttachment.contentType.startsWith('image/'))) {
+    if (logoAttachment) {
+        const contentType = (logoAttachment.contentType || '').toLowerCase();
+        const fileName = (logoAttachment.name || '').toLowerCase();
+        const allowedExt = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+
+        const isImageType = contentType.startsWith('image/');
+        const hasValidExt = allowedExt.some(ext => fileName.endsWith(ext));
+
+        if (!isImageType && !hasValidExt) {
+            return interaction.reply({
+                content: '❌ Company logo must be an image file (PNG, JPG, JPEG, GIF, or WEBP).',
+                ephemeral: true
+            });
+        }
+
         companyLogoUrl = logoAttachment.url;
     }
 
