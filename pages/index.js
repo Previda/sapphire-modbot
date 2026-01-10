@@ -29,7 +29,6 @@ export default function Home() {
         });
       }
     } catch (error) {
-      // Use fallback stats
       setStats({
         guilds: 5,
         users: 1250,
@@ -41,8 +40,8 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="h-12 w-12 rounded-full border border-white/10 border-t-white animate-spin" />
       </div>
     );
   }
@@ -50,304 +49,259 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Skyfall - Professional Discord Management</title>
-        <meta name="description" content="Professional Discord bot management with advanced features, real-time monitoring, and modern dashboard" />
+        <title>Skyfall – Advanced Discord Management</title>
+        <meta
+          name="description"
+          content="Skyfall brings enterprise‑grade moderation, tickets, and analytics to Discord with a hyper‑clean, Apple‑style experience."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        {/* Navigation */}
-        <nav className="bg-black/20 backdrop-blur-lg border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-4">
-                <div className="h-10 w-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                  <span className="text-xl font-bold text-white">S</span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">Skyfall</h1>
-                  <p className="text-xs text-gray-400">Discord Management</p>
-                </div>
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        {/* Top Navigation */}
+        <nav className="sticky top-0 z-20 border-b border-white/5 bg-black/70 backdrop-blur-xl">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-400 text-black shadow-lg">
+                <span className="text-lg font-semibold">S</span>
               </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-semibold tracking-tight">Skyfall</span>
+                <span className="text-xs text-zinc-500">Enterprise Discord Management</span>
+              </div>
+            </div>
 
-              <div className="hidden md:flex items-center space-x-8">
-                <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
-                  Dashboard
-                </Link>
-                <Link href="/status" className="text-gray-300 hover:text-white transition-colors">
-                  Status
-                </Link>
-                <Link href="/faq" className="text-gray-300 hover:text-white transition-colors">
-                  FAQ
-                </Link>
-                <Link href="/terms" className="text-gray-300 hover:text-white transition-colors">
-                  Terms
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  Get Started
-                </Link>
-              </div>
+            <div className="hidden items-center gap-8 text-sm text-zinc-400 md:flex">
+              <Link href="/dashboard" className="hover:text-white transition-colors">
+                Dashboard
+              </Link>
+              <Link href="/status" className="hover:text-white transition-colors">
+                Status
+              </Link>
+              <Link href="/faq" className="hover:text-white transition-colors">
+                FAQ
+              </Link>
+              <Link href="/terms" className="hover:text-white transition-colors">
+                Legal
+              </Link>
+              <Link
+                href="/login"
+                className="rounded-full bg-white text-black px-4 py-1.5 text-xs font-semibold tracking-wide shadow-sm transition-all hover:bg-zinc-100 hover:shadow-md"
+              >
+                Sign in with Discord
+              </Link>
             </div>
           </div>
         </nav>
 
-        {/* Hero Section */}
-        <section className="relative overflow-hidden">
-          {/* Animated Background */}
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 animate-pulse"></div>
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-bounce"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-bounce" style={{animationDelay: '1s'}}></div>
-          </div>
+        {/* Main Content */}
+        <main className="flex-1">
+          {/* Hero */}
+          <section className="relative overflow-hidden">
+            {/* Subtle light pools */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+              <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
+            </div>
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-            <div className="text-center">
-              <h1 className="text-6xl md:text-7xl font-bold text-white mb-8 leading-tight">
-                Professional
-                <span className="block bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Discord Management
-                </span>
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
-                Advanced moderation, real-time monitoring, and seamless command management 
-                with a beautiful modern dashboard that makes Discord server administration effortless.
+            <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-20 pt-16 sm:px-6 lg:flex-row lg:items-center lg:pb-28 lg:pt-20">
+              {/* Left column – text */}
+              <div className="flex-1 space-y-8">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Live for Raspberry Pi • Secure ticketing & appeals
+                </div>
+
+                <div className="space-y-4">
+                  <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl">
+                    Hyper‑clean control
+                    <span className="block text-zinc-400">for serious Discord servers.</span>
+                  </h1>
+                  <p className="max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">
+                    Skyfall combines advanced moderation, ticket & appeal workflows, and live analytics into a
+                    single, fluid experience designed to feel like a native iOS dashboard – but for your server.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/invite"
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg shadow-slate-900/40 transition-transform hover:scale-[1.02]"
+                  >
+                    <span>➕ Add Skyfall to your server</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-zinc-200 backdrop-blur-md transition-colors hover:border-white/25 hover:bg-white/10"
+                  >
+                    <span>Open live dashboard</span>
+                  </Link>
+                </div>
+
+                <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span>Realtime ticket + appeal insights</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                    <span>Secure OAuth & per‑guild controls</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right column – glass stats card */}
+              <div className="flex-1">
+                <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
+                  <div className="flex items-center justify-between pb-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Live overview</p>
+                      <p className="mt-1 text-sm font-medium text-zinc-100">Skyfall control surface</p>
+                    </div>
+                    <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-semibold text-emerald-300">
+                      Online
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 rounded-2xl border border-white/5 bg-black/40 p-3">
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-zinc-400">Servers</p>
+                      <p className="text-xl font-semibold text-zinc-50">{stats.guilds}</p>
+                      <p className="text-[11px] text-zinc-500">actively managed</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-zinc-400">Users</p>
+                      <p className="text-xl font-semibold text-zinc-50">{stats.users.toLocaleString()}</p>
+                      <p className="text-[11px] text-zinc-500">protected across guilds</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-zinc-400">Commands</p>
+                      <p className="text-xl font-semibold text-zinc-50">{stats.commands}</p>
+                      <p className="text-[11px] text-zinc-500">curated & verified</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-zinc-400">30‑day uptime</p>
+                      <p className="text-xl font-semibold text-emerald-400">{stats.uptime}%</p>
+                      <p className="text-[11px] text-zinc-500">Pi‑optimized presence</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between text-[11px] text-zinc-500">
+                    <p>Ticket, appeal, music and automod pipelines monitored in real‑time.</p>
+                    <Link href="/status" className="text-xs font-medium text-zinc-300 hover:text-white">
+                      View status →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Feature grid – compact, dark */}
+          <section className="border-t border-white/5 bg-black/60">
+            <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+              <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Built for real moderation work.</h2>
+                  <p className="mt-2 max-w-xl text-sm text-zinc-400">
+                    Every layer – from slash commands to the Pi bot – is designed to stay fast, predictable, and
+                    audit‑friendly.
+                  </p>
+                </div>
+                <div className="flex gap-3 text-xs text-zinc-500">
+                  <span className="rounded-full border border-white/10 px-3 py-1">Tickets & appeals</span>
+                  <span className="rounded-full border border-white/10 px-3 py-1">Music & queue control</span>
+                  <span className="hidden rounded-full border border-white/10 px-3 py-1 sm:inline">Advanced automod</span>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="glass-card rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <h3 className="mb-2 text-sm font-semibold">Moderation & security</h3>
+                  <p className="mb-4 text-sm text-zinc-400">
+                    Structured bans, mutes, and warnings with an integrated, configurable appeal pipeline.
+                  </p>
+                  <ul className="space-y-1.5 text-xs text-zinc-400">
+                    <li>• Per‑guild rules & permissions</li>
+                    <li>• Enterprise‑style ticket blacklists</li>
+                    <li>• Rich receipts & audit trails</li>
+                  </ul>
+                </div>
+
+                <div className="glass-card rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <h3 className="mb-2 text-sm font-semibold">Tickets & reports</h3>
+                  <p className="mb-4 text-sm text-zinc-400">
+                    Clean, category‑driven ticket flows that feel like native support inboxes, not cluttered threads.
+                  </p>
+                  <ul className="space-y-1.5 text-xs text-zinc-400">
+                    <li>• One unified ticket system</li>
+                    <li>• Priority, transcripts, and receipts</li>
+                    <li>• Reporting tuned for real staff teams</li>
+                  </ul>
+                </div>
+
+                <div className="glass-card rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <h3 className="mb-2 text-sm font-semibold">Music & live status</h3>
+                  <p className="mb-4 text-sm text-zinc-400">
+                    Optimized YouTube playback with Pi‑safe voice handling and live status surfaces for every guild.
+                  </p>
+                  <ul className="space-y-1.5 text-xs text-zinc-400">
+                    <li>• Clean `/play` URL‑based playback</li>
+                    <li>• Queue, volume, and skip controls</li>
+                    <li>• Health endpoints for dashboards & Pi</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Final CTA */}
+          <section className="border-t border-white/5 bg-black">
+            <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-14 text-center sm:px-6 lg:px-8">
+              <h2 className="max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
+                Drop Skyfall into your server and manage it like a native iOS control center.
+              </h2>
+              <p className="max-w-xl text-sm text-zinc-400">
+                One bot, one dashboard – for tickets, appeals, moderation, music and more. Designed to stay smooth on
+                Raspberry Pi while still feeling premium on desktop.
               </p>
-
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+              <div className="flex flex-wrap items-center justify-center gap-4">
                 <Link
                   href="/invite"
-                  className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg shadow-slate-900/40 transition-transform hover:scale-[1.02]"
                 >
-                  🤖 Add Bot to Server
+                  <span>Invite Skyfall</span>
                 </Link>
                 <Link
-                  href="/dashboard"
-                  className="px-8 py-4 bg-white/10 backdrop-blur-lg text-white font-bold text-lg rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
+                  href="/faq"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-zinc-200 backdrop-blur-md transition-colors hover:border-white/25 hover:bg-white/10"
                 >
-                  🚀 Launch Dashboard
-                </Link>
-                <Link
-                  href="/status"
-                  className="px-8 py-4 bg-white/10 backdrop-blur-lg text-white font-bold text-lg rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
-                >
-                  📊 View Status
-                </Link>
-              </div>
-
-              {/* Live Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                  <div className="text-4xl font-bold text-white mb-2">{stats.guilds}</div>
-                  <div className="text-gray-400">Active Servers</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                  <div className="text-4xl font-bold text-white mb-2">{stats.users.toLocaleString()}</div>
-                  <div className="text-gray-400">Users Managed</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                  <div className="text-4xl font-bold text-white mb-2">{stats.commands}</div>
-                  <div className="text-gray-400">Commands Available</div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                  <div className="text-4xl font-bold text-green-400 mb-2">{stats.uptime}%</div>
-                  <div className="text-gray-400">Uptime</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-24 bg-black/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Everything You Need
-              </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Comprehensive Discord management tools with a focus on simplicity, reliability, and modern design
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Feature Cards */}
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
-                <div className="text-5xl mb-4">⚡</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Command Management</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Enable, disable, and customize commands with real-time updates. Full control over permissions, cooldowns, and descriptions.
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
-                <div className="text-5xl mb-4">🛡️</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Advanced Moderation</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Comprehensive moderation tools including bans, kicks, mutes, and an integrated appeal system for fair administration.
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
-                <div className="text-5xl mb-4">📊</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Real-Time Analytics</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Live server statistics, command usage analytics, and detailed activity logs with beautiful visualizations.
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
-                <div className="text-5xl mb-4">🔧</div>
-                <h3 className="text-2xl font-bold text-white mb-4">System Monitoring</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Complete system health monitoring with uptime tracking, performance metrics, and automated alerts.
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
-                <div className="text-5xl mb-4">⚖️</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Appeal Management</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Streamlined appeal process for banned users with admin review system and automated notifications.
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:scale-105">
-                <div className="text-5xl mb-4">🎨</div>
-                <h3 className="text-2xl font-bold text-white mb-4">Modern Interface</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Beautiful, responsive dashboard with smooth animations, glassmorphism design, and intuitive navigation.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Status Section */}
-        <section className="py-24">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Always Online
-              </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                High availability infrastructure with real-time monitoring and transparent status reporting
-              </p>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div>
-                  <div className="text-6xl text-green-400 mb-4">✅</div>
-                  <h3 className="text-2xl font-bold text-white mb-2">All Systems Operational</h3>
-                  <p className="text-gray-300">Everything running smoothly</p>
-                </div>
-                <div>
-                  <div className="text-6xl text-blue-400 mb-4">⚡</div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Lightning Fast</h3>
-                  <p className="text-gray-300">Sub-100ms response times</p>
-                </div>
-                <div>
-                  <div className="text-6xl text-purple-400 mb-4">🔒</div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Secure & Private</h3>
-                  <p className="text-gray-300">Enterprise-grade security</p>
-                </div>
-              </div>
-
-              <div className="mt-8 text-center">
-                <Link
-                  href="/status"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  View Detailed Status
+                  <span>Read documentation</span>
                 </Link>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-24 bg-black/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Ready to Transform Your Discord Server?
-            </h2>
-            <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-              Join thousands of server administrators who trust Skyfall for professional Discord management
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Link
-                href="/login"
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold text-lg rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-2xl"
-              >
-                🚀 Get Started Now
-              </Link>
-              <Link
-                href="/faq"
-                className="px-8 py-4 bg-white/10 backdrop-blur-lg text-white font-bold text-lg rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300"
-              >
-                📚 Learn More
-              </Link>
-            </div>
-          </div>
-        </section>
+          </section>
+        </main>
 
         {/* Footer */}
-        <footer className="bg-black/40 backdrop-blur-lg border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="col-span-1 md:col-span-2">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="h-10 w-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                    <span className="text-xl font-bold text-white">S</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">Skyfall</h3>
-                    <p className="text-gray-400">Discord Management</p>
-                  </div>
-                </div>
-                <p className="text-gray-400 max-w-md">
-                  Professional Discord server management with advanced features, 
-                  real-time monitoring, and a beautiful modern interface.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-white font-bold mb-4">Quick Links</h4>
-                <div className="space-y-2">
-                  <Link href="/dashboard" className="block text-gray-400 hover:text-white transition-colors">
-                    Dashboard
-                  </Link>
-                  <Link href="/status" className="block text-gray-400 hover:text-white transition-colors">
-                    System Status
-                  </Link>
-                  <Link href="/faq" className="block text-gray-400 hover:text-white transition-colors">
-                    FAQ
-                  </Link>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-white font-bold mb-4">Legal</h4>
-                <div className="space-y-2">
-                  <Link href="/terms" className="block text-gray-400 hover:text-white transition-colors">
-                    Terms of Service
-                  </Link>
-                  <Link href="/terms" className="block text-gray-400 hover:text-white transition-colors">
-                    Privacy Policy
-                  </Link>
-                </div>
-              </div>
+        <footer className="border-t border-white/5 bg-black/95">
+          <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <div className="space-y-1">
+              <p className="text-zinc-400">© {new Date().getFullYear()} Skyfall. All rights reserved.</p>
+              <p>Secure Discord management for serious communities.</p>
             </div>
-
-            <div className="border-t border-white/10 mt-8 pt-8 text-center text-gray-400">
-              <p>&copy; 2024 Skyfall Discord Management. All rights reserved.</p>
-              <p className="mt-2">Built with ❤️ for the Discord community</p>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/status" className="hover:text-zinc-300">
+                Status
+              </Link>
+              <Link href="/terms" className="hover:text-zinc-300">
+                Terms
+              </Link>
+              <Link href="/terms" className="hover:text-zinc-300">
+                Privacy
+              </Link>
             </div>
           </div>
         </footer>
