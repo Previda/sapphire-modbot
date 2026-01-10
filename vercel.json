@@ -1,9 +1,9 @@
 {
-  "buildCommand": "cd dashboard && npm install && npm run build",
-  "outputDirectory": "dashboard/.next",
-  "installCommand": "cd dashboard && npm install",
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_BOT_NAME": "Sapphire"
+    "NEXT_PUBLIC_BOT_NAME": "Skyfall"
   }
 }
