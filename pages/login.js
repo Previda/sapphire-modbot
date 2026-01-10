@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import TopNav from '../components/TopNav'
 
 export default function Login() {
   const router = useRouter()
@@ -85,17 +86,20 @@ export default function Login() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -inset-10 opacity-50">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
-            <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse animation-delay-2000"></div>
-            <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse animation-delay-4000"></div>
+      <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
+        <TopNav />
+
+        {/* Subtle background accents */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -inset-10 opacity-40">
+            <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-sky-500 rounded-full mix-blend-screen filter blur-3xl"></div>
+            <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-fuchsia-500 rounded-full mix-blend-screen filter blur-3xl animation-delay-2000"></div>
+            <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-indigo-500 rounded-full mix-blend-screen filter blur-3xl animation-delay-4000"></div>
           </div>
         </div>
 
-        <div className="relative z-10 max-w-md w-full space-y-8">
+        <main className="relative z-10 flex flex-1 items-center justify-center p-4">
+          <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <div className="mx-auto h-24 w-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center mb-6 shadow-2xl transform hover:scale-110 transition-transform duration-300">
               <span className="text-4xl font-bold text-white">S</span>
@@ -175,7 +179,8 @@ export default function Login() {
               Professional Discord Server Management • Built with ❤️
             </p>
           </div>
-        </div>
+          </div>
+        </main>
       </div>
 
       <style jsx>{`

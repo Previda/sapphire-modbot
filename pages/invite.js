@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import TopNav from '../components/TopNav'
 
 export default function Invite() {
   const router = useRouter()
@@ -56,14 +57,16 @@ export default function Invite() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
+        <TopNav />
+
+        {/* Subtle background accents */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-fuchsia-500/10 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="container mx-auto px-4 py-8 relative z-10">
+        <main className="container mx-auto px-4 py-8 relative z-10 flex-1 flex items-center justify-center">
           {step === 'terms' && (
             <div className="max-w-2xl mx-auto">
               {/* Header */}
@@ -206,7 +209,7 @@ export default function Invite() {
               </div>
             </div>
           )}
-        </div>
+        </main>
       </div>
     </>
   )

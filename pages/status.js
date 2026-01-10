@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import TopNav from '../components/TopNav';
 
 export default function Status() {
   const [statusData, setStatusData] = useState(null);
@@ -68,45 +69,18 @@ export default function Status() {
     <>
       <Head>
         <title>System Status - Skyfall Discord Management</title>
-        <meta name="description" content="Real-time system status and uptime monitoring for Skyfall Discord Management" />
+        <meta
+          name="description"
+          content="Real-time system status and uptime monitoring for Skyfall Discord Management"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        {/* Header */}
-        <header className="bg-black/20 backdrop-blur-lg border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <Link href="/" className="flex items-center space-x-4 hover:opacity-80 transition-opacity">
-                <div className="h-10 w-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
-                  <span className="text-xl font-bold text-white">S</span>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">Skyfall</h1>
-                  <p className="text-xs text-gray-400">Discord Management</p>
-                </div>
-              </Link>
-
-              <nav className="flex items-center space-x-6">
-                <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
-                  Dashboard
-                </Link>
-                <Link href="/status" className="text-white font-medium">
-                  Status
-                </Link>
-                <Link href="/faq" className="text-gray-300 hover:text-white transition-colors">
-                  FAQ
-                </Link>
-                <Link href="/terms" className="text-gray-300 hover:text-white transition-colors">
-                  Terms
-                </Link>
-              </nav>
-            </div>
-          </div>
-        </header>
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        <TopNav active="status" />
 
         {/* Main Content */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1">
           {/* Hero Section */}
           <div className="text-center mb-12">
             <h1 className="text-5xl font-bold text-white mb-4">
@@ -296,11 +270,22 @@ export default function Status() {
         </main>
 
         {/* Footer */}
-        <footer className="bg-black/20 backdrop-blur-lg border-t border-white/10 mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center text-gray-400">
-              <p>&copy; 2024 Skyfall Discord Management. All rights reserved.</p>
-              <p className="mt-2">Professional Discord server management made simple.</p>
+        <footer className="border-t border-white/5 bg-black/95">
+          <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <div className="space-y-1">
+              <p className="text-zinc-400">© {new Date().getFullYear()} Skyfall. All rights reserved.</p>
+              <p>Secure Discord management for serious communities.</p>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/status" className="hover:text-zinc-300">
+                Status
+              </Link>
+              <Link href="/terms" className="hover:text-zinc-300">
+                Terms
+              </Link>
+              <Link href="/terms" className="hover:text-zinc-300">
+                Privacy
+              </Link>
             </div>
           </div>
         </footer>
