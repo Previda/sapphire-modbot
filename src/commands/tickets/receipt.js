@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
 const { getTicketByChannel } = require('../../utils/ticketUtils');
-const { createReceipt, getReceiptByOrderNumber, getReceiptsForCustomer } = require('../../utils/receiptUtils');
+const { createReceipt, getReceiptByOrderNumber, getReceiptsForCustomer, getReceiptsForTicket } = require('../../utils/receiptUtils');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -186,6 +186,22 @@ async function handleCreateReceipt(interaction) {
         if (ticket) {
             ticketId = ticket.ticketID || null;
             ticketChannelId = ticket.channelID || interaction.channel.id;
+        }
+    }
+
+    // Prevent duplicate receipts per ticket/channel
+    if (ticketId || ticketChannelId) {
+        const existingReceipts = await getReceiptsForTicket(
+            interaction.guild.id,
+            ticketId || ticketChannelId
+        );
+
+        if (existingReceipts.length > 0) {
+            const existing = existingReceipts[0];
+            return interaction.reply({
+                content: `❌ A receipt is already linked to this ticket (**${existing.orderNumber}**). Use /receipt get or /receipt list instead of creating another.`,
+                ephemeral: true
+            });
         }
     }
 

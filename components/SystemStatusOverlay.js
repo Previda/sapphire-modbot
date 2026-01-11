@@ -21,31 +21,19 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-1000 ease-out ${
-        fadeOut ? 'opacity-0 backdrop-blur-0' : 'opacity-100 backdrop-blur-2xl'
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-800 ease-out ${
+        fadeOut ? 'opacity-0 backdrop-blur-0' : 'opacity-100 backdrop-blur-xl'
       }`}
       style={{
-        background: fadeOut 
+        background: fadeOut
           ? 'transparent'
-          : 'linear-gradient(135deg, rgba(88, 28, 135, 0.95) 0%, rgba(29, 78, 216, 0.95) 50%, rgba(15, 23, 42, 0.98) 100%)',
+          : 'radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 55%), radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.12), transparent 55%), rgba(0, 0, 0, 0.96)',
       }}
     >
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-purple-500/20 animate-float"
-            style={{
-              width: Math.random() * 100 + 50 + 'px',
-              height: Math.random() * 100 + 50 + 'px',
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-              animationDelay: Math.random() * 5 + 's',
-              animationDuration: Math.random() * 10 + 10 + 's',
-            }}
-          />
-        ))}
+      {/* Subtle background accents */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-32 top-10 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
 
       {/* Main Content */}
@@ -95,70 +83,56 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
             </div>
           </div>
         ) : (
-          // Offline State - Ultra Modern Design
+          // Offline State - cleaner dark design
           <div className="space-y-10 max-w-2xl mx-auto px-6">
-            {/* Animated Icon Container */}
-            <div className="relative">
-              {/* Outer Glow Rings */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-64 h-64 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-ping" style={{ animationDuration: '3s' }}></div>
+            {/* Icon & title */}
+            <div className="text-center space-y-4">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-red-500/40 bg-red-500/10 shadow-[0_0_40px_rgba(248,113,113,0.35)]">
+                <span className="text-3xl">⚠️</span>
               </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-48 h-48 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 animate-ping" style={{ animationDuration: '2s' }}></div>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                  <span className="text-zinc-100">System</span>{' '}
+                  <span className="text-rose-400">offline</span>
+                </h2>
+                <p className="text-sm text-zinc-400 sm:text-base">
+                  Unable to reach your Pi bot right now. Follow the quick checks below, then retry.
+                </p>
               </div>
-              
-              {/* Main Icon Circle */}
-              <div className="relative w-40 h-40 mx-auto">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-red-500/40 to-orange-500/40 backdrop-blur-xl border-2 border-red-400/50 shadow-2xl"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-7xl animate-pulse-slow filter drop-shadow-2xl">⚠️</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Title Section */}
-            <div className="text-center space-y-3">
-              <h2 className="text-5xl font-black text-white tracking-tight">
-                System <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">Offline</span>
-              </h2>
-              <p className="text-xl text-gray-300 font-medium">
-                Unable to connect to Pi Bot
-              </p>
             </div>
 
             {/* Info Card */}
-            <div className="relative group">
-              {/* Glow Effect */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-3xl opacity-20 group-hover:opacity-30 blur transition duration-500"></div>
-              
-              {/* Card Content */}
-              <div className="relative bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/10">
-                <div className="flex items-start space-x-4 mb-6">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500/20 to-orange-500/20 rounded-2xl flex items-center justify-center border border-red-400/30">
-                    <span className="text-2xl">🔍</span>
-                  </div>
+            <div className="relative">
+              <div className="absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-rose-500/40 to-orange-400/40 opacity-30 blur-xl" />
+              <div className="relative rounded-3xl border border-white/10 bg-black/70 px-6 py-6 backdrop-blur-2xl sm:px-8">
+                <div className="mb-5 flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 text-lg">🔍</div>
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-2">Troubleshooting Steps</h3>
-                    <p className="text-sm text-gray-400">The bot server is currently unavailable</p>
+                    <h3 className="text-sm font-semibold text-zinc-100">Quick checks on your Pi</h3>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Run these in order; each step should turn green once confirmed.
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   {[
-                    { icon: '🤖', text: 'Pi bot is running', cmd: 'pm2 status' },
-                    { icon: '🌐', text: 'ngrok tunnel is active', cmd: 'screen -r ngrok' },
+                    { icon: '🤖', text: 'Pi bot process is running', cmd: 'pm2 status' },
+                    { icon: '🌐', text: 'Tunnel (ngrok / reverse proxy) is active', cmd: 'screen -r ngrok' },
                     { icon: '📡', text: 'Network connection is stable', cmd: 'ping 8.8.8.8' }
                   ].map((item, i) => (
-                    <div 
+                    <div
                       key={i}
-                      className="flex items-center space-x-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 group/item"
+                      className="group/item flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-4 py-3 text-left transition-all duration-200 hover:border-white/15 hover:bg-white/10"
                     >
-                      <span className="text-2xl group-hover/item:scale-110 transition-transform duration-300">{item.icon}</span>
+                      <span className="text-xl transition-transform duration-200 group-hover/item:scale-110">{item.icon}</span>
                       <div className="flex-1">
-                        <p className="text-white font-medium text-sm">{item.text}</p>
-                        <code className="text-xs text-gray-500 font-mono">{item.cmd}</code>
+                        <p className="text-sm font-medium text-zinc-100">{item.text}</p>
+                        <code className="mt-0.5 inline-block rounded bg-black/50 px-2 py-1 text-[11px] font-mono text-zinc-400">
+                          {item.cmd}
+                        </code>
                       </div>
-                      <div className="w-2 h-2 rounded-full bg-red-400 group-hover/item:bg-orange-400 transition-colors"></div>
+                      <span className="h-2 w-2 rounded-full bg-rose-400/80" />
                     </div>
                   ))}
                 </div>
@@ -166,37 +140,32 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <button
                 onClick={() => window.location.reload()}
-                className="group relative px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl hover:shadow-red-500/50"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg shadow-rose-900/40 transition-transform hover:scale-[1.02] active:scale-95"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <span className="relative flex items-center justify-center space-x-2">
-                  <span className="text-xl group-hover:rotate-180 transition-transform duration-500">🔄</span>
-                  <span>Retry Connection</span>
-                </span>
+                <span className="text-base">🔄</span>
+                <span>Retry connection</span>
               </button>
-              
+
               <a
                 href="/status"
-                className="group relative px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105 active:scale-95 backdrop-blur-xl"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2 text-xs font-medium text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:bg-white/10"
               >
-                <span className="flex items-center justify-center space-x-2">
-                  <span className="text-xl">📊</span>
-                  <span>View Status Page</span>
-                </span>
+                <span className="text-base">📊</span>
+                <span>Open full status page</span>
               </a>
             </div>
 
             {/* Help Text */}
-            <p className="text-center text-sm text-gray-500">
+            <p className="text-center text-xs text-zinc-500">
               Need help? Check the{' '}
-              <a href="/faq" className="text-purple-400 hover:text-purple-300 underline transition-colors">
+              <a href="/faq" className="text-sky-400 hover:text-sky-300 underline transition-colors">
                 FAQ
               </a>
               {' '}or run{' '}
-              <code className="px-2 py-1 bg-white/10 rounded text-purple-400 font-mono text-xs">
+              <code className="px-2 py-1 bg-white/5 rounded text-zinc-300 font-mono text-[11px]">
                 npm install && pm2 restart discord-bot
               </code>
               {' '}on your Pi

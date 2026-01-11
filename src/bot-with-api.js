@@ -5,6 +5,8 @@ const express = require('express');
 const cors = require('cors');
 const { handleCommand } = require('./handlers/commandHandler');
 const { handleButtonInteraction } = require('./handlers/buttonHandler');
+const { loadGuildConfig } = require('./utils/configManager');
+const { getUserTickets, saveTicket } = require('./utils/ticketUtils');
 require('dotenv').config();
 
 // Global error handlers to prevent crashes
@@ -785,45 +787,64 @@ async function handleTicketCreation(interaction, category) {
         
         const user = interaction.user;
         const guild = interaction.guild;
-        
-        // Check if user is blacklisted
-        const fs = require('fs');
-        const path = require('path');
-        const blacklistPath = path.join(__dirname, '../data/ticket-blacklist.json');
-        
-        let blacklist = {};
-        if (fs.existsSync(blacklistPath)) {
-            try {
-                blacklist = JSON.parse(fs.readFileSync(blacklistPath, 'utf8'));
-            } catch (error) {
-                console.error('Error reading blacklist:', error);
+
+        // Unified config-based ticket blacklist
+        try {
+            const config = await loadGuildConfig(guild.id);
+            const ticketsConfig = config.tickets || {};
+            const blacklist = ticketsConfig.blacklist || [];
+
+            const entry = blacklist.find(e => e.userId === user.id);
+            if (entry) {
+                const date = entry.timestamp ? `<t:${Math.floor(new Date(entry.timestamp).getTime() / 1000)}:F>` : 'Unknown';
+                const blacklistedBy = entry.moderatorId || 'Unknown';
+                const reason = entry.reason || 'No reason provided';
+
+                const embed = new EmbedBuilder()
+                    .setTitle('🚫 User Status: Blacklisted')
+                    .setDescription(`${user} is blacklisted from creating tickets.`)
+                    .addFields(
+                        { name: '👤 User', value: `${user.tag}\n\`${user.id}\``, inline: true },
+                        { name: '👮 Blacklisted By', value: `<@${blacklistedBy}>`, inline: true },
+                        { name: '📅 Date', value: date, inline: true },
+                        { name: '📝 Reason', value: reason, inline: false }
+                    )
+                    .setColor(0xED4245)
+                    .setTimestamp();
+
+                return interaction.editReply({ embeds: [embed] });
             }
+        } catch (error) {
+            console.error('Error checking config-based ticket blacklist:', error);
+            // If blacklist check fails, continue but log it
         }
-        
-        // Check if user is blacklisted in this guild
-        if (blacklist[guild.id]?.users?.includes(user.id)) {
-            const blacklistInfo = blacklist[guild.id].details?.[user.id];
-            const reason = blacklistInfo?.reason || 'No reason provided';
-            const blacklistedBy = blacklistInfo?.blacklistedBy || 'Unknown';
-            const date = blacklistInfo?.date ? `<t:${Math.floor(new Date(blacklistInfo.date).getTime() / 1000)}:F>` : 'Unknown';
-            
-            const embed = new EmbedBuilder()
-                .setTitle('🚫 User Status: Blacklisted')
-                .setDescription(`${user} is blacklisted from creating tickets.`)
-                .addFields(
-                    { name: '👤 User', value: `${user.tag}\n\`${user.id}\``, inline: true },
-                    { name: '👮 Blacklisted By', value: `<@${blacklistedBy}>`, inline: true },
-                    { name: '📅 Date', value: date, inline: true },
-                    { name: '📝 Reason', value: reason, inline: false }
-                )
-                .setColor(0xED4245)
-                .setTimestamp();
-            
-            return interaction.editReply({
-                embeds: [embed]
-            });
+
+        // Prevent duplicate open tickets for this user in this guild
+        try {
+            const openTickets = await getUserTickets(user.id, guild.id, 'open');
+            if (openTickets && openTickets.length > 0) {
+                const existing = openTickets[0];
+                const existingChannel = guild.channels.cache.get(existing.channelID);
+                const channelLabel = existingChannel ? `${existingChannel}` : `ticket ID ${existing.ticketID}`;
+
+                const embed = new EmbedBuilder()
+                    .setTitle('📂 Existing Ticket Found')
+                    .setDescription(`You already have an open ticket: ${channelLabel}`)
+                    .addFields(
+                        { name: '🆔 Ticket ID', value: existing.ticketID || 'Unknown', inline: true },
+                        { name: '📂 Category', value: existing.category || 'general', inline: true },
+                        { name: '📅 Created', value: existing.createdAt ? `<t:${Math.floor(new Date(existing.createdAt).getTime() / 1000)}:R>` : 'Unknown', inline: true }
+                    )
+                    .setColor(0x00aaff)
+                    .setTimestamp();
+
+                return interaction.editReply({ embeds: [embed] });
+            }
+        } catch (error) {
+            console.error('Error checking existing tickets for user:', error);
+            // If dedupe check fails, still allow ticket creation to avoid blocking support
         }
-        
+
         // Generate ticket ID
         const ticketID = `ticket-${Date.now()}`;
         const channelName = `${category}-${user.username}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -904,6 +925,23 @@ async function handleTicketCreation(interaction, category) {
             embeds: [welcomeEmbed],
             components: [controlRow]
         });
+        
+        // Save ticket record for dedupe and dashboard
+        try {
+            await saveTicket({
+                ticketID,
+                userID: user.id,
+                guildID: guild.id,
+                channelID: ticketChannel.id,
+                status: 'open',
+                reason: category,
+                category,
+                createdAt: new Date().toISOString(),
+                createdBy: user.id
+            });
+        } catch (error) {
+            console.error('Failed to save ticket record:', error);
+        }
         
         await interaction.editReply({
             content: `✅ Ticket created! Please check ${ticketChannel}`

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ServerSelector from '../components/ServerSelector';
 import SystemStatusOverlay from '../components/SystemStatusOverlay';
+import TopNav from '../components/TopNav';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -325,10 +326,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-400 mx-auto mb-4"></div>
-          <p className="text-white text-xl">Loading Dashboard...</p>
+          <div className="h-12 w-12 rounded-full border border-white/10 border-t-white animate-spin mx-auto mb-4" />
+          <p className="text-sm text-zinc-400">Preparing your dashboard…</p>
         </div>
       </div>
     );
@@ -344,64 +345,68 @@ export default function Dashboard() {
 
       {/* System Status Overlay */}
       <SystemStatusOverlay 
-        isOnline={statusData?.status === 'online'} 
+        isOnline={statusData?.overall?.status === 'online'} 
         isLoading={loading}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        <TopNav active="dashboard" />
+
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 z-40 bg-black/50 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-black/20 backdrop-blur-lg border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}>
+        <div
+          className={`fixed top-16 bottom-0 left-0 z-50 w-64 bg-black/20 backdrop-blur-lg border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0`}
+        >
           <div className="flex flex-col h-full">
             {/* Logo */}
             <div className="flex items-center px-6 py-4 border-b border-white/10">
-              <div className="h-10 w-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center mr-3">
+              <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-400 to-pink-400">
                 <span className="text-xl font-bold text-white">S</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Skyfall</h1>
+                <h1 className="text-xl font-semibold text-white">Skyfall</h1>
                 <p className="text-xs text-gray-400">Discord Management</p>
               </div>
             </div>
 
             {/* User Info */}
             {user && !user.isGuest && (
-              <div className="px-6 py-4 border-b border-white/10">
+              <div className="border-b border-white/10 px-6 py-4">
                 <div className="flex items-center">
                   {user.avatar ? (
                     <img
                       src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`}
                       alt={user.username}
-                      className="w-10 h-10 rounded-full mr-3 border-2 border-purple-500"
+                      className="mr-3 h-10 w-10 rounded-full border-2 border-purple-500"
                     />
                   ) : (
-                    <div className="h-10 w-10 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center mr-3">
+                    <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-blue-400">
                       <span className="text-sm font-bold text-white">{user.username?.[0] || 'U'}</span>
                     </div>
                   )}
                   <div>
-                    <p className="text-white font-medium">{user.username}</p>
+                    <p className="text-sm font-medium text-white">{user.username}</p>
                     <p className="text-xs text-green-400">● Online</p>
                   </div>
                 </div>
               </div>
             )}
-            
+
             {/* Guest User - Show Login Prompt */}
             {user?.isGuest && (
-              <div className="px-6 py-4 border-b border-white/10">
+              <div className="border-b border-white/10 px-6 py-4">
                 <Link
                   href="/api/auth/discord-oauth"
-                  className="block w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all text-center"
+                  className="block w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 text-center text-sm font-medium text-white transition-transform hover:from-purple-700 hover:to-blue-700 hover:scale-[1.02]"
                 >
                   🔐 Login with Discord
                 </Link>
@@ -409,7 +414,7 @@ export default function Dashboard() {
             )}
 
             {/* Navigation */}
-            <nav className="flex-1 px-4 py-4 space-y-2">
+            <nav className="flex-1 space-y-2 px-4 py-4">
               {sidebarItems.map((item) => (
                 <button
                   key={item.id}
@@ -417,36 +422,48 @@ export default function Dashboard() {
                     setActiveTab(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                  className={`flex w-full items-center rounded-xl px-4 py-3 text-left text-sm transition-colors duration-150 ${
                     activeTab === item.id
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                      ? 'border border-white/10 bg-white/10 text-white'
+                      : 'text-zinc-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <span className="text-xl mr-3">{item.icon}</span>
+                  <span className="mr-3 text-xl">{item.icon}</span>
                   {item.label}
                 </button>
               ))}
             </nav>
 
             {/* Quick Links */}
-            <div className="px-4 py-4 border-t border-white/10">
-              <div className="space-y-2">
-                <Link href="/profile" className="flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all">
-                  <span className="text-lg mr-3">👤</span>
-                  My Profile & Servers
+            <div className="border-t border-white/10 px-4 py-4">
+              <div className="space-y-2 text-sm">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-100 transition-colors hover:border-emerald-400/60 hover:bg-emerald-500/20"
+                >
+                  <span className="text-lg">👤</span>
+                  <span>My Profile & Servers</span>
                 </Link>
-                <Link href="/invite" className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all">
-                  <span className="text-lg mr-3">🤖</span>
-                  Add Bot to Server
+                <Link
+                  href="/invite"
+                  className="flex items-center gap-3 rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-sky-100 transition-colors hover:border-sky-400/60 hover:bg-sky-500/20"
+                >
+                  <span className="text-lg">🤖</span>
+                  <span>Add bot to server</span>
                 </Link>
-                <Link href="/status" className="flex items-center px-4 py-2 text-gray-300 hover:text-white transition-colors">
-                  <span className="text-lg mr-3">🔍</span>
-                  System Status
+                <Link
+                  href="/status"
+                  className="flex items-center gap-3 rounded-xl px-4 py-2 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <span className="text-lg">🔍</span>
+                  <span>System Status</span>
                 </Link>
-                <Link href="/faq" className="flex items-center px-4 py-2 text-gray-300 hover:text-white transition-colors">
-                  <span className="text-lg mr-3">❓</span>
-                  Help & FAQ
+                <Link
+                  href="/faq"
+                  className="flex items-center gap-3 rounded-xl px-4 py-2 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <span className="text-lg">❓</span>
+                  <span>Help & FAQ</span>
                 </Link>
               </div>
             </div>
@@ -456,18 +473,18 @@ export default function Dashboard() {
         {/* Main Content */}
         <div className="lg:ml-64">
           {/* Top Bar */}
-          <header className="bg-black/20 backdrop-blur-lg border-b border-white/10 px-6 py-4">
+          <header className="border-b border-white/10 bg-black/20 px-6 py-4 backdrop-blur-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-colors mr-4"
+                  className="mr-4 rounded-lg p-2 text-gray-300 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
                 </button>
-                <h2 className="text-2xl font-bold text-white capitalize">
+                <h2 className="text-2xl font-bold capitalize text-white">
                   {activeTab === 'overview' ? 'Dashboard Overview' : activeTab}
                 </h2>
               </div>
@@ -475,37 +492,43 @@ export default function Dashboard() {
               <div className="flex items-center space-x-4">
                 {/* User Avatar & Name */}
                 {user && !user.isGuest && (
-                  <div className="flex items-center space-x-3 px-4 py-2 bg-white/10 rounded-lg">
+                  <div className="flex items-center space-x-3 rounded-lg bg-white/10 px-4 py-2">
                     {user.avatar ? (
                       <img
                         src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`}
                         alt={user.username}
-                        className="w-8 h-8 rounded-full border-2 border-green-400"
+                        className="h-8 w-8 rounded-full border-2 border-green-400"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-blue-400">
                         <span className="text-sm font-bold text-white">{user.username?.[0]}</span>
                       </div>
                     )}
                     <div>
-                      <p className="text-white font-medium text-sm">{user.username}</p>
-                      <p className="text-green-400 text-xs">● Online</p>
+                      <p className="text-sm font-medium text-white">{user.username}</p>
+                      <p className="text-xs text-green-400">● Online</p>
                     </div>
                   </div>
                 )}
-                
+
                 {/* Status Indicator */}
                 {statusData && (
-                  <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 rounded-lg">
-                    <div className={`w-3 h-3 rounded-full animate-pulse ${
-                      statusData.overall?.status === 'online' ? 'bg-green-400' :
-                      statusData.overall?.status === 'degraded' ? 'bg-yellow-400' :
-                      'bg-red-400'
-                    }`}></div>
-                    <span className="text-white text-sm font-medium">
-                      {statusData.overall?.status === 'online' ? 'All Systems Online' :
-                       statusData.overall?.status === 'degraded' ? 'Partial Outage' :
-                       'System Offline'}
+                  <div className="flex items-center space-x-2 rounded-lg bg-white/10 px-4 py-2">
+                    <div
+                      className={`h-3 w-3 rounded-full animate-pulse ${
+                        statusData.overall?.status === 'online'
+                          ? 'bg-green-400'
+                          : statusData.overall?.status === 'degraded'
+                          ? 'bg-yellow-400'
+                          : 'bg-red-400'
+                      }`}
+                    ></div>
+                    <span className="text-sm font-medium text-white">
+                      {statusData.overall?.status === 'online'
+                        ? 'All Systems Online'
+                        : statusData.overall?.status === 'degraded'
+                        ? 'Partial Outage'
+                        : 'System Offline'}
                     </span>
                   </div>
                 )}
@@ -514,7 +537,7 @@ export default function Dashboard() {
                 {user?.isGuest ? (
                   <Link
                     href="/api/auth/discord-oauth"
-                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
+                    className="transform rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 text-sm font-medium text-white transition-all duration-200 hover:from-purple-700 hover:to-blue-700 hover:scale-105"
                   >
                     🔐 Login with Discord
                   </Link>
@@ -524,7 +547,7 @@ export default function Dashboard() {
                       fetch('/api/auth/logout', { method: 'POST' });
                       router.push('/');
                     }}
-                    className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                    className="rounded-lg bg-red-600/20 px-4 py-2 text-sm text-red-400 transition-colors hover:bg-red-600/30"
                   >
                     Logout
                   </button>
