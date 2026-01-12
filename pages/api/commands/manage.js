@@ -13,7 +13,9 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       // Get all commands with their status
-      const response = await fetch(`${PI_BOT_URL}/api/commands/manage`, {
+      const { serverId } = req.query || {};
+      const query = serverId ? `?serverId=${encodeURIComponent(serverId)}` : '';
+      const response = await fetch(`${PI_BOT_URL}/api/commands/manage${query}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -31,7 +33,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'PUT') {
       // Update command status or settings
-      const { commandId, enabled, description, cooldown, permissions } = req.body;
+      const { serverId, commandId, enabled, description, cooldown, permissions } = req.body;
       
       const response = await fetch(`${PI_BOT_URL}/api/commands/manage`, {
         method: 'PUT',
@@ -40,7 +42,7 @@ export default async function handler(req, res) {
           'ngrok-skip-browser-warning': 'true',
           'User-Agent': 'Skyfall-Dashboard/1.0'
         },
-        body: JSON.stringify({ commandId, enabled, description, cooldown, permissions }),
+        body: JSON.stringify({ serverId, commandId, enabled, description, cooldown, permissions }),
         signal: AbortSignal.timeout(10000)
       });
 

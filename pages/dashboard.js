@@ -253,11 +253,12 @@ export default function Dashboard() {
   };
 
   const handleCommandToggle = async (commandId, enabled) => {
+    const serverId = selectedServer?.id;
     try {
       const response = await fetch('/api/commands/manage', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commandId, enabled })
+        body: JSON.stringify({ serverId, commandId, enabled })
       });
 
       if (response.ok) {
@@ -272,11 +273,12 @@ export default function Dashboard() {
   };
 
   const handleCommandEdit = async (commandId, updates) => {
+    const serverId = selectedServer?.id;
     try {
       const response = await fetch('/api/commands/manage', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commandId, ...updates })
+        body: JSON.stringify({ serverId, commandId, ...updates })
       });
 
       if (response.ok) {

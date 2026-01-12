@@ -7,8 +7,16 @@ export default async function handler(req, res) {
     const clientId = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
     // MUST match exactly with callback-discord.js and Discord Developer Portal
     // Build redirect URL dynamically from the current request host
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers.host;
+    const host = req.headers.host || 'localhost:3000';
+    let protocol = req.headers['x-forwarded-proto'];
+    if (!protocol) {
+      // Use HTTP for localhost/dev, HTTPS for everything else
+      if (host.includes('localhost') || host.startsWith('127.0.0.1')) {
+        protocol = 'http';
+      } else {
+        protocol = 'https';
+      }
+    }
     const baseUrl = `${protocol}://${host}`;
     const redirectUri = `${baseUrl}/api/auth/callback-discord`;
     

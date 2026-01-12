@@ -17,8 +17,16 @@ export default async function handler(req, res) {
     const clientId = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
     const clientSecret = process.env.DISCORD_CLIENT_SECRET;
     // Build redirect URI based on current host to stay in sync with discord-oauth
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers.host;
+    const host = req.headers.host || 'localhost:3000';
+    let protocol = req.headers['x-forwarded-proto'];
+    if (!protocol) {
+      // Use HTTP for localhost/dev, HTTPS for everything else
+      if (host.includes('localhost') || host.startsWith('127.0.0.1')) {
+        protocol = 'http';
+      } else {
+        protocol = 'https';
+      }
+    }
     const baseUrl = `${protocol}://${host}`;
     const redirectUri = `${baseUrl}/api/auth/callback-discord`;
 
@@ -187,9 +195,19 @@ export default async function handler(req, res) {
     };
 
     // Set session cookie
-    res.setHeader('Set-Cookie', [
-      `skyfall_auth=${encodeURIComponent(JSON.stringify(authData))}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400`,
-    ]);
+    const isSecure = protocol === 'https';
+    const cookieParts = [
+      `skyfall_auth=${encodeURIComponent(JSON.stringify(authData))}`,
+      'Path=/',
+      'HttpOnly',
+      'SameSite=Lax',
+      'Max-Age=86400'
+    ];
+    if (isSecure) {
+      cookieParts.push('Secure');
+    }
+
+    res.setHeader('Set-Cookie', [cookieParts.join('; ')]);
 
     // Redirect to dashboard
     return res.redirect('/dashboard');
