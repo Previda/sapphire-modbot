@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ServerSelector from '../components/ServerSelector';
 import SystemStatusOverlay from '../components/SystemStatusOverlay';
-import TopNav from '../components/TopNav';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -344,14 +343,12 @@ export default function Dashboard() {
       </Head>
 
       {/* System Status Overlay */}
-      <SystemStatusOverlay 
-        isOnline={statusData?.overall?.status === 'online'} 
+      <SystemStatusOverlay
+        isOnline={statusData?.overall?.status === 'online'}
         isLoading={loading}
       />
 
       <div className="min-h-screen bg-black text-white flex flex-col">
-        <TopNav active="dashboard" />
-
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div
@@ -362,7 +359,7 @@ export default function Dashboard() {
 
         {/* Sidebar */}
         <div
-          className={`fixed top-16 bottom-0 left-0 z-50 w-64 bg-zinc-950/80 backdrop-blur-xl border-r border-white/5 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-zinc-950/80 backdrop-blur-xl border-r border-white/5 transform transition-transform duration-300 ease-in-out ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0`}
         >
@@ -381,41 +378,6 @@ export default function Dashboard() {
                 <p className="text-xs text-gray-400">Discord Management</p>
               </div>
             </div>
-
-            {/* User Info */}
-            {user && !user.isGuest && (
-              <div className="border-b border-white/5 px-6 py-4">
-                <div className="flex items-center">
-                  {user.avatar ? (
-                    <img
-                      src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`}
-                      alt={user.username}
-                      className="mr-3 h-10 w-10 rounded-full border-2 border-emerald-500/70"
-                    />
-                  ) : (
-                    <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 border border-white/10">
-                      <span className="text-sm font-bold text-white">{user.username?.[0] || 'U'}</span>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-white">{user.username}</p>
-                    <p className="text-xs text-green-400">● Online</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Guest User - Show Login Prompt */}
-            {user?.isGuest && (
-              <div className="border-b border-white/10 px-6 py-4">
-                <Link
-                  href="/api/auth/discord-oauth"
-                  className="block w-full rounded-xl bg-white text-black px-4 py-2 text-center text-sm font-medium transition-transform hover:bg-zinc-200 hover:scale-[1.02]"
-                >
-                  🔐 Login with Discord
-                </Link>
-              </div>
-            )}
 
             {/* Navigation */}
             <nav className="flex-1 space-y-2 px-4 py-4">

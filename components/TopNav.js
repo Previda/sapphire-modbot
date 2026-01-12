@@ -34,12 +34,14 @@ export default function TopNav({ active }) {
           <Link href="/terms" className={linkClass('terms')}>
             Legal
           </Link>
-          <Link
-            href="/login"
-            className="rounded-full bg-white text-black px-4 py-1.5 text-xs font-semibold tracking-wide shadow-sm transition-all hover:bg-zinc-100 hover:shadow-md"
-          >
-            Sign in with Discord
-          </Link>
+          {active !== 'dashboard' && (
+            <Link
+              href="/login"
+              className="rounded-full bg-white text-black px-4 py-1.5 text-xs font-semibold tracking-wide shadow-sm transition-all hover:bg-zinc-100 hover:shadow-md"
+            >
+              Sign in with Discord
+            </Link>
+          )}
         </div>
       </div>
     </nav>
