@@ -19,10 +19,12 @@ export default async function handler(req, res) {
         
         // Check if session is still valid (24 hours)
         const sessionAge = Date.now() - (authData.timestamp || 0);
-        if (sessionAge < 86400000 && authData.guilds && authData.guilds.length > 0) {
-          console.log('✅ User has', authData.guilds.length, 'guilds from Discord');
+        const sessionGuilds = Array.isArray(authData.guilds) ? authData.guilds : [];
+
+        if (sessionAge < 86400000 && sessionGuilds.length > 0) {
+          console.log('✅ User has', sessionGuilds.length, 'guilds from Discord');
           
-          // Fetch bot guilds from Pi to filter only servers where bot is present
+          // Attempt to enrich with Pi bot guild data, but do NOT hide servers if bot is missing
           let botGuilds = [];
           try {
             const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3004';
@@ -39,49 +41,38 @@ export default async function handler(req, res) {
           } catch (error) {
             console.log('⚠️ Could not fetch bot guilds:', error.message);
           }
-          
-          // Filter user's guilds to only show servers where the bot is installed
-          const serversWithBot = authData.guilds.filter(userGuild => 
-            botGuilds.some(botGuild => botGuild.id === userGuild.id)
-          );
-          
-          console.log('✅ User can manage', serversWithBot.length, 'servers with bot');
-          
-          if (serversWithBot.length === 0) {
-            return res.status(200).json({
-              success: true,
-              servers: [],
-              totalServers: 0,
-              source: 'user_session',
-              message: 'No servers found - add the bot to your Discord servers',
-              user: authData.user
-            });
-          }
-          
-          // Merge user guild data with bot guild data
-          const enhancedServers = serversWithBot.map(userGuild => {
+
+          // Build servers list. If bot guilds are available, mark hasBot for matching guilds.
+          const enhancedServers = sessionGuilds.map(userGuild => {
             const botGuild = botGuilds.find(bg => bg.id === userGuild.id);
+            const hasBot = !!botGuild;
+
             return {
               id: userGuild.id,
               name: userGuild.name,
               icon: userGuild.icon ? `https://cdn.discordapp.com/icons/${userGuild.id}/${userGuild.icon}.png` : null,
               memberCount: botGuild?.memberCount || 0,
-              onlineMembers: 0,
-              botPermissions: ['ADMINISTRATOR'],
+              onlineMembers: botGuild?.onlineMembers || 0,
+              botPermissions: botGuild?.botPermissions || ['ADMINISTRATOR'],
               features: botGuild?.features || [],
               isOwner: userGuild.owner,
               canManage: true,
-              hasBot: true,
-              botOnline: true,
+              hasBot,
+              botOnline: hasBot,
             };
           });
-          
+
+          const anyWithBot = enhancedServers.some(s => s.hasBot);
+
           return res.status(200).json({
             success: true,
             servers: enhancedServers,
             totalServers: enhancedServers.length,
-            source: 'user_session_with_bot',
-            user: authData.user
+            source: anyWithBot ? 'user_session_with_bot' : 'user_session_no_bot',
+            user: authData.user,
+            message: anyWithBot
+              ? undefined
+              : 'Showing servers you can manage. Add Skyfall to a server to enable live controls.'
           });
         }
       } catch (error) {

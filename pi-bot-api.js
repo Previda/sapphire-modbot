@@ -176,6 +176,14 @@ app.put('/api/appeals', (req, res) => {
     }
 });
 
+app.get('/api/user/profile', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Pi Bot API user profile stub',
+        realData: false
+    });
+});
+
 // Health check
 app.get('/health', (req, res) => {
     res.json({ 
@@ -212,8 +220,8 @@ app.post('/api/internal/add-log', (req, res) => {
     res.json({ success: true });
 });
 
-// Start server
-app.listen(port, '0.0.0.0', () => {
+// Start server (bind to all interfaces / IPv4 + IPv6)
+app.listen(port, () => {
     console.log('✅ Pi Bot API Server Started');
     console.log(`🌐 Local: http://localhost:${port}`);
     console.log(`🌐 Network: http://192.168.1.62:${port}`);

@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  swcMinify: true,
   
   env: {
     DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || '1358527215020544222',
