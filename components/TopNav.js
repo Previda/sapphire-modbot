@@ -8,8 +8,12 @@ export default function TopNav({ active }) {
     <nav className="sticky top-0 z-20 border-b border-white/5 bg-black/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-400 text-black shadow-lg">
-            <span className="text-lg font-semibold">S</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden bg-black shadow-lg border border-white/10">
+            <img
+              src="/logo-skyfall.svg"
+              alt="Skyfall logo"
+              className="h-9 w-9 object-cover"
+            />
           </div>
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-semibold tracking-tight">Skyfall</span>

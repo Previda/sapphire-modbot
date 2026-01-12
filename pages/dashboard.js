@@ -362,15 +362,19 @@ export default function Dashboard() {
 
         {/* Sidebar */}
         <div
-          className={`fixed top-16 bottom-0 left-0 z-50 w-64 bg-black/20 backdrop-blur-lg border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed top-16 bottom-0 left-0 z-50 w-64 bg-zinc-950/80 backdrop-blur-xl border-r border-white/5 transform transition-transform duration-300 ease-in-out ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0`}
         >
           <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="flex items-center px-6 py-4 border-b border-white/10">
-              <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-400 to-pink-400">
-                <span className="text-xl font-bold text-white">S</span>
+            <div className="flex items-center px-6 py-4 border-b border-white/5">
+              <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full overflow-hidden bg-black border border-white/10">
+                <img
+                  src="/logo-skyfall.svg"
+                  alt="Skyfall logo"
+                  className="h-10 w-10 object-cover"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-white">Skyfall</h1>
@@ -380,16 +384,16 @@ export default function Dashboard() {
 
             {/* User Info */}
             {user && !user.isGuest && (
-              <div className="border-b border-white/10 px-6 py-4">
+              <div className="border-b border-white/5 px-6 py-4">
                 <div className="flex items-center">
                   {user.avatar ? (
                     <img
                       src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`}
                       alt={user.username}
-                      className="mr-3 h-10 w-10 rounded-full border-2 border-purple-500"
+                      className="mr-3 h-10 w-10 rounded-full border-2 border-emerald-500/70"
                     />
                   ) : (
-                    <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-blue-400">
+                    <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 border border-white/10">
                       <span className="text-sm font-bold text-white">{user.username?.[0] || 'U'}</span>
                     </div>
                   )}
@@ -406,7 +410,7 @@ export default function Dashboard() {
               <div className="border-b border-white/10 px-6 py-4">
                 <Link
                   href="/api/auth/discord-oauth"
-                  className="block w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 text-center text-sm font-medium text-white transition-transform hover:from-purple-700 hover:to-blue-700 hover:scale-[1.02]"
+                  className="block w-full rounded-xl bg-white text-black px-4 py-2 text-center text-sm font-medium transition-transform hover:bg-zinc-200 hover:scale-[1.02]"
                 >
                   🔐 Login with Discord
                 </Link>
@@ -435,7 +439,7 @@ export default function Dashboard() {
             </nav>
 
             {/* Quick Links */}
-            <div className="border-t border-white/10 px-4 py-4">
+            <div className="border-t border-white/5 px-4 py-4">
               <div className="space-y-2 text-sm">
                 <Link
                   href="/profile"
@@ -473,7 +477,7 @@ export default function Dashboard() {
         {/* Main Content */}
         <div className="lg:ml-64">
           {/* Top Bar */}
-          <header className="border-b border-white/10 bg-black/20 px-6 py-4 backdrop-blur-lg">
+          <header className="border-b border-white/5 bg-black/10 px-6 py-4 backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <button
@@ -492,7 +496,7 @@ export default function Dashboard() {
               <div className="flex items-center space-x-4">
                 {/* User Avatar & Name */}
                 {user && !user.isGuest && (
-                  <div className="flex items-center space-x-3 rounded-lg bg-white/10 px-4 py-2">
+                  <div className="flex items-center space-x-3 rounded-lg bg-zinc-900/80 px-4 py-2 border border-white/10">
                     {user.avatar ? (
                       <img
                         src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`}
@@ -513,13 +517,13 @@ export default function Dashboard() {
 
                 {/* Status Indicator */}
                 {statusData && (
-                  <div className="flex items-center space-x-2 rounded-lg bg-white/10 px-4 py-2">
+                  <div className="flex items-center space-x-2 rounded-lg bg-zinc-900/80 px-4 py-2 border border-white/10">
                     <div
                       className={`h-3 w-3 rounded-full animate-pulse ${
                         statusData.overall?.status === 'online'
-                          ? 'bg-green-400'
+                          ? 'bg-emerald-400'
                           : statusData.overall?.status === 'degraded'
-                          ? 'bg-yellow-400'
+                          ? 'bg-sky-400'
                           : 'bg-red-400'
                       }`}
                     ></div>
@@ -537,7 +541,7 @@ export default function Dashboard() {
                 {user?.isGuest ? (
                   <Link
                     href="/api/auth/discord-oauth"
-                    className="transform rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 text-sm font-medium text-white transition-all duration-200 hover:from-purple-700 hover:to-blue-700 hover:scale-105"
+                    className="transform rounded-lg bg-white text-black px-6 py-2 text-sm font-medium transition-all duration-200 hover:bg-zinc-200 hover:scale-105"
                   >
                     🔐 Login with Discord
                   </Link>
@@ -590,7 +594,7 @@ export default function Dashboard() {
 
             {/* Pi Bot Connection Status */}
             <div className="mb-8">
-              <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur-lg rounded-2xl p-6 border border-purple-500/30">
+              <div className="bg-zinc-900/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
                     <div className={`w-4 h-4 rounded-full animate-pulse ${
@@ -602,13 +606,13 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={testPiBotConnection}
-                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all transform hover:scale-105"
+                    className="px-6 py-2 rounded-lg border border-white/15 bg-zinc-950/60 text-sm font-medium text-white hover:bg-zinc-800/80 hover:border-white/30 transition-colors"
                   >
                     🔄 Refresh
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-smooth hover-lift cursor-pointer group">
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-white/30 transition-smooth hover-lift cursor-pointer group">
                     <div className={`text-5xl mb-3 transition-spring group-hover:scale-110 ${
                       statusData?.overall?.status === 'online' ? 'text-green-400' :
                       statusData?.overall?.status === 'degraded' ? 'text-yellow-400' :
@@ -617,7 +621,7 @@ export default function Dashboard() {
                       {statusData?.overall?.status === 'online' ? '✅' : 
                        statusData?.overall?.status === 'degraded' ? '⚠️' : '❌'}
                     </div>
-                    <p className="text-white font-bold text-xl mb-2 group-hover:text-purple-300 transition-smooth">
+                    <p className="text-white font-bold text-xl mb-2 group-hover:text-white transition-smooth">
                       {statusData?.overall?.status === 'online' ? 'Online' : 
                        statusData?.overall?.status === 'degraded' ? 'Degraded' : 'Offline'}
                     </p>
@@ -634,9 +638,9 @@ export default function Dashboard() {
                       Your Servers
                     </p>
                   </div>
-                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-purple-500/50 transition-smooth hover-lift cursor-pointer group">
-                    <div className="text-5xl mb-3 text-purple-400 transition-spring group-hover:scale-110">⚡</div>
-                    <p className="text-white font-bold text-xl mb-2 group-hover:text-purple-300 transition-smooth">
+                  <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-emerald-500/50 transition-smooth hover-lift cursor-pointer group">
+                    <div className="text-5xl mb-3 text-emerald-400 transition-spring group-hover:scale-110">⚡</div>
+                    <p className="text-white font-bold text-xl mb-2 group-hover:text-emerald-300 transition-smooth">
                       {commands.filter(c => c.enabled).length || 0}
                     </p>
                     <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">
@@ -654,7 +658,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Server Members</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
+                        <p className="text-3xl font-bold text-white transition-smooth">
                           {selectedServer?.memberCount?.toLocaleString() || 0}
                         </p>
                         <p className="text-sm text-green-400 mt-1">
@@ -669,7 +673,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Active Commands</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
+                        <p className="text-3xl font-bold text-white transition-smooth">
                           {commands.filter(cmd => cmd.enabled).length}
                         </p>
                         <p className="text-sm text-gray-400 mt-1">
@@ -684,7 +688,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Pending Appeals</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
+                        <p className="text-3xl font-bold text-white transition-smooth">
                           {appeals.filter(appeal => appeal.status === 'pending').length}
                         </p>
                         <p className="text-sm text-gray-400 mt-1">
@@ -699,10 +703,10 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">Server Boost</p>
-                        <p className="text-3xl font-bold text-white group-hover:text-purple-300 transition-smooth">
+                        <p className="text-3xl font-bold text-white transition-smooth">
                           Level {selectedServer?.boostLevel || 0}
                         </p>
-                        <p className="text-sm text-purple-400 mt-1">
+                        <p className="text-sm text-zinc-300 mt-1">
                           {selectedServer?.boostCount || 0} boosts
                         </p>
                       </div>
@@ -737,7 +741,7 @@ export default function Dashboard() {
                     <div className="space-y-3">
                       <button
                         onClick={() => setActiveTab('commands')}
-                        className="w-full p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-medium hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
+                        className="w-full p-4 rounded-xl border border-white/15 bg-zinc-950/60 text-white font-medium hover:bg-zinc-800/80 hover:border-white/30 transition-all duration-200 transform hover:scale-105"
                       >
                         ⚡ Manage Commands
                       </button>
@@ -780,7 +784,7 @@ export default function Dashboard() {
                             onChange={(e) => handleCommandToggle(command.id, e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-blue-600"></div>
+                          <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                         </label>
                       </div>
 
@@ -809,7 +813,7 @@ export default function Dashboard() {
                               handleCommandEdit(command.id, { description: newDescription });
                             }
                           }}
-                          className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-colors"
+                          className="w-full px-4 py-2 rounded-lg border border-white/15 bg-zinc-950/60 text-white hover:bg-zinc-800/80 hover:border-white/30 transition-colors"
                         >
                           ✏️ Edit Command
                         </button>

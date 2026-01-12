@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Skyfall Brand Logo</title>
+  <desc id="desc">A falling meteor with trailing lines and stars inside a dark circle.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050509" />
+      <stop offset="100%" stop-color="#090913" />
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="url(#bg)" />
+
+  <!-- Stars -->
+  <g fill="#ffffff">
+    <circle cx="152" cy="132" r="6" />
+    <circle cx="340" cy="132" r="5" />
+    <circle cx="200" cy="196" r="4" />
+    <circle cx="316" cy="212" r="3" />
+    <circle cx="244" cy="112" r="3" />
+    <circle cx="388" cy="196" r="4" />
+    <circle cx="128" cy="220" r="4" />
+  </g>
+
+  <!-- Diamond stars -->
+  <g fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round">
+    <path d="M104 176l10-10 10 10-10 10z" />
+    <path d="M380 260l9-9 9 9-9 9z" />
+    <path d="M188 292l8-8 8 8-8 8z" />
+  </g>
+
+  <!-- Meteor trails -->
+  <g fill="#ffffff">
+    <rect x="232" y="120" width="12" height="170" rx="6" />
+    <rect x="260" y="132" width="10" height="150" rx="5" opacity="0.9" />
+    <rect x="204" y="140" width="9" height="140" rx="4.5" opacity="0.9" />
+    <rect x="284" y="150" width="8" height="132" rx="4" opacity="0.8" />
+    <rect x="180" y="156" width="7" height="120" rx="3.5" opacity="0.75" />
+  </g>
+
+  <!-- Meteor core -->
+  <path
+    d="M256 308c-34 0-62 26-62 58 0 34 27 60 62 60s62-26 62-60c0-32-28-58-62-58z"
+    fill="#ffffff"
+  />
+</svg>
