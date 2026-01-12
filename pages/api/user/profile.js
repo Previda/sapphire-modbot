@@ -4,17 +4,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get session from cookie
-    const sessionCookie = req.cookies['discord_session'];
-    
-    if (!sessionCookie) {
+    // Get session from skyfall_auth cookie (same session used by dashboard)
+    const cookies = req.headers.cookie || '';
+    const authCookie = cookies.split(';').find(c => c.trim().startsWith('skyfall_auth='));
+
+    if (!authCookie) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
     // Parse session data
     let authData;
     try {
-      authData = JSON.parse(Buffer.from(sessionCookie, 'base64').toString('utf8'));
+      authData = JSON.parse(decodeURIComponent(authCookie.split('=')[1]));
     } catch (error) {
       return res.status(401).json({ error: 'Invalid session' });
     }
@@ -28,12 +29,13 @@ export default async function handler(req, res) {
     let enrichedGuilds = authData.guilds || [];
     
     try {
-      const piResponse = await fetch(`${process.env.PI_BOT_API_URL}/api/guilds`, {
+      const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3004';
+      const piResponse = await fetch(`${PI_BOT_URL}/api/guilds`, {
         headers: {
           'Authorization': `Bearer ${process.env.PI_BOT_API_KEY || 'default-key'}`,
           'Content-Type': 'application/json'
         },
-        timeout: 5000
+        signal: AbortSignal.timeout(5000)
       });
 
       if (piResponse.ok) {

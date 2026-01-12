@@ -80,9 +80,9 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-400 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-400 mx-auto mb-4"></div>
           <p className="text-white text-xl">Loading Profile...</p>
         </div>
       </div>
@@ -96,11 +96,11 @@ export default function Profile() {
         <meta name="description" content="Your Discord profile and server information" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="min-h-screen bg-black">
         {/* Header */}
-        <header className="bg-black/20 backdrop-blur-lg border-b border-white/10 px-6 py-4">
+        <header className="bg-black/40 backdrop-blur-lg border-b border-white/10 px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Link href="/dashboard" className="text-white hover:text-purple-300 transition-colors">
+            <Link href="/dashboard" className="text-white hover:text-emerald-300 transition-colors">
               ← Back to Dashboard
             </Link>
             <h1 className="text-2xl font-bold text-white">My Profile</h1>
@@ -110,16 +110,16 @@ export default function Profile() {
 
         <main className="max-w-7xl mx-auto px-6 py-8">
           {/* User Info Card */}
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 mb-8">
+          <div className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 border border-white/10 mb-8">
             <div className="flex items-center space-x-6">
               {user?.avatar ? (
                 <img
                   src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`}
                   alt={user.username}
-                  className="w-24 h-24 rounded-full border-4 border-purple-500"
+                  className="w-24 h-24 rounded-full border-4 border-emerald-500"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-4xl font-bold text-white border-4 border-purple-500">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-r from-emerald-500 to-sky-500 flex items-center justify-center text-4xl font-bold text-white border-4 border-emerald-500">
                   {user?.username?.[0] || 'U'}
                 </div>
               )}
@@ -136,9 +136,9 @@ export default function Profile() {
               </div>
 
               <div className="text-right">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl px-6 py-3 mb-2">
+                <div className="bg-gradient-to-r from-emerald-600 to-sky-600 rounded-xl px-6 py-3 mb-2">
                   <p className="text-white font-bold text-2xl">{allGuilds.length}</p>
-                  <p className="text-purple-200 text-sm">Total Servers</p>
+                  <p className="text-emerald-200 text-sm">Total Servers</p>
                 </div>
                 <div className="bg-green-600/20 rounded-xl px-6 py-3 border border-green-500/30">
                   <p className="text-green-300 font-bold text-2xl">{manageableGuilds.length}</p>
@@ -149,14 +149,14 @@ export default function Profile() {
           </div>
 
           {/* Server Tabs */}
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl border border-white/20 overflow-hidden mb-8">
+          <div className="bg-white/5 backdrop-blur-lg rounded-3xl border border-white/10 overflow-hidden mb-8">
             <div className="border-b border-white/10 p-4">
               <div className="flex space-x-2 overflow-x-auto">
                 <button
                   onClick={() => setSelectedGuild(null)}
                   className={`px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
                     !selectedGuild
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                      ? 'bg-gradient-to-r from-emerald-600 to-sky-600 text-white'
                       : 'bg-white/10 text-gray-300 hover:bg-white/20'
                   }`}
                 >
@@ -168,7 +168,7 @@ export default function Profile() {
                     onClick={() => selectGuild(guild)}
                     className={`px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap flex items-center space-x-2 ${
                       selectedGuild?.id === guild.id
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                        ? 'bg-gradient-to-r from-emerald-600 to-sky-600 text-white'
                         : 'bg-white/10 text-gray-300 hover:bg-white/20'
                     }`}
                   >
@@ -179,7 +179,7 @@ export default function Profile() {
                         className="w-6 h-6 rounded-full"
                       />
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-xs">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-xs">
                         {guild.name[0]}
                       </div>
                     )}
@@ -253,13 +253,13 @@ export default function Profile() {
                                 {permissions.slice(0, 3).map((perm, i) => (
                                   <span
                                     key={i}
-                                    className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs border border-purple-500/30"
+                                    className="px-2 py-1 bg-emerald-500/15 text-emerald-300 rounded text-xs border border-emerald-500/30"
                                   >
                                     {perm}
                                   </span>
                                 ))}
                                 {permissions.length > 3 && (
-                                  <span className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs border border-purple-500/30">
+                                  <span className="px-2 py-1 bg-emerald-500/15 text-emerald-300 rounded text-xs border border-emerald-500/30">
                                     +{permissions.length - 3} more
                                   </span>
                                 )}
@@ -310,15 +310,15 @@ export default function Profile() {
                         </div>
                       )}
                       {selectedGuild.hasBot && (
-                        <div className="bg-purple-600/20 rounded-xl px-6 py-3 border border-purple-500/30">
-                          <p className="text-purple-300 font-medium">🤖 Bot Installed</p>
+                        <div className="bg-emerald-600/20 rounded-xl px-6 py-3 border border-emerald-500/30">
+                          <p className="text-emerald-300 font-medium">🤖 Bot Installed</p>
                         </div>
                       )}
                     </div>
                   </div>
 
                   {/* Your Roles */}
-                  <div className="bg-white/10 rounded-2xl p-6 border border-white/20">
+                  <div className="bg-white/10 rounded-2xl p-6 border border-white/15">
                     <h4 className="text-xl font-bold text-white mb-4">Your Roles in this Server</h4>
                     
                     {guildRoles && guildRoles.length > 0 ? (
@@ -326,10 +326,10 @@ export default function Profile() {
                         {guildRoles.map((roleId, index) => (
                           <div
                             key={index}
-                            className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-xl p-4 border border-purple-500/30"
+                            className="bg-gradient-to-r from-emerald-600/15 to-sky-600/15 rounded-xl p-4 border border-emerald-500/30"
                           >
                             <div className="flex items-center space-x-3">
-                              <div className="w-3 h-3 rounded-full bg-purple-400"></div>
+                              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
                               <span className="text-white font-medium">Role {index + 1}</span>
                             </div>
                             <p className="text-gray-400 text-xs mt-2">ID: {roleId}</p>
@@ -360,7 +360,7 @@ export default function Profile() {
                   {/* Server Stats */}
                   {selectedGuild.memberCount > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-white/10 rounded-2xl p-6 border border-white/20 text-center">
+                      <div className="bg-white/10 rounded-2xl p-6 border border-white/15 text-center">
                         <div className="text-4xl mb-2">👥</div>
                         <p className="text-2xl font-bold text-white">{selectedGuild.memberCount.toLocaleString()}</p>
                         <p className="text-gray-400">Total Members</p>
@@ -395,7 +395,7 @@ export default function Profile() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Link
                         href={`/dashboard?server=${selectedGuild.id}`}
-                        className="block p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-medium text-center hover:from-purple-700 hover:to-blue-700 transition-all"
+                        className="block p-4 bg-gradient-to-r from-emerald-600 to-sky-600 rounded-xl text-white font-medium text-center hover:from-emerald-700 hover:to-sky-700 transition-all"
                       >
                         ⚡ Manage Commands
                       </Link>

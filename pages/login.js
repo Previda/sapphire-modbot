@@ -8,74 +8,31 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const token = localStorage.getItem('discord_token')
-    if (token) {
-      router.push('/')
-    }
+    // Check server-side session; if already authenticated, go straight to dashboard
+    const checkSession = async () => {
+      try {
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include',
+        })
 
-    // Handle OAuth callback
-    const { code } = router.query
-    if (code) {
-      handleOAuthCallback(code)
-    }
-  }, [router.query])
-
-  const handleOAuthCallback = async (code) => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/auth/discord', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Authentication failed')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.authenticated) {
+            router.push('/dashboard')
+          }
+        }
+      } catch (error) {
+        console.error('Session check failed:', error)
       }
-
-      const data = await response.json()
-      
-      // Store token and user data
-      localStorage.setItem('discord_token', data.access_token)
-      localStorage.setItem('skyfall_auth', JSON.stringify(data))
-      
-      // Redirect to dashboard
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      alert('Authentication failed. Please try again.')
     }
-    
-    setLoading(false);
-  };
+
+    checkSession()
+  }, [router])
 
   const handleDiscordLogin = () => {
     setLoading(true)
-    // Redirect to our OAuth endpoint
+    // Redirect to unified OAuth endpoint which sets the skyfall_auth cookie
     window.location.href = '/api/auth/discord-oauth'
-  };
-
-  const handleQuickAccess = () => {
-    setLoading(true)
-    
-    // Create demo user for quick access
-    const demoUser = {
-      id: 'demo_user',
-      username: 'Demo Admin',
-      discriminator: '0001',
-      avatar: null,
-      isAdmin: true,
-      access_token: 'demo_token'
-    }
-    
-    localStorage.setItem('skyfall_auth', JSON.stringify(demoUser))
-    
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 1000)
   };
 
   return (
@@ -93,7 +50,7 @@ export default function Login() {
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -inset-10 opacity-40">
             <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-sky-500 rounded-full mix-blend-screen filter blur-3xl"></div>
-            <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-fuchsia-500 rounded-full mix-blend-screen filter blur-3xl animation-delay-2000"></div>
+            <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-emerald-500 rounded-full mix-blend-screen filter blur-3xl animation-delay-2000"></div>
             <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-indigo-500 rounded-full mix-blend-screen filter blur-3xl animation-delay-4000"></div>
           </div>
         </div>
@@ -101,10 +58,14 @@ export default function Login() {
         <main className="relative z-10 flex flex-1 items-center justify-center p-4">
           <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto h-24 w-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center mb-6 shadow-2xl transform hover:scale-110 transition-transform duration-300">
-              <span className="text-4xl font-bold text-white">S</span>
+            <div className="mx-auto h-24 w-24 rounded-full bg-black flex items-center justify-center mb-6 shadow-2xl border border-white/10 overflow-hidden">
+              <img
+                src="/logo-skyfall.svg"
+                alt="Skyfall logo"
+                className="h-20 w-20 object-contain"
+              />
             </div>
-            <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">
               Skyfall
             </h1>
             <p className="text-gray-300 text-xl font-medium">
@@ -120,7 +81,7 @@ export default function Login() {
             <button
               onClick={handleDiscordLogin}
               disabled={loading}
-              className="w-full flex items-center justify-center px-6 py-4 mb-4 border border-transparent text-lg font-semibold rounded-2xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center px-6 py-4 mb-4 border border-transparent text-lg font-semibold rounded-2xl text-white bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-600 hover:to-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="flex items-center">
@@ -137,20 +98,7 @@ export default function Login() {
               )}
             </button>
 
-            {/* Quick Access Button */}
-            <button
-              onClick={handleQuickAccess}
-              disabled={loading}
-              className="w-full flex items-center justify-center px-6 py-3 border border-white/30 text-base font-medium rounded-2xl text-white bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Quick Access (Demo)
-              </div>
-            </button>
-            
+            {/* Auth info */}
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-400">
                 Secure authentication with Discord OAuth 2.0
