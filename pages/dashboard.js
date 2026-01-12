@@ -118,12 +118,6 @@ export default function Dashboard() {
   };
 
   const fetchServers = async () => {
-    // Only fetch servers if user is authenticated
-    if (user?.isGuest) {
-      setServers([]);
-      return;
-    }
-
     try {
       const response = await fetch('/api/servers/list', {
         method: 'GET',
@@ -154,7 +148,7 @@ export default function Dashboard() {
   };
 
   const fetchServerData = async (serverId) => {
-    if (!serverId || user?.isGuest) return;
+    if (!serverId) return;
     
     try {
       const response = await fetch(`/api/servers/${serverId}/data`, {
