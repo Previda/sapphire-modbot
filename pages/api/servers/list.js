@@ -116,12 +116,20 @@ export default async function handler(req, res) {
           lastActivity: guild.lastActivity || new Date().toISOString()
         })) || [];
 
-        return res.status(200).json({
-          success: true,
-          servers: enhancedServers,
-          totalServers: enhancedServers.length,
-          source: 'pi_bot'
-        });
+        // If Pi bot has at least one guild, return them. If it's empty,
+        // fall through to the premium fallback servers below so the
+        // dashboard never sees an empty list just because guilds
+        // haven't been synced yet.
+        if (enhancedServers.length > 0) {
+          return res.status(200).json({
+            success: true,
+            servers: enhancedServers,
+            totalServers: enhancedServers.length,
+            source: 'pi_bot'
+          });
+        } else {
+          console.log('⚠️ Pi bot responded but returned 0 guilds - falling back to premium demo servers');
+        }
       }
     } catch (error) {
       console.log('⚠️ Pi bot unavailable, using premium fallback servers');
