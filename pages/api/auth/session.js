@@ -32,6 +32,7 @@ export default async function handler(req, res) {
       authenticated: true,
       user: authData.user,
       guilds: authData.guilds,
+      allGuilds: authData.allGuilds || authData.guilds || [],
       isAdmin: authData.isAdmin,
     });
   } catch (error) {

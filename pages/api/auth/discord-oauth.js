@@ -6,7 +6,11 @@ export default async function handler(req, res) {
     // Redirect to Discord OAuth with full permissions
     const clientId = process.env.DISCORD_CLIENT_ID || '1358527215020544222';
     // MUST match exactly with callback-discord.js and Discord Developer Portal
-    const redirectUri = 'https://skyfall-omega.vercel.app/api/auth/callback-discord';
+    // Build redirect URL dynamically from the current request host
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host;
+    const baseUrl = `${protocol}://${host}`;
+    const redirectUri = `${baseUrl}/api/auth/callback-discord`;
     
     console.log('🔐 Starting Discord OAuth...');
     console.log('Client ID:', clientId);

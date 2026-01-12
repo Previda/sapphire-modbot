@@ -26,12 +26,12 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
     }
     // Generate a gradient based on server name for consistent colors
     const colors = [
-      'from-purple-500 to-pink-500',
-      'from-blue-500 to-cyan-500',
-      'from-green-500 to-emerald-500',
-      'from-yellow-500 to-orange-500',
-      'from-red-500 to-rose-500',
-      'from-indigo-500 to-purple-500'
+      'from-slate-600 to-slate-900',
+      'from-sky-500 to-cyan-500',
+      'from-emerald-500 to-teal-500',
+      'from-amber-500 to-orange-500',
+      'from-rose-500 to-red-500',
+      'from-indigo-500 to-sky-500'
     ];
     const colorIndex = server.name.length % colors.length;
     return colors[colorIndex];
@@ -56,7 +56,7 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
       {/* Selected Server Display */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl hover:bg-white/15 transition-all duration-300 group"
+        className="w-full flex items-center justify-between p-4 bg-zinc-900/80 backdrop-blur-lg border border-white/10 rounded-2xl hover:bg-zinc-800/80 transition-all duration-300 group"
       >
         <div className="flex items-center space-x-4">
           {selectedServer ? (
@@ -73,7 +73,7 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
                 </div>
               )}
               <div className="text-left">
-                <h3 className="text-white font-bold text-lg group-hover:text-purple-300 transition-colors">
+                <h3 className="text-white font-bold text-lg group-hover:text-white transition-colors">
                   {selectedServer.name}
                 </h3>
                 <p className="text-gray-400 text-sm flex items-center space-x-3">
@@ -120,7 +120,7 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 overflow-hidden animate-slide-down">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-950/95 backdrop-blur-xl border border-white/15 rounded-2xl shadow-2xl z-50 overflow-hidden animate-slide-down">
           {/* Search Bar */}
           <div className="p-4 border-b border-white/10">
             <div className="relative">
@@ -129,7 +129,7 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
                 placeholder="Search servers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-3 bg-zinc-900/80 border border-white/15 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
               />
               <svg className="absolute right-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -150,7 +150,7 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
                       setSearchTerm('');
                     }}
                     className={`w-full flex items-center space-x-4 p-4 rounded-xl transition-all duration-200 hover:bg-white/10 group ${
-                      selectedServer?.id === server.id ? 'bg-purple-500/20 ring-1 ring-purple-500/50' : ''
+                      selectedServer?.id === server.id ? 'bg-emerald-500/15 ring-1 ring-emerald-500/50' : ''
                     }`}
                   >
                     {/* Server Icon */}
@@ -169,7 +169,7 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
                     {/* Server Info */}
                     <div className="flex-1 text-left">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-white font-bold group-hover:text-purple-300 transition-colors">
+                        <h4 className="text-white font-bold group-hover:text-emerald-200 transition-colors">
                           {server.name}
                         </h4>
                         {server.isOwner && (
@@ -204,7 +204,7 @@ export default function ServerSelector({ servers, selectedServer, onServerSelect
 
                     {/* Selection Indicator */}
                     {selectedServer?.id === server.id && (
-                      <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                      <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
                         <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>

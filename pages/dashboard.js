@@ -81,7 +81,7 @@ export default function Dashboard() {
         const data = await response.json();
         
         if (data.authenticated && data.user) {
-          setUser(data.user);
+          setUser({ ...data.user, isAdmin: data.isAdmin, isGuest: false });
           // Set servers from user's Discord guilds
           if (data.guilds && data.guilds.length > 0) {
             const userServers = data.guilds.map(guild => ({
@@ -508,8 +508,15 @@ export default function Dashboard() {
                         <span className="text-sm font-bold text-white">{user.username?.[0]}</span>
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm font-medium text-white">{user.username}</p>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-white">{user.username}</p>
+                        {user.isAdmin && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            Admin
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-green-400">● Online</p>
                     </div>
                   </div>
