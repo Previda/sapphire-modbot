@@ -11,6 +11,9 @@ export default async function handler(req, res) {
   try {
     const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
     const startTime = Date.now();
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host;
+    const dashboardBaseUrl = `${protocol}://${host}`;
 
     // Test Pi bot connection
     let piBotStatus = {
@@ -68,7 +71,11 @@ export default async function handler(req, res) {
       commandEndpoints.map(async (endpoint) => {
         const testStart = Date.now();
         try {
-          const response = await fetch(`${PI_BOT_URL}${endpoint.endpoint}`, {
+          const baseUrl = endpoint.endpoint === '/api/user/profile'
+            ? dashboardBaseUrl
+            : PI_BOT_URL;
+
+          const response = await fetch(`${baseUrl}${endpoint.endpoint}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -78,13 +85,16 @@ export default async function handler(req, res) {
             signal: AbortSignal.timeout(3000)
           });
 
+          const isUserProfile = endpoint.endpoint === '/api/user/profile';
+          const ok = response.ok || (isUserProfile && response.status === 401);
+
           return {
             name: endpoint.name,
             endpoint: endpoint.endpoint,
-            status: response.ok ? 'operational' : 'degraded',
+            status: ok ? 'operational' : 'degraded',
             responseTime: Date.now() - testStart,
             lastCheck: new Date().toISOString(),
-            error: response.ok ? null : `HTTP ${response.status}`
+            error: ok ? null : `HTTP ${response.status}`
           };
         } catch (error) {
           return {
