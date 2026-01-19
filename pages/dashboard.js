@@ -333,7 +333,7 @@ export default function Dashboard() {
   return (
     <>
       <Head>
-        <title>Dashboard - KSyfall Discord Management</title>
+        <title>Dashboard - Skyfall Discord Management</title>
         <meta name="description" content="Professional Discord bot management dashboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -365,12 +365,12 @@ export default function Dashboard() {
               <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full overflow-hidden bg-black border border-white/10">
                 <img
                   src="/logo-skyfall.svg"
-                  alt="KSyfall logo"
+                  alt="Skyfall logo"
                   className="h-10 w-10 object-cover"
                 />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-white">KSyfall</h1>
+                <h1 className="text-xl font-semibold text-white">Skyfall</h1>
                 <p className="text-xs text-gray-400">Discord Management</p>
               </div>
             </div>

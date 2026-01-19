@@ -68,10 +68,10 @@ export default function Status() {
   return (
     <>
       <Head>
-        <title>System Status - KSyfall Discord Management</title>
+        <title>System Status - Skyfall Discord Management</title>
         <meta
           name="description"
-          content="Real-time system status and uptime monitoring for KSyfall Discord Management"
+          content="Real-time system status and uptime monitoring for Skyfall Discord Management"
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>

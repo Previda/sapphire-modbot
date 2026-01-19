@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         message: 'Real Discord data from Pi bot',
-        botName: 'KSyfall',
+        botName: 'Skyfall',
         data: {
           status: 'online',
           guilds: guildsData.guildCount || 5,
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       return res.status(503).json({
         success: false,
         error: 'Pi bot unavailable',
-        message: 'Real Discord data unavailable. Ensure the KSyfall backend (PI_BOT_API_URL) is online and reachable.',
+        message: 'Real Discord data unavailable. Ensure the Skyfall backend (PI_BOT_API_URL) is online and reachable.',
         timestamp: new Date().toISOString(),
         mode: 'ERROR_NO_BACKEND'
       });
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       message: 'Fallback data - Pi bot unavailable (development only)',
-      botName: 'KSyfall',
+      botName: 'Skyfall',
       data: {
         status: 'online',
         guilds: 5,
@@ -84,7 +84,7 @@ export default async function handler(req, res) {
         realGuilds: [
           {
             id: '1158527215020544222',
-            name: 'KSyfall | Softworks',
+            name: 'Skyfall | Softworks',
             members: 1250,
             commandsUsed: Math.floor(Math.random() * 200) + 1400,
             activeTickets: Math.floor(Math.random() * 5) + 10,

@@ -201,7 +201,7 @@ export default async function handler(req, res) {
       return res.status(503).json({
         success: false,
         error: 'Backend unavailable',
-        message: 'Cannot update commands because the KSyfall backend (PI_BOT_API_URL) is offline or unreachable.'
+        message: 'Cannot update commands because the Skyfall backend (PI_BOT_API_URL) is offline or unreachable.'
       });
     }
 

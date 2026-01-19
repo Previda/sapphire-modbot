@@ -96,7 +96,7 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
                   <span className="text-gray-400">offline</span>
                 </h2>
                 <p className="text-sm text-zinc-400 sm:text-base">
-                  Unable to reach your KSyfall backend right now. Follow the quick checks below, then retry.
+                  Unable to reach your Skyfall backend right now. Follow the quick checks below, then retry.
                 </p>
               </div>
             </div>

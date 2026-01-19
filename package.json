@@ -29,7 +29,8 @@
     "pi:stop": "pm2 stop skyfall-bot",
     "pi:logs": "pm2 logs skyfall-bot",
     "pi:delete": "pm2 delete skyfall-bot",
-    "kill-port": "bash kill-port.sh"
+    "kill-port": "bash kill-port.sh",
+    "skyfall:config": "node skyfall-config.js"
   },
   "dependencies": {
     "@discordjs/opus": "^0.10.0",

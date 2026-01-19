@@ -11,12 +11,12 @@ export default function TopNav({ active }) {
           <div className="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden bg-black shadow-lg border border-white/10">
             <img
               src="/logo-skyfall.svg"
-              alt="KSyfall logo"
+              alt="Skyfall logo"
               className="h-9 w-9 object-cover"
             />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold tracking-tight">KSyfall</span>
+            <span className="text-sm font-semibold tracking-tight">Skyfall</span>
             <span className="text-xs text-zinc-500">Discord Management</span>
           </div>
         </div>

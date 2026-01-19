@@ -88,7 +88,7 @@ export default async function handler(req, res) {
       serverId,
       data: { commands: [], logs: [], appeals: [] },
       source: 'none',
-      message: 'No server data available - ensure the KSyfall backend API (PI_BOT_API_URL) is reachable and connected to this server'
+      message: 'No server data available - ensure the Skyfall backend API (PI_BOT_API_URL) is reachable and connected to this server'
     });
 
   } catch (error) {

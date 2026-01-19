@@ -49,10 +49,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>KSyfall – Advanced Discord Management</title>
+        <title>Skyfall – Advanced Discord Management</title>
         <meta
           name="description"
-          content="KSyfall brings enterprise‑grade moderation, tickets, and analytics to Discord with a hyper‑clean, Apple‑style experience."
+          content="Skyfall brings enterprise‑grade moderation, tickets, and analytics to Discord with a hyper‑clean, Apple‑style experience."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -64,10 +64,10 @@ export default function Home() {
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-zinc-50 to-zinc-400 text-black shadow-lg">
-                <span className="text-lg font-semibold">K</span>
+                <span className="text-lg font-semibold">S</span>
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="text-sm font-semibold tracking-tight">KSyfall</span>
+                <span className="text-sm font-semibold tracking-tight">Skyfall</span>
                 <span className="text-xs text-zinc-500">Enterprise Discord Management</span>
               </div>
             </div>
@@ -119,7 +119,7 @@ export default function Home() {
                     <span className="block text-zinc-400">for serious Discord servers.</span>
                   </h1>
                   <p className="max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-                    KSyfall combines advanced moderation, ticket & appeal workflows, and live analytics into a
+                    Skyfall combines advanced moderation, ticket & appeal workflows, and live analytics into a
                     single, fluid experience designed to feel like a native iOS dashboard – but for your server.
                   </p>
                 </div>
@@ -129,7 +129,7 @@ export default function Home() {
                     href="/invite"
                     className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg shadow-slate-900/40 transition-transform hover:scale-[1.02]"
                   >
-                    <span>➕ Add KSyfall to your server</span>
+                    <span>➕ Add Skyfall to your server</span>
                   </Link>
 
                   <Link
@@ -158,7 +158,7 @@ export default function Home() {
                   <div className="flex items-center justify-between pb-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Live overview</p>
-                      <p className="mt-1 text-sm font-medium text-zinc-100">KSyfall control surface</p>
+                      <p className="mt-1 text-sm font-medium text-zinc-100">Skyfall control surface</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold text-zinc-200">
                       Online
@@ -261,7 +261,7 @@ export default function Home() {
           <section className="border-t border-white/5 bg-black">
             <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-14 text-center sm:px-6 lg:px-8">
               <h2 className="max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
-                Drop KSyfall into your server and manage it like a native iOS control center.
+                Drop Skyfall into your server and manage it like a native iOS control center.
               </h2>
               <p className="max-w-xl text-sm text-zinc-400">
                 One bot, one dashboard – for tickets, appeals, moderation, music and more. Designed to stay smooth on
@@ -272,7 +272,7 @@ export default function Home() {
                   href="/invite"
                   className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg shadow-slate-900/40 transition-transform hover:scale-[1.02]"
                 >
-                  <span>Invite KSyfall</span>
+                  <span>Invite Skyfall</span>
                 </Link>
                 <Link
                   href="/faq"
@@ -289,7 +289,7 @@ export default function Home() {
         <footer className="border-t border-white/5 bg-black/95">
           <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <div className="space-y-1">
-              <p className="text-zinc-400">&copy; {new Date().getFullYear()} KSyfall. All rights reserved.</p>
+              <p className="text-zinc-400">&copy; {new Date().getFullYear()} Skyfall. All rights reserved.</p>
               <p>Secure Discord management for serious communities.</p>
             </div>
             <div className="flex flex-wrap gap-4">

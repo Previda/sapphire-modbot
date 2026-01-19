@@ -245,7 +245,7 @@ export default async function handler(req, res) {
       servers: [],
       totalServers: 0,
       source: 'none',
-      message: 'No servers available - log in with Discord and connect the KSyfall bot to your servers for live data'
+      message: 'No servers available - log in with Discord and connect the Skyfall bot to your servers for live data'
     });
 
   } catch (error) {

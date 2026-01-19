@@ -38,8 +38,8 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>Login - KSyfall Dashboard</title>
-        <meta name="description" content="Login to KSyfall Discord Management Dashboard" />
+        <title>Login - Skyfall Dashboard</title>
+        <meta name="description" content="Login to Skyfall Discord Management Dashboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
@@ -61,12 +61,12 @@ export default function Login() {
             <div className="mx-auto h-24 w-24 rounded-full bg-black flex items-center justify-center mb-6 shadow-2xl border border-white/10 overflow-hidden">
               <img
                 src="/logo-skyfall.svg"
-                alt="KSyfall logo"
+                alt="Skyfall logo"
                 className="h-20 w-20 object-contain"
               />
             </div>
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-zinc-50 to-zinc-400 bg-clip-text text-transparent">
-              KSyfall
+              Skyfall
             </h1>
             <p className="text-gray-300 text-xl font-medium">
               Clean Discord Management
