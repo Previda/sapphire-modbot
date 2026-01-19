@@ -49,10 +49,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Skyfall – Advanced Discord Management</title>
+        <title>KSyfall – Advanced Discord Management</title>
         <meta
           name="description"
-          content="Skyfall brings enterprise‑grade moderation, tickets, and analytics to Discord with a hyper‑clean, Apple‑style experience."
+          content="KSyfall brings enterprise‑grade moderation, tickets, and analytics to Discord with a hyper‑clean, Apple‑style experience."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -63,11 +63,11 @@ export default function Home() {
         <nav className="sticky top-0 z-20 border-b border-white/5 bg-black/70 backdrop-blur-xl">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-400 text-black shadow-lg">
-                <span className="text-lg font-semibold">S</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-zinc-50 to-zinc-400 text-black shadow-lg">
+                <span className="text-lg font-semibold">K</span>
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="text-sm font-semibold tracking-tight">Skyfall</span>
+                <span className="text-sm font-semibold tracking-tight">KSyfall</span>
                 <span className="text-xs text-zinc-500">Enterprise Discord Management</span>
               </div>
             </div>
@@ -101,16 +101,16 @@ export default function Home() {
           <section className="relative overflow-hidden">
             {/* Subtle light pools */}
             <div className="pointer-events-none absolute inset-0">
-              <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
-              <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
+              <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-zinc-50/10 blur-3xl" />
+              <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-zinc-400/10 blur-3xl" />
             </div>
 
             <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-20 pt-16 sm:px-6 lg:flex-row lg:items-center lg:pb-28 lg:pt-20">
               {/* Left column – text */}
               <div className="flex-1 space-y-8">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Live for Raspberry Pi • Secure ticketing & appeals
+                  <span className="h-1.5 w-1.5 rounded-full bg-zinc-200" />
+                  Live for Discord • Secure ticketing & appeals
                 </div>
 
                 <div className="space-y-4">
@@ -119,7 +119,7 @@ export default function Home() {
                     <span className="block text-zinc-400">for serious Discord servers.</span>
                   </h1>
                   <p className="max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-                    Skyfall combines advanced moderation, ticket & appeal workflows, and live analytics into a
+                    KSyfall combines advanced moderation, ticket & appeal workflows, and live analytics into a
                     single, fluid experience designed to feel like a native iOS dashboard – but for your server.
                   </p>
                 </div>
@@ -129,7 +129,7 @@ export default function Home() {
                     href="/invite"
                     className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg shadow-slate-900/40 transition-transform hover:scale-[1.02]"
                   >
-                    <span>➕ Add Skyfall to your server</span>
+                    <span>➕ Add KSyfall to your server</span>
                   </Link>
 
                   <Link
@@ -142,11 +142,11 @@ export default function Home() {
 
                 <div className="flex flex-wrap gap-4 text-xs text-zinc-500">
                   <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-200" />
                     <span>Realtime ticket + appeal insights</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
                     <span>Secure OAuth & per‑guild controls</span>
                   </div>
                 </div>
@@ -154,13 +154,13 @@ export default function Home() {
 
               {/* Right column – glass stats card */}
               <div className="flex-1">
-                <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
+                <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-black/60 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
                   <div className="flex items-center justify-between pb-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Live overview</p>
-                      <p className="mt-1 text-sm font-medium text-zinc-100">Skyfall control surface</p>
+                      <p className="mt-1 text-sm font-medium text-zinc-100">KSyfall control surface</p>
                     </div>
-                    <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-semibold text-emerald-300">
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold text-zinc-200">
                       Online
                     </span>
                   </div>
@@ -183,8 +183,8 @@ export default function Home() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-[11px] text-zinc-400">30‑day uptime</p>
-                      <p className="text-xl font-semibold text-emerald-400">{stats.uptime}%</p>
-                      <p className="text-[11px] text-zinc-500">Pi‑optimized presence</p>
+                      <p className="text-xl font-semibold text-zinc-200">{stats.uptime}%</p>
+                      <p className="text-[11px] text-zinc-500">optimized presence</p>
                     </div>
                   </div>
 
@@ -206,7 +206,7 @@ export default function Home() {
                 <div>
                   <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Built for real moderation work.</h2>
                   <p className="mt-2 max-w-xl text-sm text-zinc-400">
-                    Every layer – from slash commands to the Pi bot – is designed to stay fast, predictable, and
+                    Every layer – from slash commands to the backend engine – is designed to stay fast, predictable, and
                     audit‑friendly.
                   </p>
                 </div>
@@ -245,12 +245,12 @@ export default function Home() {
                 <div className="glass-card rounded-2xl border border-white/10 bg-white/5 p-6">
                   <h3 className="mb-2 text-sm font-semibold">Music & live status</h3>
                   <p className="mb-4 text-sm text-zinc-400">
-                    Optimized YouTube playback with Pi‑safe voice handling and live status surfaces for every guild.
+                    Optimized YouTube playback with voice handling and live status surfaces for every guild.
                   </p>
                   <ul className="space-y-1.5 text-xs text-zinc-400">
                     <li>• Clean `/play` URL‑based playback</li>
                     <li>• Queue, volume, and skip controls</li>
-                    <li>• Health endpoints for dashboards & Pi</li>
+                    <li>• Health endpoints for dashboards</li>
                   </ul>
                 </div>
               </div>
@@ -261,18 +261,18 @@ export default function Home() {
           <section className="border-t border-white/5 bg-black">
             <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-14 text-center sm:px-6 lg:px-8">
               <h2 className="max-w-2xl text-2xl font-semibold tracking-tight sm:text-3xl">
-                Drop Skyfall into your server and manage it like a native iOS control center.
+                Drop KSyfall into your server and manage it like a native iOS control center.
               </h2>
               <p className="max-w-xl text-sm text-zinc-400">
                 One bot, one dashboard – for tickets, appeals, moderation, music and more. Designed to stay smooth on
-                Raspberry Pi while still feeling premium on desktop.
+                Discord while still feeling premium on desktop.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <Link
                   href="/invite"
                   className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black shadow-lg shadow-slate-900/40 transition-transform hover:scale-[1.02]"
                 >
-                  <span>Invite Skyfall</span>
+                  <span>Invite KSyfall</span>
                 </Link>
                 <Link
                   href="/faq"
@@ -289,7 +289,7 @@ export default function Home() {
         <footer className="border-t border-white/5 bg-black/95">
           <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <div className="space-y-1">
-              <p className="text-zinc-400">© {new Date().getFullYear()} Skyfall. All rights reserved.</p>
+              <p className="text-zinc-400">&copy; {new Date().getFullYear()} KSyfall. All rights reserved.</p>
               <p>Secure Discord management for serious communities.</p>
             </div>
             <div className="flex flex-wrap gap-4">

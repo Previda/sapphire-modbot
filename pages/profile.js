@@ -136,13 +136,13 @@ export default function Profile() {
               </div>
 
               <div className="text-right">
-                <div className="bg-gradient-to-r from-emerald-600 to-sky-600 rounded-xl px-6 py-3 mb-2">
+                <div className="bg-zinc-900 rounded-xl px-6 py-3 mb-2 border border-white/10">
                   <p className="text-white font-bold text-2xl">{allGuilds.length}</p>
-                  <p className="text-emerald-200 text-sm">Total Servers</p>
+                  <p className="text-zinc-300 text-sm">Total Servers</p>
                 </div>
-                <div className="bg-green-600/20 rounded-xl px-6 py-3 border border-green-500/30">
-                  <p className="text-green-300 font-bold text-2xl">{manageableGuilds.length}</p>
-                  <p className="text-green-400 text-sm">Can Manage</p>
+                <div className="bg-zinc-900 rounded-xl px-6 py-3 border border-white/10">
+                  <p className="text-white font-bold text-2xl">{manageableGuilds.length}</p>
+                  <p className="text-zinc-300 text-sm">Can Manage</p>
                 </div>
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function Profile() {
                         className="w-6 h-6 rounded-full"
                       />
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-xs">
+                      <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs">
                         {guild.name[0]}
                       </div>
                     )}
@@ -218,7 +218,7 @@ export default function Profile() {
                                 className="w-16 h-16 rounded-full"
                               />
                             ) : (
-                              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-2xl font-bold text-white">
+                              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-zinc-600 to-zinc-400 flex items-center justify-center text-2xl font-bold text-white">
                                 {guild.name[0]}
                               </div>
                             )}
@@ -253,7 +253,7 @@ export default function Profile() {
                                 {permissions.slice(0, 3).map((perm, i) => (
                                   <span
                                     key={i}
-                                    className="px-2 py-1 bg-emerald-500/15 text-emerald-300 rounded text-xs border border-emerald-500/30"
+                                    className="px-2 py-1 bg-white/5 text-zinc-200 rounded text-xs border border-white/20"
                                   >
                                     {perm}
                                   </span>

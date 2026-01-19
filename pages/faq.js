@@ -18,12 +18,12 @@ export default function FAQ() {
       category: "Getting Started",
       questions: [
         {
-          question: "What is Skyfall Discord Management?",
-          answer: "Skyfall is a professional Discord bot management system that provides advanced moderation, command management, and server analytics. It features a modern web dashboard for easy administration of your Discord servers."
+          question: "What is KSyfall Discord Management?",
+          answer: "KSyfall is a professional Discord bot management system that provides advanced moderation, command management, and server analytics. It features a modern web dashboard for easy administration of your Discord servers."
         },
         {
-          question: "How do I add Skyfall to my Discord server?",
-          answer: "To add Skyfall to your server, you need administrator permissions. Contact our support team or use the Discord OAuth integration in the dashboard to connect your servers."
+          question: "How do I add KSyfall to my Discord server?",
+          answer: "To add KSyfall to your server, you need administrator permissions. Contact our support team or use the Discord OAuth integration in the dashboard to connect your servers."
         },
         {
           question: "Is Skyfall free to use?",
@@ -35,8 +35,8 @@ export default function FAQ() {
       category: "Commands & Features",
       questions: [
         {
-          question: "What commands does Skyfall support?",
-          answer: "Skyfall supports a comprehensive set of commands including moderation (ban, kick, mute), utility (ping, serverinfo, help), verification systems, and appeal management. All commands can be enabled/disabled and customized through the dashboard."
+          question: "What commands does KSyfall support?",
+          answer: "KSyfall supports a comprehensive set of commands including moderation (ban, kick, mute), utility (ping, serverinfo, help), verification systems, and appeal management. All commands can be enabled/disabled and customized through the dashboard."
         },
         {
           question: "Can I customize command permissions?",
@@ -53,7 +53,7 @@ export default function FAQ() {
       questions: [
         {
           question: "How do I access the dashboard?",
-          answer: "Access the dashboard at skyfall-omega.vercel.app. You can log in using Discord OAuth or use the quick access demo mode to explore features."
+          answer: "Access the dashboard using the official KSyfall dashboard URL. You can log in using Discord OAuth to manage your servers."
         },
         {
           question: "What can I do in the dashboard?",
@@ -70,7 +70,7 @@ export default function FAQ() {
       questions: [
         {
           question: "What happens if the bot goes offline?",
-          answer: "Skyfall is designed for high availability. If the main bot goes offline, you'll be notified through the dashboard. We maintain 99.9% uptime and have automatic failover systems in place."
+          answer: "KSyfall is designed for high availability. If the main bot goes offline, you'll be notified through the dashboard. We maintain 99.9% uptime and have automatic failover systems in place."
         },
         {
           question: "How do I report bugs or request features?",
@@ -90,8 +90,8 @@ export default function FAQ() {
           answer: "First, check if the commands are enabled in the dashboard. Ensure the bot has the necessary permissions in your server. If issues persist, check the activity logs in the dashboard for error details."
         },
         {
-          question: "Dashboard shows 'Pi bot unavailable'",
-          answer: "This indicates a temporary connection issue with our backend services. The dashboard will automatically retry and show real data once the connection is restored. Check the status page for current system health."
+          question: "Dashboard shows 'backend unavailable'",
+          answer: "This indicates a temporary connection issue with the KSyfall backend services. The dashboard will automatically retry and show real data once the connection is restored. Check the status page for current system health."
         },
         {
           question: "How do I reset command settings?",
@@ -104,7 +104,7 @@ export default function FAQ() {
   return (
     <>
       <Head>
-        <title>FAQ - Skyfall Discord Management</title>
+        <title>FAQ - KSyfall Discord Management</title>
         <meta
           name="description"
           content="Frequently asked questions about Skyfall Discord bot management system"
@@ -227,7 +227,7 @@ export default function FAQ() {
         <footer className="border-t border-white/5 bg-black/95">
           <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <div className="space-y-1">
-              <p className="text-zinc-400">© {new Date().getFullYear()} Skyfall. All rights reserved.</p>
+              <p className="text-zinc-400"> a9 {new Date().getFullYear()} KSyfall. All rights reserved.</p>
               <p>Secure Discord management for serious communities.</p>
             </div>
             <div className="flex flex-wrap gap-4">

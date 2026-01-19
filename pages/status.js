@@ -68,10 +68,10 @@ export default function Status() {
   return (
     <>
       <Head>
-        <title>System Status - Skyfall Discord Management</title>
+        <title>System Status - KSyfall Discord Management</title>
         <meta
           name="description"
-          content="Real-time system status and uptime monitoring for Skyfall Discord Management"
+          content="Real-time system status and uptime monitoring for KSyfall Discord Management"
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -127,11 +127,11 @@ export default function Status() {
 
               {/* Service Status */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {/* Pi Bot Status */}
+                {/* Backend Status */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
                   <h3 className="text-xl font-bold text-white mb-4 flex items-center">
                     <span className="text-2xl mr-3">🤖</span>
-                    Pi Bot Core
+                    Backend Core
                   </h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">

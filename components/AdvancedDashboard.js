@@ -45,19 +45,19 @@ const AdvancedDashboard = () => {
 
   const fetchBotData = async () => {
     try {
-      // Only try real Discord data from Pi bot
+      // Only try real Discord data from backend
       const response = await fetch('/api/discord-real-data');
       if (response.ok) {
         const data = await response.json();
         setBotData(data);
-        console.log('✅ Using REAL Discord data from Pi bot:', data.mode);
+        console.log('✅ Using REAL Discord data from backend:', data.mode);
         return;
       } else {
-        console.log('❌ Pi bot unavailable - no real data available');
+        console.log('❌ Backend unavailable - no real data available');
         setBotData({ 
           success: false, 
-          error: 'Pi bot offline',
-          message: 'Real Discord data unavailable. Pi bot must be online.',
+          error: 'Backend offline',
+          message: 'Real Discord data unavailable. Backend must be online.',
           mode: 'ERROR_NO_PI_BOT'
         });
       }
@@ -66,7 +66,7 @@ const AdvancedDashboard = () => {
       setBotData({ 
         success: false, 
         error: 'Connection failed',
-        message: 'Cannot connect to Pi bot for real data.',
+        message: 'Cannot connect to backend for real data.',
         mode: 'ERROR_CONNECTION'
       });
     }
@@ -321,7 +321,7 @@ const AdvancedDashboard = () => {
     );
   }
 
-  // Show error if Pi bot is offline
+  // Show error if backend is offline
   if (botData && !botData.success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
@@ -337,9 +337,9 @@ const AdvancedDashboard = () => {
           >
             <span className="text-red-400 font-black text-3xl">⚠️</span>
           </motion.div>
-          <h2 className="text-3xl font-black text-white mb-4">Pi Bot Offline</h2>
+          <h2 className="text-3xl font-black text-white mb-4">Backend Offline</h2>
           <p className="text-red-300 mb-6 text-lg">{botData.message}</p>
-          <p className="text-white/70 mb-8">Real Discord data unavailable. Please start your Pi bot to access live data.</p>
+          <p className="text-white/70 mb-8">Real Discord data unavailable. Please start your backend to access live data.</p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

@@ -135,106 +135,117 @@ export default async function handler(req, res) {
       console.log('⚠️ Pi bot unavailable, using premium fallback servers');
     }
 
-    // Premium fallback servers for demo/development
-    const premiumFallbackServers = [
-      {
-        id: '1234567890123456789',
-        name: 'Skyfall Community',
-        icon: 'https://cdn.discordapp.com/icons/1234567890123456789/example.png',
-        memberCount: 1247,
-        onlineMembers: 342,
-        botPermissions: ['ADMINISTRATOR', 'MANAGE_MESSAGES', 'KICK_MEMBERS'],
-        features: ['COMMUNITY', 'MODERATION', 'PREMIUM'],
-        region: 'us-east',
-        verificationLevel: 3,
-        boostLevel: 2,
-        boostCount: 14,
-        isOwner: true,
-        canManage: true,
-        joinedAt: '2024-01-15T10:30:00Z',
-        lastActivity: new Date().toISOString(),
-        description: 'Main community server with full moderation suite'
-      },
-      {
-        id: '9876543210987654321',
-        name: 'Gaming Hub',
-        icon: 'https://cdn.discordapp.com/icons/9876543210987654321/gaming.png',
-        memberCount: 856,
-        onlineMembers: 178,
-        botPermissions: ['MANAGE_MESSAGES', 'KICK_MEMBERS', 'BAN_MEMBERS'],
-        features: ['GAMING', 'VOICE_CHANNELS'],
-        region: 'us-west',
-        verificationLevel: 2,
-        boostLevel: 1,
-        boostCount: 7,
-        isOwner: false,
-        canManage: true,
-        joinedAt: '2024-02-20T14:15:00Z',
-        lastActivity: new Date(Date.now() - 3600000).toISOString(),
-        description: 'Gaming community with event management'
-      },
-      {
-        id: '5555666677778888999',
-        name: 'Developer Workspace',
-        icon: 'https://cdn.discordapp.com/icons/5555666677778888999/dev.png',
-        memberCount: 423,
-        onlineMembers: 89,
-        botPermissions: ['ADMINISTRATOR'],
-        features: ['DEVELOPER', 'COMMUNITY', 'THREADS'],
-        region: 'europe',
-        verificationLevel: 4,
-        boostLevel: 3,
-        boostCount: 28,
-        isOwner: false,
-        canManage: true,
-        joinedAt: '2024-03-10T09:45:00Z',
-        lastActivity: new Date(Date.now() - 7200000).toISOString(),
-        description: 'Professional development team coordination'
-      },
-      {
-        id: '1111222233334444555',
-        name: 'Art & Creative',
-        icon: 'https://cdn.discordapp.com/icons/1111222233334444555/art.png',
-        memberCount: 692,
-        onlineMembers: 156,
-        botPermissions: ['MANAGE_MESSAGES', 'MANAGE_ROLES'],
-        features: ['COMMUNITY', 'CREATIVE'],
-        region: 'us-central',
-        verificationLevel: 1,
-        boostLevel: 1,
-        boostCount: 5,
-        isOwner: false,
-        canManage: true,
-        joinedAt: '2024-04-05T16:20:00Z',
-        lastActivity: new Date(Date.now() - 1800000).toISOString(),
-        description: 'Creative community for artists and designers'
-      },
-      {
-        id: '7777888899990000111',
-        name: 'Study Group',
-        icon: 'https://cdn.discordapp.com/icons/7777888899990000111/study.png',
-        memberCount: 234,
-        onlineMembers: 67,
-        botPermissions: ['MANAGE_MESSAGES', 'MUTE_MEMBERS'],
-        features: ['EDUCATION', 'STUDY_GROUPS'],
-        region: 'asia',
-        verificationLevel: 2,
-        boostLevel: 0,
-        boostCount: 0,
-        isOwner: true,
-        canManage: true,
-        joinedAt: '2024-05-12T11:30:00Z',
-        lastActivity: new Date(Date.now() - 900000).toISOString(),
-        description: 'Educational server for collaborative learning'
-      }
-    ];
+    // Premium fallback servers for demo/development (disabled in production)
+    if (process.env.NODE_ENV !== 'production') {
+      const premiumFallbackServers = [
+        {
+          id: '1234567890123456789',
+          name: 'Skyfall Community',
+          icon: 'https://cdn.discordapp.com/icons/1234567890123456789/example.png',
+          memberCount: 1247,
+          onlineMembers: 342,
+          botPermissions: ['ADMINISTRATOR', 'MANAGE_MESSAGES', 'KICK_MEMBERS'],
+          features: ['COMMUNITY', 'MODERATION', 'PREMIUM'],
+          region: 'us-east',
+          verificationLevel: 3,
+          boostLevel: 2,
+          boostCount: 14,
+          isOwner: true,
+          canManage: true,
+          joinedAt: '2024-01-15T10:30:00Z',
+          lastActivity: new Date().toISOString(),
+          description: 'Main community server with full moderation suite'
+        },
+        {
+          id: '9876543210987654321',
+          name: 'Gaming Hub',
+          icon: 'https://cdn.discordapp.com/icons/9876543210987654321/gaming.png',
+          memberCount: 856,
+          onlineMembers: 178,
+          botPermissions: ['MANAGE_MESSAGES', 'KICK_MEMBERS', 'BAN_MEMBERS'],
+          features: ['GAMING', 'VOICE_CHANNELS'],
+          region: 'us-west',
+          verificationLevel: 2,
+          boostLevel: 1,
+          boostCount: 7,
+          isOwner: false,
+          canManage: true,
+          joinedAt: '2024-02-20T14:15:00Z',
+          lastActivity: new Date(Date.now() - 3600000).toISOString(),
+          description: 'Gaming community with event management'
+        },
+        {
+          id: '5555666677778888999',
+          name: 'Developer Workspace',
+          icon: 'https://cdn.discordapp.com/icons/5555666677778888999/dev.png',
+          memberCount: 423,
+          onlineMembers: 89,
+          botPermissions: ['ADMINISTRATOR'],
+          features: ['DEVELOPER', 'COMMUNITY', 'THREADS'],
+          region: 'europe',
+          verificationLevel: 4,
+          boostLevel: 3,
+          boostCount: 28,
+          isOwner: false,
+          canManage: true,
+          joinedAt: '2024-03-10T09:45:00Z',
+          lastActivity: new Date(Date.now() - 7200000).toISOString(),
+          description: 'Professional development team coordination'
+        },
+        {
+          id: '1111222233334444555',
+          name: 'Art & Creative',
+          icon: 'https://cdn.discordapp.com/icons/1111222233334444555/art.png',
+          memberCount: 692,
+          onlineMembers: 156,
+          botPermissions: ['MANAGE_MESSAGES', 'MANAGE_ROLES'],
+          features: ['COMMUNITY', 'CREATIVE'],
+          region: 'us-central',
+          verificationLevel: 1,
+          boostLevel: 1,
+          boostCount: 5,
+          isOwner: false,
+          canManage: true,
+          joinedAt: '2024-04-05T16:20:00Z',
+          lastActivity: new Date(Date.now() - 1800000).toISOString(),
+          description: 'Creative community for artists and designers'
+        },
+        {
+          id: '7777888899990000111',
+          name: 'Study Group',
+          icon: 'https://cdn.discordapp.com/icons/7777888899990000111/study.png',
+          memberCount: 234,
+          onlineMembers: 67,
+          botPermissions: ['MANAGE_MESSAGES', 'MUTE_MEMBERS'],
+          features: ['EDUCATION', 'STUDY_GROUPS'],
+          region: 'asia',
+          verificationLevel: 2,
+          boostLevel: 0,
+          boostCount: 0,
+          isOwner: true,
+          canManage: true,
+          joinedAt: '2024-05-12T11:30:00Z',
+          lastActivity: new Date(Date.now() - 900000).toISOString(),
+          description: 'Educational server for collaborative learning'
+        }
+      ];
 
+      return res.status(200).json({
+        success: true,
+        servers: premiumFallbackServers,
+        totalServers: premiumFallbackServers.length,
+        source: 'fallback',
+        message: 'Using premium demo servers - connect Pi bot for real data'
+      });
+    }
+
+    // In production, if we reach here there is no real data available
     return res.status(200).json({
       success: true,
-      servers: premiumFallbackServers,
-      totalServers: premiumFallbackServers.length,
-      source: 'fallback',
-      message: 'Using premium demo servers - connect Pi bot for real data'
+      servers: [],
+      totalServers: 0,
+      source: 'none',
+      message: 'No servers available - log in with Discord and connect the KSyfall bot to your servers for live data'
     });
 
   } catch (error) {

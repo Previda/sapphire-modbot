@@ -9,6 +9,7 @@ export default async function handler(req, res) {
   }
 
   const PI_BOT_URL = process.env.PI_BOT_API_URL || 'http://192.168.1.62:3001';
+  const isProduction = process.env.NODE_ENV === 'production';
   
   console.log('🔄 Attempting to fetch from Pi bot:', PI_BOT_URL);
 
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         message: 'Real Discord data from Pi bot',
-        botName: 'Skyfall',
+        botName: 'KSyfall',
         data: {
           status: 'online',
           guilds: guildsData.guildCount || 5,
@@ -54,12 +55,23 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('🔴 Pi bot connection failed:', error.message);
-    
-    // Return realistic fallback data with proper structure
+
+    // In production, never return fake data – surface a clear error instead
+    if (isProduction) {
+      return res.status(503).json({
+        success: false,
+        error: 'Pi bot unavailable',
+        message: 'Real Discord data unavailable. Ensure the KSyfall backend (PI_BOT_API_URL) is online and reachable.',
+        timestamp: new Date().toISOString(),
+        mode: 'ERROR_NO_BACKEND'
+      });
+    }
+
+    // In non-production, keep a structured fallback for UI development
     return res.status(200).json({
       success: true,
-      message: 'Fallback data - Pi bot unavailable',
-      botName: 'Skyfall',
+      message: 'Fallback data - Pi bot unavailable (development only)',
+      botName: 'KSyfall',
       data: {
         status: 'online',
         guilds: 5,
@@ -72,7 +84,7 @@ export default async function handler(req, res) {
         realGuilds: [
           {
             id: '1158527215020544222',
-            name: 'Skyfall | Softworks',
+            name: 'KSyfall | Softworks',
             members: 1250,
             commandsUsed: Math.floor(Math.random() * 200) + 1400,
             activeTickets: Math.floor(Math.random() * 5) + 10,
@@ -120,7 +132,7 @@ export default async function handler(req, res) {
         userStats: {}
       },
       timestamp: new Date().toISOString(),
-      mode: 'FALLBACK_DATA'
+      mode: 'FALLBACK_DATA_DEV'
     });
   }
 }

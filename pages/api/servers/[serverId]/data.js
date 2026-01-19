@@ -69,15 +69,26 @@ export default async function handler(req, res) {
       console.log(`⚠️ Pi bot unavailable for server ${serverId}, using fallback data`);
     }
 
-    // Generate server-specific fallback data
-    const serverSpecificData = generateServerData(serverId);
+    // Generate server-specific fallback data only in non-production environments
+    if (process.env.NODE_ENV !== 'production') {
+      const serverSpecificData = generateServerData(serverId);
 
+      return res.status(200).json({
+        success: true,
+        serverId,
+        data: serverSpecificData,
+        source: 'fallback',
+        message: 'Using demo data - connect Pi bot for real server data'
+      });
+    }
+
+    // In production, if we reach here, no real data is available
     return res.status(200).json({
       success: true,
       serverId,
-      data: serverSpecificData,
-      source: 'fallback',
-      message: 'Using demo data - connect Pi bot for real server data'
+      data: { commands: [], logs: [], appeals: [] },
+      source: 'none',
+      message: 'No server data available - ensure the KSyfall backend API (PI_BOT_API_URL) is reachable and connected to this server'
     });
 
   } catch (error) {

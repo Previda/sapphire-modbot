@@ -46,9 +46,9 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
             <div className="relative">
               {/* Spinning Ring */}
               <div className="w-32 h-32 mx-auto">
-                <div className="absolute inset-0 rounded-full border-4 border-purple-500/30"></div>
-                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin"></div>
-                <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-blue-500 animate-spin-slow"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-zinc-500/30"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-zinc-200 animate-spin"></div>
+                <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-zinc-400 animate-spin-slow"></div>
               </div>
               
               {/* Center Icon */}
@@ -62,9 +62,9 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
                 Initializing System
               </h2>
               <div className="flex items-center justify-center space-x-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-zinc-300 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
               <p className="text-gray-300 text-lg">Please wait while we connect to the server...</p>
             </div>
@@ -87,23 +87,23 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
           <div className="space-y-10 max-w-2xl mx-auto px-6">
             {/* Icon & title */}
             <div className="text-center space-y-4">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-red-500/40 bg-red-500/10 shadow-[0_0_40px_rgba(248,113,113,0.35)]">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-gray-500/40 bg-gray-500/10 shadow-[0_0_40px_rgba(128,128,128,0.35)]">
                 <span className="text-3xl">⚠️</span>
               </div>
               <div className="space-y-2">
                 <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                   <span className="text-zinc-100">System</span>{' '}
-                  <span className="text-rose-400">offline</span>
+                  <span className="text-gray-400">offline</span>
                 </h2>
                 <p className="text-sm text-zinc-400 sm:text-base">
-                  Unable to reach your Pi bot right now. Follow the quick checks below, then retry.
+                  Unable to reach your KSyfall backend right now. Follow the quick checks below, then retry.
                 </p>
               </div>
             </div>
 
             {/* Info Card */}
             <div className="relative">
-              <div className="absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-rose-500/40 to-orange-400/40 opacity-30 blur-xl" />
+              <div className="absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-gray-500/40 to-gray-400/40 opacity-30 blur-xl" />
               <div className="relative rounded-3xl border border-white/10 bg-black/70 px-6 py-6 backdrop-blur-2xl sm:px-8">
                 <div className="mb-5 flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 text-lg">🔍</div>
@@ -117,8 +117,8 @@ export default function SystemStatusOverlay({ isOnline, isLoading }) {
 
                 <div className="space-y-3">
                   {[
-                    { icon: '🤖', text: 'Pi bot process is running', cmd: 'pm2 status' },
-                    { icon: '🌐', text: 'Tunnel (ngrok / reverse proxy) is active', cmd: 'screen -r ngrok' },
+                    { icon: '🤖', text: 'Bot process is running', cmd: 'pm2 status' },
+                    { icon: '🌐', text: 'Tunnel (ngrok / reverse proxy) is active', cmd: 'screen -r tunnel' },
                     { icon: '📡', text: 'Network connection is stable', cmd: 'ping 8.8.8.8' }
                   ].map((item, i) => (
                     <div

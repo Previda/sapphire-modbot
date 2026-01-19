@@ -181,9 +181,9 @@ export default function Dashboard() {
         setStatusData(piData);
         
         if (piData.overall.status === 'online') {
-          addNotification('Pi bot connected successfully!', 'success');
+          addNotification('Backend connected successfully!', 'success');
         } else if (piData.overall.status === 'degraded') {
-          addNotification('Pi bot partially connected', 'warning');
+          addNotification('Backend partially connected', 'warning');
         }
         return;
       }
@@ -215,7 +215,7 @@ export default function Dashboard() {
   };
 
   const testPiBotConnection = async () => {
-    addNotification('Testing Pi bot connection...', 'info');
+    addNotification('Testing backend connection...', 'info');
     
     try {
       const response = await fetch('/api/pi-bot/connect');
@@ -223,17 +223,17 @@ export default function Dashboard() {
         const data = await response.json();
         
         if (data.connected) {
-          addNotification(`Pi bot connected! ${data.bestConnection.url}`, 'success');
+          addNotification(`Backend connected! ${data.bestConnection.url}`, 'success');
           // Refresh status data
           await fetchStatusData();
         } else {
-          addNotification('No Pi bot connections found', 'warning');
+          addNotification('No backend connections found', 'warning');
         }
       } else {
         addNotification('Connection test failed', 'error');
       }
     } catch (error) {
-      console.error('Pi bot connection test failed:', error);
+      console.error('Backend connection test failed:', error);
       addNotification('Connection test error', 'error');
     }
   };
@@ -333,7 +333,7 @@ export default function Dashboard() {
   return (
     <>
       <Head>
-        <title>Dashboard - Skyfall Discord Management</title>
+        <title>Dashboard - KSyfall Discord Management</title>
         <meta name="description" content="Professional Discord bot management dashboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -365,12 +365,12 @@ export default function Dashboard() {
               <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full overflow-hidden bg-black border border-white/10">
                 <img
                   src="/logo-skyfall.svg"
-                  alt="Skyfall logo"
+                  alt="KSyfall logo"
                   className="h-10 w-10 object-cover"
                 />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-white">Skyfall</h1>
+                <h1 className="text-xl font-semibold text-white">KSyfall</h1>
                 <p className="text-xs text-gray-400">Discord Management</p>
               </div>
             </div>
@@ -401,14 +401,14 @@ export default function Dashboard() {
               <div className="space-y-2 text-sm">
                 <Link
                   href="/profile"
-                  className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-100 transition-colors hover:border-emerald-400/60 hover:bg-emerald-500/20"
+                  className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-zinc-100 transition-colors hover:border-white/40 hover:bg-white/10"
                 >
                   <span className="text-lg">👤</span>
                   <span>My Profile & Servers</span>
                 </Link>
                 <Link
                   href="/invite"
-                  className="flex items-center gap-3 rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-sky-100 transition-colors hover:border-sky-400/60 hover:bg-sky-500/20"
+                  className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-zinc-100 transition-colors hover:border-white/40 hover:bg-white/10"
                 >
                   <span className="text-lg">🤖</span>
                   <span>Add bot to server</span>
@@ -462,7 +462,7 @@ export default function Dashboard() {
                         className="h-8 w-8 rounded-full border-2 border-green-400"
                       />
                     ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-blue-400">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-zinc-200 to-zinc-500">
                         <span className="text-sm font-bold text-white">{user.username?.[0]}</span>
                       </div>
                     )}
@@ -557,7 +557,7 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Pi Bot Connection Status */}
+            {/* Backend Connection Status */}
             <div className="mb-8">
               <div className="bg-zinc-900/80 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center justify-between mb-6">
@@ -591,11 +591,11 @@ export default function Dashboard() {
                        statusData?.overall?.status === 'degraded' ? 'Degraded' : 'Offline'}
                     </p>
                     <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-smooth">
-                      Pi Bot Status
+                      Backend Status
                     </p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-blue-500/50 transition-smooth hover-lift cursor-pointer group">
-                    <div className="text-5xl mb-3 text-blue-400 transition-spring group-hover:scale-110">🏰</div>
+                    <div className="text-5xl mb-3 text-zinc-200 transition-spring group-hover:scale-110">🏰</div>
                     <p className="text-white font-bold text-xl mb-2 group-hover:text-blue-300 transition-smooth">
                       {servers.length || 0}
                     </p>
@@ -604,7 +604,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-6 text-center border border-white/20 hover:border-emerald-500/50 transition-smooth hover-lift cursor-pointer group">
-                    <div className="text-5xl mb-3 text-emerald-400 transition-spring group-hover:scale-110">⚡</div>
+                    <div className="text-5xl mb-3 text-zinc-200 transition-spring group-hover:scale-110">⚡</div>
                     <p className="text-white font-bold text-xl mb-2 group-hover:text-emerald-300 transition-smooth">
                       {commands.filter(c => c.enabled).length || 0}
                     </p>

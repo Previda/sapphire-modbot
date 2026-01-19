@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // Get all commands with their status
+      // Get all commands with their status from the live Pi backend
       const { serverId } = req.query || {};
       const query = serverId ? `?serverId=${encodeURIComponent(serverId)}` : '';
       const response = await fetch(`${PI_BOT_URL}/api/commands/manage${query}`, {
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      // Update command status or settings
+      // Update command status or settings via the live backend
       const { serverId, commandId, enabled, description, cooldown, permissions } = req.body;
       
       const response = await fetch(`${PI_BOT_URL}/api/commands/manage`, {
@@ -52,8 +52,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // Fallback with professional command management data
-    if (req.method === 'GET') {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // In non-production, provide a rich demo set of commands so the UI looks complete
+    if (req.method === 'GET' && !isProduction) {
       const commands = [
         {
           id: 'ping',
@@ -177,16 +179,29 @@ export default async function handler(req, res) {
         disabledCommands: commands.filter(cmd => !cmd.enabled).length,
         totalUsage: commands.reduce((sum, cmd) => sum + cmd.usageCount, 0),
         averageSuccessRate: commands.reduce((sum, cmd) => sum + cmd.successRate, 0) / commands.length,
-        mode: 'PROFESSIONAL_MANAGEMENT'
+        mode: 'PROFESSIONAL_MANAGEMENT_DEV'
       });
     }
 
-    if (req.method === 'PUT') {
-      // Simulate command update
+    // In production, if we reach here, the backend is unavailable – do not fake updates
+    if (req.method === 'GET' && isProduction) {
       return res.status(200).json({
         success: true,
-        message: 'Command updated successfully',
-        updatedCommand: req.body
+        commands: [],
+        totalCommands: 0,
+        enabledCommands: 0,
+        disabledCommands: 0,
+        totalUsage: 0,
+        averageSuccessRate: 0,
+        mode: 'NO_BACKEND'
+      });
+    }
+
+    if (req.method === 'PUT' && isProduction) {
+      return res.status(503).json({
+        success: false,
+        error: 'Backend unavailable',
+        message: 'Cannot update commands because the KSyfall backend (PI_BOT_API_URL) is offline or unreachable.'
       });
     }
 

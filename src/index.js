@@ -308,6 +308,57 @@ function addLog(action, user, details, type) {
     }
 }
 
+// Global safety handlers to reduce unexpected crashes
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled promise rejection:', reason);
+    try {
+        const message = typeof reason === 'object' && reason !== null && 'message' in reason
+            ? reason.message
+            : String(reason);
+        addLog('unhandled_rejection', 'System', message, 'error');
+    } catch (err) {
+        console.error('Failed to log unhandled rejection:', err);
+    }
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught exception:', error);
+    try {
+        const message = error && error.message ? error.message : String(error);
+        addLog('uncaught_exception', 'System', message, 'error');
+    } catch (err) {
+        console.error('Failed to log uncaught exception:', err);
+    }
+});
+
+async function gracefulShutdown(signal) {
+    console.log(`\n${signal} received. Shutting down Skyfall bot gracefully...`);
+
+    try {
+        await client.destroy();
+        console.log('Discord client destroyed.');
+    } catch (err) {
+        console.error('Error destroying Discord client:', err);
+    }
+
+    try {
+        if (server && server.close) {
+            server.close(() => {
+                console.log('HTTP API server closed.');
+                process.exit(0);
+            });
+        } else {
+            process.exit(0);
+        }
+    } catch (err) {
+        console.error('Error during HTTP server shutdown:', err);
+        process.exit(1);
+    }
+}
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
 function generateSampleLogs() {
     const sampleLogs = [
         { action: 'Bot started', user: 'System', details: 'Skyfall bot successfully started and connected', type: 'system' },

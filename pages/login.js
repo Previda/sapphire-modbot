@@ -38,20 +38,20 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>Login - Skyfall Dashboard</title>
-        <meta name="description" content="Login to Skyfall Discord Management Dashboard" />
+        <title>Login - KSyfall Dashboard</title>
+        <meta name="description" content="Login to KSyfall Discord Management Dashboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
       <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
         <TopNav />
 
-        {/* Subtle background accents */}
+        {/* Subtle background accents - grayscale */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -inset-10 opacity-40">
-            <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-sky-500 rounded-full mix-blend-screen filter blur-3xl"></div>
-            <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-emerald-500 rounded-full mix-blend-screen filter blur-3xl animation-delay-2000"></div>
-            <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-indigo-500 rounded-full mix-blend-screen filter blur-3xl animation-delay-4000"></div>
+            <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-zinc-800 rounded-full mix-blend-screen filter blur-3xl"></div>
+            <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-zinc-700 rounded-full mix-blend-screen filter blur-3xl animation-delay-2000"></div>
+            <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-zinc-900 rounded-full mix-blend-screen filter blur-3xl animation-delay-4000"></div>
           </div>
         </div>
 
@@ -61,18 +61,18 @@ export default function Login() {
             <div className="mx-auto h-24 w-24 rounded-full bg-black flex items-center justify-center mb-6 shadow-2xl border border-white/10 overflow-hidden">
               <img
                 src="/logo-skyfall.svg"
-                alt="Skyfall logo"
+                alt="KSyfall logo"
                 className="h-20 w-20 object-contain"
               />
             </div>
-            <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">
-              Skyfall
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-zinc-50 to-zinc-400 bg-clip-text text-transparent">
+              KSyfall
             </h1>
             <p className="text-gray-300 text-xl font-medium">
-              Ultra Modern Discord Management
+              Clean Discord Management
             </p>
             <p className="text-gray-400 text-sm mt-2">
-              Professional • Seamless • Beautiful
+              Professional • Minimal • Clean
             </p>
           </div>
           
@@ -81,7 +81,7 @@ export default function Login() {
             <button
               onClick={handleDiscordLogin}
               disabled={loading}
-              className="w-full flex items-center justify-center px-6 py-4 mb-4 border border-transparent text-lg font-semibold rounded-2xl text-white bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-600 hover:to-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center px-6 py-4 mb-4 border border-white/20 text-lg font-semibold rounded-2xl text-black bg-white hover:bg-zinc-100 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="flex items-center">
