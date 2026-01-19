@@ -686,7 +686,7 @@ export default function Dashboard() {
 
                 {/* Recent Activity */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                  <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/15">
                     <h3 className="text-xl font-bold text-white mb-4">Recent Activity</h3>
                     <div className="space-y-3">
                       {logs.slice(0, 5).map((log, index) => (
@@ -797,7 +797,7 @@ export default function Dashboard() {
                   <div className="p-6 border-b border-white/10">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xl font-bold text-white">Recent Activity</h4>
-                      <span className="text-gray-400">{logs.length} entries</span>
+                      <span className="text-zinc-400">{logs.length} entries</span>
                     </div>
                   </div>
 
@@ -805,7 +805,7 @@ export default function Dashboard() {
                     {logs.map((log, index) => (
                       <div key={index} className="p-6 hover:bg-white/5 transition-colors">
                         <div className="flex items-center space-x-4">
-                          <div className="text-3xl">
+                          <div className="text-3xl text-white/80">
                             {log.type === 'command' ? '⚡' : 
                              log.type === 'moderation' ? '🛡️' : 
                              log.type === 'system' ? '🔧' : '📝'}
@@ -813,10 +813,10 @@ export default function Dashboard() {
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <h5 className="text-white font-medium">{log.action}</h5>
-                              <span className="text-gray-400 text-sm">{new Date(log.timestamp).toLocaleString()}</span>
+                              <span className="text-zinc-400 text-sm">{new Date(log.timestamp).toLocaleString()}</span>
                             </div>
-                            <p className="text-gray-300 text-sm">{log.details}</p>
-                            <p className="text-gray-400 text-xs mt-1">User: {log.user} • Guild: {log.guild}</p>
+                            <p className="text-zinc-200 text-sm">{log.details}</p>
+                            <p className="text-zinc-500 text-xs mt-1">User: {log.user} • Guild: {log.guild}</p>
                           </div>
                         </div>
                       </div>
@@ -832,13 +832,13 @@ export default function Dashboard() {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {appeals.map((appeal, index) => (
-                    <div key={index} className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <div key={index} className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/15">
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-lg font-bold text-white">{appeal.username}</h4>
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          appeal.status === 'pending' ? 'bg-yellow-400/20 text-yellow-400' :
-                          appeal.status === 'approved' ? 'bg-green-400/20 text-green-400' :
-                          'bg-red-400/20 text-red-400'
+                          appeal.status === 'pending' ? 'bg-white/10 text-zinc-200' :
+                          appeal.status === 'approved' ? 'bg-white/10 text-zinc-100' :
+                          'bg-white/10 text-zinc-300'
                         }`}>
                           {appeal.status}
                         </span>
@@ -846,15 +846,15 @@ export default function Dashboard() {
 
                       <div className="space-y-3 text-sm">
                         <div>
-                          <span className="text-gray-400">Reason for ban:</span>
+                          <span className="text-zinc-400">Reason for ban:</span>
                           <p className="text-white mt-1">{appeal.banReason}</p>
                         </div>
                         <div>
-                          <span className="text-gray-400">Appeal message:</span>
+                          <span className="text-zinc-400">Appeal message:</span>
                           <p className="text-white mt-1">{appeal.appealMessage}</p>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Submitted:</span>
+                          <span className="text-zinc-400">Submitted:</span>
                           <span className="text-white">{new Date(appeal.submittedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
@@ -863,13 +863,13 @@ export default function Dashboard() {
                         <div className="mt-4 pt-4 border-t border-white/10 flex space-x-3">
                           <button 
                             onClick={() => handleAppealAction(appeal.id, 'approved')}
-                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            className="flex-1 px-4 py-2 rounded-lg border border-white/20 bg-zinc-950/70 text-white hover:bg-zinc-900/80 hover:border-white/40 transition-colors"
                           >
                             ✅ Approve
                           </button>
                           <button 
                             onClick={() => handleAppealAction(appeal.id, 'denied')}
-                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            className="flex-1 px-4 py-2 rounded-lg border border-white/20 bg-zinc-950/70 text-white hover:bg-zinc-900/80 hover:border-white/40 transition-colors"
                           >
                             ❌ Deny
                           </button>
@@ -887,7 +887,7 @@ export default function Dashboard() {
                 
                 {statusData ? (
                   <>
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/15">
                       <div className="text-center">
                         <div className={`inline-flex items-center px-6 py-3 rounded-full text-lg font-bold ${
                           statusData.overall?.status === 'operational' ? 'text-green-400 bg-green-400/20' :
@@ -906,11 +906,11 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 text-center">
                         <div className="text-3xl font-bold text-white">{statusData.overall?.healthPercentage || 0}%</div>
-                        <div className="text-gray-400">System Health</div>
+                        <div className="text-zinc-400">System Health</div>
                       </div>
                       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 text-center">
                         <div className="text-3xl font-bold text-white">{statusData.metrics?.operationalServices || 0}/{statusData.metrics?.totalServices || 0}</div>
-                        <div className="text-gray-400">Services Online</div>
+                        <div className="text-zinc-400">Services Online</div>
                       </div>
                       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 text-center">
                         <div className="text-3xl font-bold text-white">{statusData.metrics?.averageResponseTime || 0}ms</div>
